@@ -8,7 +8,15 @@ Expo + Expo Router + TypeScript under **`apps/mobile/` only**. Do not edit `apps
 
 Copy in this app is **draft pending counsel** — do not treat UX strings as legal-approved.
 
-**Visual pass (hi-fi 01–05b):** cream paper `#FFFEFA` / `#F7F5F0`, sage→olive CTA `#7A9E7E → #6B8F71`, charcoal `#2C2B28`. Nunito (brand) + Inter (UI). Glass cards, floating pill tabs, slide-to-end Live, Sign-first Note, Secure message Send + voice toast. No PHIPA chips. No 24h wipe copy. Flow strip `06-flow-strip.png` was not on disk at last re-pull — do not block the localhost demo.
+**Design freeze SoT (must-fix, all wired on Expo web):**
+1. Live End = charcoal **Slide to end visit** (not a sage Start twin) + glove-sized **Pause**. Transcript behind **View transcript** sheet only.
+2. **04b** `/visit/:id/signed` — Note signed → **Review follow-ups** / **Back to Today**.
+3. Follow-ups: **Secure message** chip, edit in card, **Skip** + **Send** below, “We’ll text them a link to open it securely.”
+4. Consent: no PHIPA/CA·ON chips; **Why we ask** only; **Start recording** + “I confirmed the patient agrees.”
+5. Sign: “You’re signing this as the clinical record.” No “Olive record of truth” / no 24h wipe.
+6. Waveform = solid olive `#6B8F71` bars on soft mist — no gradient / chartreuse.
+
+Tokens: cream `#FFFEFA`/`#F7F5F0`, sage `#7A9E7E`, olive `#6B8F71`, charcoal `#2C2B28`, glass blur ~28, radius 24–28, Nunito+Inter, no teal. 03b / 06 / edges not on disk — do not block.
 
 ## Francesca ASAP — localhost mocks (no API)
 

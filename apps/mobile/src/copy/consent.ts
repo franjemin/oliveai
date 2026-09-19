@@ -11,7 +11,7 @@ export const AUDIO_DISCLOSURE = {
     "Olive will listen during this visit and draft notes for Dr. Chen. Personal health info stays with this clinic.",
   whyLink: "Why we ask",
   startCta: "Start recording",
-  agreeMicrocopy: "I confirmed the patient agreed.",
+  agreeMicrocopy: "I confirmed the patient agrees.",
   refuseCta: "Not recording this visit",
   points: [
     {

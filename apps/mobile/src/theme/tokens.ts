@@ -50,9 +50,9 @@ export const space = {
 export const radius = {
   sm: 12,
   md: 18,
-  lg: 26,
-  xl: 32,
-  sheet: 36,
+  lg: 24,
+  xl: 28,
+  sheet: 28,
   pill: 999,
 } as const;
 

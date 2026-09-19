@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
   card: {
-    backgroundColor: color.white,
+    backgroundColor: color.glass,
     borderRadius: radius.xl,
     padding: 22,
     ...shadow.glass,

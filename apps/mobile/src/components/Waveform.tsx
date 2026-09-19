@@ -8,10 +8,12 @@ const HEIGHTS = [8, 14, 10, 20, 12, 18, 9, 22, 11, 16, 10, 19, 12, 15];
 export function Waveform({ active }: { active: boolean }) {
   const bars = useMemo(() => HEIGHTS, []);
   return (
-    <View style={styles.row} accessibilityLabel={active ? "Live waveform" : "Idle waveform"}>
-      {bars.map((max, i) => (
-        <Bar key={i} max={max} delay={i * 55} active={active} />
-      ))}
+    <View style={styles.mist} accessibilityLabel={active ? "Live waveform" : "Idle waveform"}>
+      <View style={styles.row}>
+        {bars.map((max, i) => (
+          <Bar key={i} max={max} delay={i * 55} active={active} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -45,6 +47,12 @@ function Bar({ max, delay, active }: { max: number; delay: number; active: boole
 }
 
 const styles = StyleSheet.create({
+  mist: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: color.mistWash,
+  },
   row: {
     height: 26,
     flexDirection: "row",
@@ -55,6 +63,6 @@ const styles = StyleSheet.create({
   bar: {
     width: 2.5,
     borderRadius: 2,
-    backgroundColor: color.sage,
+    backgroundColor: color.olive,
   },
 });
