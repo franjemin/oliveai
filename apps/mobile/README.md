@@ -43,23 +43,26 @@ Boot: `POST /v1/auth/login` with `od@demo.olive.local` / `demo`, then pins visit
 
 **Mocks-only (no API process):** omit the `.env` override (`.env.example` has `EXPO_PUBLIC_USE_MOCKS=true`) and run the same `npx expo start --web --port 8081`.
 
-### 2. Dry-run checklist (`wired` | `mock` | `missing`)
+### 2. Product-approved Wed hard pass/fail (`wired` | `mock` | `missing`)
 
-| Step | Status |
-| --- | --- |
-| Today | **wired** |
-| Consent Agree/Deny + recording-gate | **wired** |
-| Live Pause/End | **wired** (ambient mic bytes **mock**) |
-| Note Sign | **wired** |
-| post-Sign follow-ups bridge | **wired** |
-| Swipe Send stub / Skip / CASL fail-closed | **wired** (notify SMS vendor **mock**) |
-| Edge states | **wired** |
+| # | Hard pass/fail | Status |
+| --- | --- | --- |
+| 1 | Core loop works on demo login (`od@demo.olive.local` / `demo` → visit `…0005`) | **wired** |
+| 2 | Zero “audio deleted within 24h” / hard-delete claims anywhere in UI / README | **wired** |
+| 3 | No PHIPA chips / “record of truth” on primary surfaces | **wired** |
+| 4 | Consent Agree/Deny + recording-gate | **wired** |
+| 5 | Live Pause/End | **wired** (ambient mic bytes **mock**) |
+| 6 | Note Sign | **wired** |
+| 7 | post-Sign follow-ups bridge → Swipe Send stub / Skip / CASL fail-closed | **wired** (notify SMS vendor **mock**) |
+| 8 | Product-approved dry-run checklist compliance: retention = clinic-controlled (no wipe claims); Bluedot primary copy (no PHIPA chips / no “record of truth” on primary) | **wired** |
 
-**Wed must-work (all wired):** Consent agree/deny + gate · Live pause/end · Note sign + post-Sign bridge · Swipe send stub/skip/CASL fail-closed.
+Edge states (consent denied, bad-audio, empty swipe) are **wired** (supporting, not a numbered hard-fail).
+
+**Wed must-work (#4–#7, all wired):** Consent agree/deny + gate · Live pause/end · Note sign + post-Sign bridge · Swipe send stub/skip/CASL fail-closed.
 
 **OK mock/partial for demo week:** SDM / `verbal_attested` depth · MFA · post-sign correction trail · backup purge · admin audit UI · data-map beyond PHIPA fields.
 
-Nothing on the Wed spine is **missing**.
+Nothing on the Wed hard-fail list is **missing**.
 
 ### 3. Contract gaps that block Live / Sign / Swipe
 
