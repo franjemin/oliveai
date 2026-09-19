@@ -3,7 +3,7 @@ import { Animated, StyleSheet, View } from "react-native";
 
 import { color } from "@/src/theme/tokens";
 
-const HEIGHTS = [10, 18, 12, 22, 14, 20, 11, 24, 13, 19, 12, 16];
+const HEIGHTS = [8, 14, 10, 20, 12, 18, 9, 22, 11, 16, 10, 19, 12, 15];
 
 export function Waveform({ active }: { active: boolean }) {
   const bars = useMemo(() => HEIGHTS, []);
@@ -46,14 +46,14 @@ function Bar({ max, delay, active }: { max: number; delay: number; active: boole
 
 const styles = StyleSheet.create({
   row: {
-    height: 28,
+    height: 26,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
+    gap: 2.5,
   },
   bar: {
-    width: 3,
+    width: 2.5,
     borderRadius: 2,
     backgroundColor: color.sage,
   },

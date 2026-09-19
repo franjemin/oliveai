@@ -3,8 +3,8 @@ import { Animated, PanResponder, StyleSheet, Text, View } from "react-native";
 
 import { color, font, radius } from "@/src/theme/tokens";
 
-const KNOB = 52;
-const INSET = 4;
+const KNOB = 58;
+const INSET = 5;
 
 export function SlideToEnd({
   label = "Slide to end visit",
@@ -69,7 +69,7 @@ export function SlideToEnd({
 
 const styles = StyleSheet.create({
   track: {
-    height: 64,
+    height: 72,
     borderRadius: radius.pill,
     backgroundColor: color.track,
     justifyContent: "center",
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     color: "rgba(255,254,250,0.92)",
     fontFamily: font.uiSemi,
     fontSize: 16,
-    paddingLeft: 18,
+    paddingLeft: 22,
   },
   knob: {
     position: "absolute",

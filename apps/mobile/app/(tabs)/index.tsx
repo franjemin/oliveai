@@ -44,7 +44,8 @@ export default function TodayScreen() {
         return;
       }
       if (row.visitStatus === "completed") {
-        router.push(`/visit/${visit.id}/note`);
+        const note = await olive.getNote(visit.id).catch(() => null);
+        router.push(note?.status === "signed" ? `/visit/${visit.id}/signed` : `/visit/${visit.id}/note`);
         return;
       }
       router.push(`/visit/${visit.id}/consent`);

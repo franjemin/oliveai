@@ -13,6 +13,7 @@ import { Waveform } from "@/src/components/Waveform";
 import { Body, Button, Caption, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
+import { shortReason } from "@/src/theme/format";
 import { color, font, radius, space } from "@/src/theme/tokens";
 
 export default function LiveScreen() {
@@ -87,7 +88,7 @@ export default function LiveScreen() {
           <Title>Visit</Title>
           <Caption style={{ marginTop: 6 }}>
             {patient?.displayName ?? "Visit"}
-            {patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
+            {shortReason(patient?.reason) ? ` · ${shortReason(patient?.reason)}` : ""}
           </Caption>
         </View>
         {badAudio ? (
@@ -130,11 +131,11 @@ export default function LiveScreen() {
         </View>
         <View style={styles.bottom}>
           <SlideToEnd disabled={!capturing && !gateError} onComplete={() => void end()} />
-          <View style={{ height: 10 }} />
+          <View style={{ height: 12 }} />
           <Button
             label={paused ? "Resume" : "Pause"}
             variant="secondary"
-            size="lg"
+            size="xl"
             disabled={!capturing}
             onPress={() => setPaused((p) => !p)}
           />
@@ -150,9 +151,9 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   timer: {
     fontFamily: font.display,
-    fontSize: 80,
-    lineHeight: 84,
-    letterSpacing: -2.4,
+    fontSize: 88,
+    lineHeight: 92,
+    letterSpacing: -2.6,
     color: color.charcoal,
     fontWeight: "400",
   },

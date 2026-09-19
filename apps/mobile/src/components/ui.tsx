@@ -103,7 +103,7 @@ export function Button({
 }: PressableProps & {
   label: string;
   variant?: "primary" | "secondary" | "ghost" | "refuse" | "end" | "outline";
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
 }) {
   const palette = {
     primary: { bg: color.olive, fg: color.white, border: "transparent" },
@@ -121,6 +121,7 @@ export function Button({
       style={(state) => [
         styles.btnWrap,
         size === "lg" && styles.btnLg,
+        size === "xl" && styles.btnXl,
         typeof style === "function" ? style(state) : style,
         { opacity: disabled ? 0.4 : state.pressed ? 0.88 : 1 },
       ]}
@@ -131,15 +132,16 @@ export function Button({
           colors={[...gradient.cta]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
-          style={[styles.btnFill, size === "lg" && styles.btnLg]}
+          style={[styles.btnFill, size === "lg" && styles.btnLg, size === "xl" && styles.btnXl]}
         >
-          <Text style={[styles.btnLabel, size === "lg" && styles.btnLabelLg, { color: color.white }]}>{label}</Text>
+          <Text style={[styles.btnLabel, (size === "lg" || size === "xl") && styles.btnLabelLg, { color: color.white }]}>{label}</Text>
         </LinearGradient>
       ) : (
         <View
           style={[
             styles.btnFill,
             size === "lg" && styles.btnLg,
+            size === "xl" && styles.btnXl,
             {
               backgroundColor: palette.bg,
               borderColor: palette.border,
@@ -147,7 +149,7 @@ export function Button({
             },
           ]}
         >
-          <Text style={[styles.btnLabel, size === "lg" && styles.btnLabelLg, { color: palette.fg }]}>{label}</Text>
+          <Text style={[styles.btnLabel, (size === "lg" || size === "xl") && styles.btnLabelLg, { color: palette.fg }]}>{label}</Text>
         </View>
       )}
     </Pressable>
@@ -218,6 +220,9 @@ const styles = StyleSheet.create({
   },
   btnLg: {
     minHeight: 64,
+  },
+  btnXl: {
+    minHeight: 76,
   },
   btnLabel: {
     fontSize: 16,

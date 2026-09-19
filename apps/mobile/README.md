@@ -93,8 +93,9 @@ Nothing on the Wed hard-fail list is **missing**.
 | Today | **Start** on NEXT UP card | Olive mark + wordmark. LATER rows. Reset = long-press Today. |
 | Consent | **Start recording** | Bottom sheet. **Why we ask** + agree line. Refuse = **Not recording this visit**. |
 | Consent denied | **Continue without recording** | Edge only |
-| Live | **Slide to end visit** | Large **Pause**. **View transcript** pill. |
-| Note | **Sign note** | Preview on land. **Edit full note**. Confirm sheet (wipe-scrub: clinic-controlled audio, no 24h). After Sign: **Review follow-ups**. |
+| Live | **Slide to end visit** (charcoal, not a sage Start twin) | Glove-sized **Pause**. **View transcript** pill. |
+| Note | **Sign note** | Preview on land. **Edit full note**. Confirm sheet (wipe-scrub: clinic-controlled audio, no 24h). |
+| Post-sign `/visit/:id/signed` | **Review follow-ups** | 04b bridge: check + “Note signed. Review follow-ups?” + **Back to Today**. |
 | Follow-ups / Swipe | **Send** (not Send SMS) | **SECURE MESSAGE** chip. Edit in the card. Skip + Send below. Microcopy: “We’ll text them a link to open it securely.” 05b toast on edit-save only. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |

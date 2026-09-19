@@ -10,6 +10,7 @@ import { Body, Button, Caption, Pill, Screen, Title } from "@/src/components/ui"
 import { EDGE } from "@/src/copy/edges";
 import { formatSoap, parseSoap, SOAP_LABELS, soapPreview, type Soap } from "@/src/copy/soap";
 import { useOlive } from "@/src/store/OliveProvider";
+import { shortReason } from "@/src/theme/format";
 import { color, font, radius, space } from "@/src/theme/tokens";
 
 export default function NoteScreen() {
@@ -35,10 +36,14 @@ export default function NoteScreen() {
         /* visit may still be in progress after refuse */
       }
       const n = await olive.getNote(id);
+      if (n.status === "signed") {
+        router.replace(`/visit/${id}/signed`);
+        return;
+      }
       setNote(n);
       setSoap(parseSoap(n.body));
     })();
-  }, [id, olive]);
+  }, [id, olive, router]);
 
   const signed = note?.status === "signed";
   const canSign = note?.status === "draft";
@@ -69,6 +74,7 @@ export default function NoteScreen() {
       setSoap(parseSoap(n.body));
       setEditing(false);
       setConfirm(false);
+      router.replace(`/visit/${id}/signed`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Sign failed.");
     } finally {
@@ -76,37 +82,7 @@ export default function NoteScreen() {
     }
   };
 
-  const patientLine = [
-    patient?.displayName ?? "Visit",
-    patient?.reason ? patient.reason.split("·")[0].trim() : null,
-    signed ? EDGE.postSign.body : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-  if (signed) {
-    return (
-      <Screen>
-        <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
-          <View style={styles.signedCenter}>
-            <View style={styles.check}>
-              <Caption style={styles.checkMark}>✓</Caption>
-            </View>
-            <Title style={{ marginTop: 28, textAlign: "center" }}>{EDGE.postSign.title}</Title>
-            <Caption style={{ marginTop: 12, textAlign: "center" }}>{patientLine}</Caption>
-            <View style={{ marginTop: 16, alignItems: "center" }}>
-              <Pill label={EDGE.postSign.chip} tone="olive" />
-            </View>
-          </View>
-          <View style={styles.actions}>
-            <Button label={EDGE.postSign.cta} onPress={() => router.replace("/follow-ups")} />
-            <View style={{ height: 10 }} />
-            <Button label={EDGE.postSign.back} variant="secondary" onPress={() => router.replace("/")} />
-          </View>
-        </SafeAreaView>
-      </Screen>
-    );
-  }
+  const patientLine = [patient?.displayName ?? "Visit", shortReason(patient?.reason) || null].filter(Boolean).join(" · ");
 
   return (
     <Screen>
@@ -179,7 +155,6 @@ export default function NoteScreen() {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, paddingHorizontal: space.lg, paddingBottom: 8 },
   pad: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 24 },
   noteTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   preview: {
@@ -209,14 +184,4 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   actions: { paddingHorizontal: space.lg, paddingBottom: 8 },
-  signedCenter: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
-  check: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: color.olive,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkMark: { color: color.white, fontSize: 22, fontFamily: font.uiSemi },
 });
