@@ -176,14 +176,13 @@ export default function FollowUpsTab() {
             <>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
-                  <Button label="Skip" variant="outline" disabled={busy} onPress={() => void skip()} />
+                  <Button label="Skip" variant="secondary" disabled={busy} onPress={() => void skip()} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Button label="Send" variant="outline" disabled={busy} onPress={() => void send()} />
+                <View style={{ flex: 1.15 }}>
+                  <Button label="Send" disabled={busy} onPress={() => void send()} />
                 </View>
               </View>
-              <Caption style={{ textAlign: "center", marginTop: 8 }}>or tap · swipe right to send, left to skip</Caption>
-              <Caption style={{ textAlign: "center", marginTop: 6 }}>{SECURE_SEND_MICROCOPY}</Caption>
+              <Caption style={{ textAlign: "center", marginTop: 12 }}>{SECURE_SEND_MICROCOPY}</Caption>
             </>
           ) : (
             <Button label={EDGE.emptySwipe.cta} onPress={() => router.replace("/")} />

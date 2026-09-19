@@ -83,7 +83,7 @@ Nothing on the Wed hard-fail list is **missing**.
 
 - **Demo simplicity cuts** (Core simplicity bar): one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
 - **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
-- **Messaging:** swipe card ≠ SMS body of record. Notify text is a short stub with clinic identity + STOP. Secure thread is the record.
+- **Messaging (05):** chip **Secure message**. CTA **Send** (not Send SMS). Microcopy: “We’ll text them a link to open it securely.” Edit in the card; Skip/Send below. Draft = in-app secure message, not the SMS body. Notify SMS is a stub with clinic ID + STOP.
 
 ## Screens
 
@@ -94,7 +94,7 @@ Nothing on the Wed hard-fail list is **missing**.
 | Consent denied | **Continue without recording** | Edge only |
 | Live | **Slide to end visit** | Large **Pause**. **View transcript** pill. |
 | Note | **Sign note** | Preview on land. **Edit full note**. Confirm sheet (wipe-scrub: clinic-controlled audio, no 24h). After Sign: **Review follow-ups**. |
-| Follow-ups / Swipe | Swipe right **Send** / left **Skip** | Secure message chip. Stamp-on-card. Outline buttons are a11y only. Voice toast on edit. |
+| Follow-ups / Swipe | **Send** (not Send SMS) | **SECURE MESSAGE** chip. Edit in the card. Skip + Send below. Microcopy: “We’ll text them a link to open it securely.” Draft = in-app secure message. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |
 | Chats | Secure threads after Send (not full chat chrome) |
