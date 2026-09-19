@@ -80,7 +80,7 @@ paths:
   /v1/session:
     get:
       tags: [Auth, Flags]
-      summary: Session bootstrap (user + clinic + flags)
+      summary: Session bootstrap (user + clinic + flags + clinician style heuristic)
       responses:
         "200":
           description: Bootstrap payload
@@ -93,6 +93,13 @@ paths:
                   user: { $ref: "#/components/schemas/User" }
                   clinic: { $ref: "#/components/schemas/Clinic" }
                   flags: { $ref: "#/components/schemas/FeatureFlags" }
+                  style:
+                    type: object
+                    description: Per clinician+clinic draft heuristic (demo simplicity cuts). Not PHI training.
+                    properties:
+                      preferShorter: { type: boolean }
+                      greeting: { type: string, nullable: true }
+                      editCount: { type: integer }
         "401":
           $ref: "#/components/responses/Error"
 
