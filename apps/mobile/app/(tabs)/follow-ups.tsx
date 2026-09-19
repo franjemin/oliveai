@@ -101,8 +101,8 @@ export default function FollowUpsTab() {
 
   return (
     <Screen>
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <View style={styles.pad}>
+      <SafeAreaView style={styles.safe} edges={["top"]}>
+        <View style={styles.header}>
           <Title>Follow-ups</Title>
           <View style={styles.progressRow}>
             <View style={styles.track}>
@@ -129,8 +129,10 @@ export default function FollowUpsTab() {
               ) : null}
             </View>
           ) : null}
+        </View>
 
-          {current ? (
+        {current ? (
+          <View style={styles.deckWrap}>
             <SwipeDeck
               disabled={busy}
               onSend={() => void send()}
@@ -144,7 +146,7 @@ export default function FollowUpsTab() {
                 ) : undefined
               }
             >
-              <Card style={{ flex: 1 }}>
+              <Card style={styles.card}>
                 <Kicker style={{ color: color.sage }}>Secure message</Kicker>
                 <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
                 <Caption style={{ marginTop: 4 }}>
@@ -163,14 +165,15 @@ export default function FollowUpsTab() {
                 </View>
               </Card>
             </SwipeDeck>
-          ) : (
-            <View style={styles.empty}>
-              <Title>{EDGE.emptySwipe.title}</Title>
-              <Body style={{ color: color.inkMuted, marginTop: 8 }}>{EDGE.emptySwipe.body}</Body>
-            </View>
-          )}
-        </View>
-        <View style={styles.actions}>
+          </View>
+        ) : (
+          <View style={styles.empty}>
+            <Title>{EDGE.emptySwipe.title}</Title>
+            <Body style={{ color: color.inkMuted, marginTop: 8 }}>{EDGE.emptySwipe.body}</Body>
+          </View>
+        )}
+
+        <View style={styles.footer}>
           {toast ? (
             <View style={styles.toast} accessibilityLiveRegion="polite">
               <Caption style={{ color: color.charcoal, fontFamily: font.uiMed, textAlign: "center" }}>
@@ -180,7 +183,7 @@ export default function FollowUpsTab() {
           ) : null}
           {current ? (
             <>
-              <Caption style={{ textAlign: "center", marginBottom: 10, color: color.inkFaint }}>{SWIPE_OR_TAP}</Caption>
+              <Caption style={styles.orTap}>{SWIPE_OR_TAP}</Caption>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
                   <Button label="Skip" variant="outline" disabled={busy} onPress={() => void skip()} />
@@ -189,7 +192,7 @@ export default function FollowUpsTab() {
                   <Button label="Send" variant="outline" disabled={busy} onPress={() => void send()} />
                 </View>
               </View>
-              <Caption style={{ textAlign: "center", marginTop: 10 }}>{SECURE_SEND_MICROCOPY}</Caption>
+              <Caption style={styles.microcopy}>{SECURE_SEND_MICROCOPY}</Caption>
             </>
           ) : (
             <Button label={EDGE.emptySwipe.cta} onPress={() => router.replace("/")} />
@@ -201,7 +204,8 @@ export default function FollowUpsTab() {
 }
 
 const styles = StyleSheet.create({
-  pad: { flex: 1, paddingHorizontal: space.lg, paddingTop: 8 },
+  safe: { flex: 1, minHeight: 0 },
+  header: { paddingHorizontal: space.lg, paddingTop: 8, flexShrink: 0 },
   progressRow: { marginTop: 18, flexDirection: "row", alignItems: "center", gap: 12 },
   track: {
     flex: 1,
@@ -212,7 +216,9 @@ const styles = StyleSheet.create({
   },
   fill: { height: 4, backgroundColor: color.olive, borderRadius: 2 },
   banner: { marginTop: 16, borderRadius: 16, padding: 14 },
+  deckWrap: { flex: 1, minHeight: 0, paddingHorizontal: space.lg },
   peekCard: { flex: 1, backgroundColor: color.paperAlt },
+  card: { flex: 1, minHeight: 0, overflow: "hidden" },
   cardName: { marginTop: 10, fontSize: 26, lineHeight: 30 },
   message: {
     marginTop: 16,
@@ -220,24 +226,29 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 14,
     flex: 1,
+    minHeight: 0,
   },
   edit: {
-    minHeight: 140,
+    flex: 1,
+    minHeight: 0,
     fontSize: 16,
     lineHeight: 24,
     color: color.ink,
     fontFamily: font.ui,
     borderWidth: 0,
   },
-  empty: { flex: 1, justifyContent: "center" },
-  actions: { paddingHorizontal: space.lg, paddingBottom: 108, position: "relative" },
+  empty: { flex: 1, minHeight: 0, justifyContent: "center", paddingHorizontal: space.lg },
+  footer: {
+    flexShrink: 0,
+    paddingHorizontal: space.lg,
+    paddingTop: 12,
+    paddingBottom: 88,
+    gap: 10,
+  },
+  orTap: { textAlign: "center", color: color.inkFaint },
+  microcopy: { textAlign: "center" },
   row: { flexDirection: "row", gap: 10 },
   toast: {
-    position: "absolute",
-    left: 28,
-    right: 28,
-    bottom: 196,
-    zIndex: 6,
     backgroundColor: color.white,
     borderRadius: radius.pill,
     paddingHorizontal: 18,

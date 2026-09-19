@@ -121,7 +121,7 @@ export function SwipeDeck({
 }
 
 const styles = StyleSheet.create({
-  stage: { flex: 1, marginTop: 16, overflow: "visible" },
+  stage: { flex: 1, minHeight: 0, marginTop: 16, overflow: "visible" },
   peek: {
     position: "absolute",
     left: 0,
@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
   },
   front: {
     flex: 1,
+    minHeight: 0,
     overflow: "visible",
   },
   stamp: {
