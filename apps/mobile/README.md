@@ -12,44 +12,22 @@ Copy in this app is **draft pending counsel** — do not treat UX strings as leg
 
 ## Ready-to-run packet (Tech Lead)
 
-### 1. PR + branch
+**PR:** https://github.com/franjemin/oliveai/pull/2  
+**Branch:** `cursor/olive-v1-core-mobile-56b9`  
+**Demo login:** `od@demo.olive.local` / `demo`  
+**Seeded visit:** `00000000-0000-4000-8000-000000000005`
 
-| | |
-| --- | --- |
-| PR | https://github.com/franjemin/oliveai/pull/2 |
-| Branch | `cursor/olive-v1-core-mobile-56b9` |
-| Base | `main` (does not rewrite Backend PR #1) |
-| Demo login | `od@demo.olive.local` / `demo` |
-| Seeded visit | `00000000-0000-4000-8000-000000000005` (Alex Rivera) |
-| Clinic | Harbourfront Dental |
+### 1. Exact local run — `apps/mobile/` pointed at Backend PR #1 API
 
-### 2. Local run (`apps/mobile/` only)
-
-**Mocks (default — Francesca / Mon dry-run):**
+Bring up Backend PR #1 on `:3000` first (that PR’s runbook). Do **not** edit `apps/api/` from this branch.
 
 ```bash
 cd apps/mobile
 npm install
-# .env.example defaults:
-#   EXPO_PUBLIC_USE_MOCKS=true
-#   EXPO_PUBLIC_API_BASE=http://localhost:3000
-npx expo start --web --port 8081
-# open http://localhost:8081
-```
-
-Boot auto-logs in as `od@demo.olive.local` / `demo` and pins visit `00000000-0000-4000-8000-000000000005` on Today.
-
-**Point at Backend PR #1 API:**
-
-```bash
-# Terminal A — run Backend PR #1 first (see that PR; do not edit apps/api/ from this branch)
-# typical: checkout cursor/olive-v1-core-backend-a0fd → docker compose / migrate / seed / start on :3000
-
-cd apps/mobile
 cp .env.example .env
 ```
 
-`.env`:
+Write `.env` exactly:
 
 ```
 EXPO_PUBLIC_USE_MOCKS=false
@@ -58,36 +36,45 @@ EXPO_PUBLIC_API_BASE=http://localhost:3000
 
 ```bash
 npx expo start --web --port 8081
-# still http://localhost:8081
-# login still od@demo.olive.local / demo ; visit still …0005
+# http://localhost:8081
 ```
 
-App boot: `POST /v1/auth/login` → day feed → overlay visit `…0005`. Magic-link inbox: `GET /v1/inbox/:token`. Notify SMS vendor stays stubbed on both sides.
+Boot: `POST /v1/auth/login` with `od@demo.olive.local` / `demo`, then pins visit `00000000-0000-4000-8000-000000000005` on Today.
 
-### 3. Wed dry-run checklist (`wired` / `mock` / `missing`)
+**Mocks-only (no API process):** omit the `.env` override (`.env.example` has `EXPO_PUBLIC_USE_MOCKS=true`) and run the same `npx expo start --web --port 8081`.
+
+### 2. Dry-run checklist (`wired` | `mock` | `missing`)
 
 | Step | Status |
 | --- | --- |
-| Today (NEXT UP → Start → visit `…0005`) | **wired** |
-| Consent Agree (**Start recording**) / Deny (**Not recording this visit**) + recording-gate | **wired** |
-| Live Pause / End (**Slide to end visit**) | **wired** (mic capture is **mock**) |
-| Note Sign (draft-only; signed immutable) | **wired** |
-| post-Sign follow-ups bridge (04b → Review follow-ups) | **wired** |
-| Swipe Send stub / Skip / CASL fail-closed | **wired** (notify SMS body is **mock**/stub) |
-| Edge states (consent denied, bad-audio, empty swipe) | **wired** |
-| Bluedot P0 on primary (one hero CTA, no PHIPA chips, no “record of truth”, clinic-controlled retention / no 24h wipe) | **wired** |
+| Today | **wired** |
+| Consent Agree/Deny + recording-gate | **wired** |
+| Live Pause/End | **wired** (ambient mic bytes **mock**) |
+| Note Sign | **wired** |
+| post-Sign follow-ups bridge | **wired** |
+| Swipe Send stub / Skip / CASL fail-closed | **wired** (notify SMS vendor **mock**) |
+| Edge states | **wired** |
 
-Nothing on this spine is **missing**. Real microphone, live SMS vendor, OD write-back, MFA, SDM/verbal_attested depth remain **mock** / out of demo week.
+**Wed must-work (all wired):** Consent agree/deny + gate · Live pause/end · Note sign + post-Sign bridge · Swipe send stub/skip/CASL fail-closed.
 
-**Send stub:** card = secure message. CTA **Send** (not Send SMS). Microcopy: “We’ll text them a link to open it securely.” CASL/STOP fail-closed runs on the **notify** send.
+**OK mock/partial for demo week:** SDM / `verbal_attested` depth · MFA · post-sign correction trail · backup purge · admin audit UI · data-map beyond PHIPA fields.
 
-### 4. Dry-run ETA
+Nothing on the Wed spine is **missing**.
 
-**Dry-runable on mocks now (0 hours).** Expo web Core loop was walked on this branch.
+### 3. Contract gaps that block Live / Sign / Swipe
 
-- **Mon clinic dry-run:** use mocks + `http://localhost:8081`. Not slipping.
-- **API-backed walk:** hours after Backend PR #1 is up locally — not a FE blocker; no contract gap blocks Live / Sign / Swipe (FE POSTs a follow-up after Sign if BE has none).
-- **Wed demo:** on track on the mock path. SMS vendor / real mic stay **mock**.
+**None.** Live, Sign, and Swipe have `/v1` routes on Backend PR #1. Non-blocking workarounds only:
+
+| Gap | Blocks Live / Sign / Swipe? | FE handling |
+| --- | --- | --- |
+| BE does not auto-create a follow-up on visit end | **No** | After Sign, FE `POST /v1/visits/:id/follow-ups` if the list is empty |
+| Day-feed date (`2026-09-19` examples vs seed **today**) | **No** | FE tries today + `2026-09-19` and overlays visit `…0005` |
+| No `GET /v1/follow-ups` | **No** | Compose pending from day visits |
+| Notify SMS vendor / BAA transcription | **No** | Stub on both sides; Send still returns secure + `inboxPath` |
+
+### 4. Mon dry-run target
+
+**Not slipping.** Mock path is dry-runable **now**. API-backed walk is hours after PR #1 is up locally — not a FE blocker.
 
 ## Product locks (Bluedot P0)
 
@@ -133,19 +120,17 @@ Nothing on this spine is **missing**. Real microphone, live SMS vendor, OD write
 
 Snapshot of PR #1 contracts: [`contracts/`](contracts/) (Backend remains SoT — do not edit `apps/api/`).
 
-## Contract mismatches (not demo-blockers)
+## Other contract mismatches (do not block Live / Sign / Swipe)
 
 | Mismatch | FE handling |
 | --- | --- |
-| Day-feed date: OpenAPI examples use `2026-09-19`; BE seed `startedAt` is **today** | FE tries today then `2026-09-19`, and always overlays visit `…0005` |
-| BE does not auto-create a follow-up on visit end (`happy-path` POSTs one) | After Sign, FE creates a draft if the list is empty |
-| No `GET /v1/follow-ups` or `GET /v1/chats` | Compose from day visits / patients+chat |
+| No `GET /v1/chats` | Compose from patients + per-patient chat |
 | Day-feed extras (`time`, `reason`, `recording`) | FE view model only |
 | `Note.aiAssisted` missing on contract | OLI-5 badge derives from body / declined recording |
 | `Clinic.email` on BE seed, not on OpenAPI Clinic | Optional extra; ignored |
 | Consent evidence extras (`grantedAt`, actor) vs slim OpenAPI Consent | Optional FE fields |
 | Jordan Hale STOP patient | Mock-only extra (BE seed is Alex + Sam) |
-| Notify SMS vendor / BAA transcription / OD 501 / PMS / chat polish / PHIPA / MFA | Stubbed on BE — do not block FE |
+| OD 501 / PMS / chat polish / PHIPA / MFA | Stubbed on BE — do not block FE |
 
 ## Deferred
 
