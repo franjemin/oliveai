@@ -9,7 +9,13 @@ import type { FollowUp } from "@/src/api/types";
 import { SwipeDeck } from "@/src/components/SwipeDeck";
 import { Body, Button, Caption, Card, Kicker, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
-import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY, VOICE_LEARNING_TOAST } from "@/src/copy/messaging";
+import {
+  SECURE_SEND_MICROCOPY,
+  SEND_FAIL_COPY,
+  SWIPE_HINT,
+  SWIPE_OR_TAP,
+  VOICE_LEARNING_TOAST,
+} from "@/src/copy/messaging";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, font, radius, shadow, space } from "@/src/theme/tokens";
 
@@ -178,15 +184,17 @@ export default function FollowUpsTab() {
           ) : null}
           {current ? (
             <>
+              <Caption style={{ textAlign: "center", marginBottom: 8 }}>{SWIPE_HINT}</Caption>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
-                  <Button label="Skip" variant="secondary" disabled={busy} onPress={() => void skip()} />
+                  <Button label="Skip" variant="outline" disabled={busy} onPress={() => void skip()} />
                 </View>
-                <View style={{ flex: 1.15 }}>
-                  <Button label="Send" disabled={busy} onPress={() => void send()} />
+                <View style={{ flex: 1 }}>
+                  <Button label="Send" variant="outline" disabled={busy} onPress={() => void send()} />
                 </View>
               </View>
-              <Caption style={{ textAlign: "center", marginTop: 12 }}>{SECURE_SEND_MICROCOPY}</Caption>
+              <Caption style={{ textAlign: "center", marginTop: 8, color: color.inkFaint }}>{SWIPE_OR_TAP}</Caption>
+              <Caption style={{ textAlign: "center", marginTop: 8 }}>{SECURE_SEND_MICROCOPY}</Caption>
             </>
           ) : (
             <Button label={EDGE.emptySwipe.cta} onPress={() => router.replace("/")} />
@@ -232,7 +240,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 28,
     right: 28,
-    bottom: 168,
+    bottom: 196,
     zIndex: 6,
     backgroundColor: color.white,
     borderRadius: radius.pill,

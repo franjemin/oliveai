@@ -88,6 +88,10 @@ export function SwipeDeck({
         widthRef.current = e.nativeEvent.layout.width;
       }}
     >
+      <View style={styles.hintRow} pointerEvents="none">
+        <Text style={styles.hintSkip}>← Skip</Text>
+        <Text style={styles.hintSend}>Send →</Text>
+      </View>
       {peek ? (
         <Animated.View style={[styles.peek, { transform: [{ scale: peekScale }] }]}>{peek}</Animated.View>
       ) : null}
@@ -113,14 +117,30 @@ export function SwipeDeck({
 }
 
 const styles = StyleSheet.create({
-  stage: { flex: 1, marginTop: 18 },
+  stage: { flex: 1, marginTop: 10 },
+  hintRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  hintSkip: {
+    fontFamily: font.uiMed,
+    fontSize: 12,
+    color: "rgba(44, 43, 40, 0.38)",
+  },
+  hintSend: {
+    fontFamily: font.uiMed,
+    fontSize: 12,
+    color: color.olive,
+  },
   peek: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    top: 14,
-    bottom: 0,
-    opacity: 0.55,
+    left: 10,
+    right: 10,
+    top: 36,
+    bottom: 8,
+    opacity: 0.62,
   },
   front: {
     flex: 1,

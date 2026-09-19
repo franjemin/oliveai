@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import { AUDIO_DISCLOSURE } from "./consent";
 import { EDGE } from "./edges";
-import { SECURE_SEND_MICROCOPY, VOICE_LEARNING_TOAST } from "./messaging";
+import { SECURE_SEND_MICROCOPY, SWIPE_HINT, VOICE_LEARNING_TOAST } from "./messaging";
 import { AUDIO_RETENTION } from "./retention";
 import { color, radius } from "../theme/tokens";
 
@@ -22,6 +22,7 @@ test("Design freeze: primary copy has no PHIPA chips, record of truth, Send SMS,
     EDGE.postSign.cta,
     EDGE.postSign.back,
     SECURE_SEND_MICROCOPY,
+    SWIPE_HINT,
     VOICE_LEARNING_TOAST,
     AUDIO_RETENTION.short,
     AUDIO_RETENTION.body,
@@ -30,6 +31,7 @@ test("Design freeze: primary copy has no PHIPA chips, record of truth, Send SMS,
   assert.match(AUDIO_DISCLOSURE.agreeMicrocopy, /I confirmed the patient agrees/);
   assert.match(EDGE.signConfirm.oliveTruth, /clinical record/);
   assert.match(SECURE_SEND_MICROCOPY, /We’ll text them a link to open it securely/);
+  assert.match(SWIPE_HINT, /Swipe right to send/);
   assert.doesNotMatch(primary, /PHIPA|CA·ON|record of truth|Send SMS|deleted within 24|24h wipe|audio TTL/i);
 });
 

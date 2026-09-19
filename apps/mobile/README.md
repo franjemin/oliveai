@@ -11,7 +11,7 @@ Copy in this app is **draft pending counsel** — do not treat UX strings as leg
 **Design freeze SoT (must-fix, all wired on Expo web):**
 1. Live End = charcoal **Slide to end visit** (not a sage Start twin) + glove-sized **Pause**. Transcript behind **View transcript** sheet only.
 2. **04b** `/visit/:id/signed` — Note signed → **Review follow-ups** / **Back to Today**.
-3. Follow-ups: **Secure message** chip, edit in card, **Skip** + **Send** below, “We’ll text them a link to open it securely.”
+3. Follow-ups: gesture-first **swipe right = Send / left = Skip**. Outline buttons are a11y only. **Secure message** chip + “We’ll text them a link to open it securely.”
 4. Consent: no PHIPA/CA·ON chips; **Why we ask** only; **Start recording** + “I confirmed the patient agrees.”
 5. Sign: “You’re signing this as the clinical record.” No “Olive record of truth” / no 24h wipe.
 6. Waveform = solid olive `#6B8F71` bars on soft mist — no gradient / chartreuse.
@@ -117,7 +117,7 @@ Nothing on the Wed hard-fail list is **missing**.
 
 - **Demo simplicity cuts** (Core simplicity bar): one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
 - **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
-- **Messaging (05 / 05b):** chip **Secure message**. CTA **Send** (not Send SMS). Microcopy: “We’ll text them a link to open it securely.” Edit in the card; Skip/Send below. Draft = in-app secure message, not the SMS body. After card edit-save only: toast “Saved — Olive will use this to sound more like you.” (no queue rewrite / bulk regen claim). Notify SMS is a stub with clinic ID + STOP.
+- **Messaging (05 / 05b carve-out):** gesture-first card stack — swipe right = Send (secure + notify stub), swipe left = Skip. Peek of next card + drag hints. Outline Skip/Send are a11y (“or tap”) only — not a button-primary stack. Chip **Secure message**. Microcopy: “We’ll text them a link to open it securely.” After card edit-save only: toast “Saved — Olive will use this to sound more like you.”
 - **Voice learning:** on follow-up edit-save **and** note edit/sign, fire `{ source, before, after, resourceId }` to mocks and the HTTP log. Follow-up also `POST /v1/follow-ups/:id/edits` `{ before, after }` (OpenAPI `FollowUpEdit`). Session `style` is a local heuristic (`editCount` / `preferShorter` / `greeting`) — not PHI training and not a batch-apply / queue rewrite.
 
 ## Screens
@@ -130,7 +130,7 @@ Nothing on the Wed hard-fail list is **missing**.
 | Live | **Slide to end visit** (charcoal, not a sage Start twin) | Glove-sized **Pause**. **View transcript** pill. |
 | Note | **Sign note** | Preview on land. **Edit full note**. Confirm sheet (wipe-scrub: clinic-controlled audio, no 24h). |
 | Post-sign `/visit/:id/signed` | **Review follow-ups** | 04b bridge: check + “Note signed. Review follow-ups?” + **Back to Today**. |
-| Follow-ups / Swipe | **Send** (not Send SMS) | **SECURE MESSAGE** chip. Edit in the card. Skip + Send below. Microcopy: “We’ll text them a link to open it securely.” 05b toast on edit-save only. |
+| Follow-ups / Swipe | **Swipe right to Send** (left = Skip) | Gesture-first card stack. Peek of next. Outline Skip/Send are a11y (“or tap”) only. **SECURE MESSAGE** chip. Edit in the card. “We’ll text them a link to open it securely.” 05b toast on edit-save only. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |
 | Chats | Secure threads after Send (not full chat chrome) |

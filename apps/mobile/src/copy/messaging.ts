@@ -2,6 +2,9 @@ import { clinicSmsFooter } from "./sms";
 
 /** Product lock: the card is a secure message. Notify SMS is a short stub, not the body of record. */
 export const SECURE_SEND_MICROCOPY = "We’ll text them a link to open it securely.";
+/** Gesture-first Follow-ups (05 carve-out). Buttons are a11y only. */
+export const SWIPE_HINT = "Swipe right to send · left to skip";
+export const SWIPE_OR_TAP = "or tap";
 /** 05b — toast only after follow-up card edit-save. Heuristic only; do not claim queue rewrite / batch-apply. */
 export const VOICE_LEARNING_TOAST = "Saved — Olive will use this to sound more like you.";
 
