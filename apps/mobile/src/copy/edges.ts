@@ -1,10 +1,6 @@
 /**
- * Edge-state CTAs from Design hi-fi (`olive-v1/hifi/edges/`).
- * PNGs were not mounted in this environment; labels are taken from the
- * locked filenames / captions — do not invent alternate CTAs.
- *
- * Product lock: sign confirm must not claim 24h audio delete.
- * Use clinic-controlled retention instead of any wipe copy.
+ * Edge-state CTAs from Design cuts 1–4 (hi-fi PNGs not mounted).
+ * Sign confirm is the short three-beat sheet Product/TL approved for demo week.
  */
 export const EDGE = {
   consentDenied: {
@@ -14,7 +10,7 @@ export const EDGE = {
   },
   badAudio: {
     title: "We can’t hear clearly",
-    body: "Check the microphone, or continue and finish the note yourself.",
+    body: "Check the mic, or continue and write the note.",
     fixMic: "Fix mic",
     continueAnyway: "Continue anyway",
   },
@@ -26,8 +22,8 @@ export const EDGE = {
   signConfirm: {
     title: "Sign this note?",
     oliveTruth: "Olive drafted this. You are responsible for what you sign.",
-    retention: "Visit audio stays with the clinic record. Retention is clinic-controlled.",
-    noOd: "No Open Dental write-back in this demo.",
+    audio: "Visit audio is deleted within 24 hours.",
+    noOd: "No Open Dental write-back.",
     sign: "Sign note",
     cancel: "Cancel",
   },

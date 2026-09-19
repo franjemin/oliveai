@@ -83,28 +83,26 @@ export default function LiveScreen() {
     <Screen>
       <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
         <View style={styles.wash} />
+        <Caption style={{ textAlign: "center" }}>{patient?.displayName ?? "Visit"}</Caption>
         {badAudio ? (
           <View style={styles.badBanner}>
             <Caption style={{ color: color.warn }}>{EDGE.badAudio.title}</Caption>
-            <Body style={{ marginTop: 4 }}>{EDGE.badAudio.body}</Body>
             <View style={styles.badRow}>
-              <Button
-                label={EDGE.badAudio.fixMic}
-                variant="secondary"
+              <Pressable
                 onPress={() => {
                   setBadAudio(false);
                   setPaused(false);
                   setCapturing(true);
                 }}
-              />
-              <Pressable onPress={() => setBadAudio(false)} style={{ paddingVertical: 10 }}>
-                <Caption style={{ color: color.olive, textAlign: "center" }}>{EDGE.badAudio.continueAnyway}</Caption>
+              >
+                <Caption style={{ color: color.olive }}>{EDGE.badAudio.fixMic}</Caption>
+              </Pressable>
+              <Pressable onPress={() => setBadAudio(false)}>
+                <Caption style={{ color: color.inkMuted }}>{EDGE.badAudio.continueAnyway}</Caption>
               </Pressable>
             </View>
           </View>
-        ) : (
-          <Caption style={{ textAlign: "center" }}>{patient?.displayName ?? "Visit"}</Caption>
-        )}
+        ) : null}
         <View style={styles.center}>
           <Caption>{gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}</Caption>
           <Display style={styles.timer}>{clock}</Display>
@@ -145,9 +143,10 @@ const styles = StyleSheet.create({
   link: { alignItems: "center", paddingVertical: 8 },
   badBanner: {
     backgroundColor: color.warnSoft,
-    borderRadius: radius.md,
-    padding: space.md,
-    marginTop: space.md,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: 10,
+    marginTop: space.sm,
   },
-  badRow: { marginTop: 12, gap: 4 },
+  badRow: { marginTop: 6, flexDirection: "row", gap: 16 },
 });

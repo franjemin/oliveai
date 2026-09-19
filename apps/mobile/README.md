@@ -55,8 +55,8 @@ Magic-link inbox uses `GET /v1/inbox/:token`. Secure thread uses `GET/POST /v1/p
 Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from stubbed SMS / BAA transcription / OD / PMS / chat polish / PHIPA / MFA.
 
 1. Boot → demo login (`od@demo.olive.local` / `demo`)
-2. Today → **Continue Alex Rivera** → visit `…0005`
-3. Consent → **Start recording** (gate fail-closed) → Live
+2. Today → tap Alex → visit `…0005`
+3. Consent → **Agree** (Refuse first-class; gate fail-closed) → Live
 4. Live polls `GET /v1/visits/:id/transcript` (mocks attach segments; live POSTs stub audio + `POST /v1/dev/process-jobs`)
 5. **End visit** → Note (AI-draft badge) → **Sign note**
 6. If BE has no follow-up yet, FE `POST /v1/visits/:id/follow-ups` then Swipe **Send** (secure + notify stub)
@@ -67,9 +67,9 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 | # | Step | Status |
 | --- | --- | --- |
 | 1 | Core loop on demo login | **wired** (mocks; API swap via env) |
-| 2 | Zero “audio deleted within 24h” / hard-delete claims in UI/README | **wired** (clinic-controlled retention) |
+| 2 | Retention copy | **wired** (clinic-controlled except short sign confirm: 24h audio beat) |
 | 3 | No PHIPA chips / “record of truth” on primary surfaces | **wired** |
-| 4 | Today → Consent Agree/Deny + recording-gate | **wired** (CTA: Start recording / Refuse) |
+| 4 | Today → Consent **Agree** + first-class Refuse + recording-gate | **wired** |
 | 5 | Live Pause/End + 03b transcript sheet | **wired** (capture simulated after gate) |
 | 6 | Note Sign + post-Sign follow-ups bridge | **wired** |
 | 7 | Swipe **Send** stub / Skip / CASL fail-closed | **wired** (Send = secure message; notify SMS **stub**) |
@@ -84,7 +84,7 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 
 ## Product locks
 
-- **Retention:** no 24h audio delete. Audio is kept with the clinic record (clinic-controlled). Encryption/audit unchanged.
+- **Retention:** clinic-controlled on primary surfaces. Demo-week sign confirm uses the approved three-beat sheet (Olive truth · 24h audio · no OD).
 - **Messaging:** swipe card ≠ SMS body of record. Notify text is a short stub with clinic identity + STOP. Secure thread is the record.
 
 ## Screens
@@ -92,10 +92,10 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 | Route | Hero CTA | Happy path |
 | --- | --- | --- |
 | Today | Tap the next patient | Roster only. Finish day is ghost. Reset = long-press Today. |
-| Consent | **Start recording** | Lead + Why we ask. Refuse is a text link (OLI-9). |
+| Consent | **Agree** | Short sheet. Refuse is first-class. |
 | Consent denied | **Continue without recording** | Edge only |
-| Live | **End visit** | Timer + waveform. Transcript is 03b sheet. Bad-audio only via `?edge=bad-audio`. |
-| Note | **Sign note** | One badge. Confirm is Sign / Cancel. |
+| Live | **End visit** | Timer + waveform. Transcript is 03b sheet. Bad-audio is a top banner (`?edge=bad-audio`). |
+| Note | **Sign note** | Landing preview only. Edit opens SOAP. Short confirm (Olive truth · 24h audio · no OD). |
 | Swipe | **Send** | Card + microcopy. Skip is a text link. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |

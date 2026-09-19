@@ -17,6 +17,7 @@
   "exclude": [
     "src/api/mock/invariants.test.ts",
     "src/api/map.test.ts",
+    "src/copy/soap.test.ts",
     "node_modules"
   ]
 }

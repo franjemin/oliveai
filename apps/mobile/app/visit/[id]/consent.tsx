@@ -1,9 +1,8 @@
 import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { ConsentParty } from "@/src/api/types";
 import { Body, Button, Caption, Screen, Title } from "@/src/components/ui";
 import { AUDIO_DISCLOSURE } from "@/src/copy/consent";
 import { useOlive } from "@/src/store/OliveProvider";
@@ -13,11 +12,8 @@ export default function ConsentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const olive = useOlive();
   const router = useRouter();
-  const [party, setParty] = useState<ConsentParty>("patient");
   const [busy, setBusy] = useState<"accept" | "refuse" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [why, setWhy] = useState(false);
-  const [sdm, setSdm] = useState(false);
   const patient = olive.day.patients.find((p) => p.visitId === id);
 
   const accept = async () => {
@@ -25,7 +21,7 @@ export default function ConsentScreen() {
     setBusy("accept");
     setError(null);
     try {
-      await olive.acceptConsent(id, party);
+      await olive.acceptConsent(id, "patient");
       router.replace(`/visit/${id}/live`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Recording gate closed.");
@@ -39,7 +35,7 @@ export default function ConsentScreen() {
     setBusy("refuse");
     setError(null);
     try {
-      await olive.refuseConsent(id, party);
+      await olive.refuseConsent(id, "patient");
       router.replace(`/visit/${id}/denied` as Href);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not record refuse.");
@@ -50,47 +46,19 @@ export default function ConsentScreen() {
 
   return (
     <Screen>
-      <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-        <ScrollView contentContainerStyle={styles.pad}>
-          <Pressable onPress={() => router.back()}>
-            <Caption style={{ color: color.olive }}>← Today</Caption>
-          </Pressable>
-          <Caption style={{ marginTop: 16 }}>{patient?.displayName ?? "Patient"}</Caption>
-          <Title style={{ marginTop: 6 }}>{AUDIO_DISCLOSURE.title}</Title>
-          <Body style={{ marginTop: 12, color: color.inkMuted }}>{AUDIO_DISCLOSURE.lead}</Body>
-
-          <Pressable onPress={() => setWhy((v) => !v)} style={{ marginTop: 20 }}>
-            <Caption style={{ color: color.olive }}>{why ? "Hide details" : "Why we ask"}</Caption>
-          </Pressable>
-          {why ? (
-            <View style={{ marginTop: 14, gap: 14 }}>
-              {AUDIO_DISCLOSURE.points.map((pt) => (
-                <View key={pt.heading}>
-                  <Caption style={{ color: color.oliveInk }}>{pt.heading}</Caption>
-                  <Body style={{ marginTop: 4 }}>{pt.body}</Body>
-                </View>
-              ))}
-            </View>
-          ) : null}
-
-          <Pressable onPress={() => setSdm((v) => !v)} style={{ marginTop: 18 }}>
-            <Caption style={{ color: color.inkFaint }}>{sdm ? "Consent is for the patient" : "Not the patient?"}</Caption>
-          </Pressable>
-          {sdm ? (
-            <Pressable onPress={() => setParty(party === "sdm" ? "patient" : "sdm")} style={{ marginTop: 8 }}>
-              <Caption style={{ color: color.olive }}>
-                {party === "sdm" ? "Using substitute decision-maker" : "Use substitute decision-maker"}
-              </Caption>
-            </Pressable>
-          ) : null}
-
+      <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
+        <Pressable onPress={() => router.back()}>
+          <Caption style={{ color: color.olive }}>← Today</Caption>
+        </Pressable>
+        <View style={styles.body}>
+          <Caption>{patient?.displayName ?? "Patient"}</Caption>
+          <Title style={{ marginTop: 8 }}>{AUDIO_DISCLOSURE.shortTitle}</Title>
+          <Body style={{ marginTop: 12, color: color.inkMuted }}>{AUDIO_DISCLOSURE.shortLead}</Body>
           {error ? <Body style={{ color: color.refuse, marginTop: 16 }}>{error}</Body> : null}
-        </ScrollView>
+        </View>
         <View style={styles.actions}>
-          <Button label="Start recording" disabled={busy !== null} onPress={accept} />
-          <Pressable onPress={refuse} disabled={busy !== null} style={styles.refuse}>
-            <Caption style={{ color: color.refuse, textAlign: "center" }}>Refuse recording</Caption>
-          </Pressable>
+          <Button label="Agree" disabled={busy !== null} onPress={accept} />
+          <Button label="Refuse" variant="refuse" disabled={busy !== null} onPress={refuse} />
         </View>
       </SafeAreaView>
     </Screen>
@@ -98,7 +66,7 @@ export default function ConsentScreen() {
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 24 },
-  actions: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: 8 },
-  refuse: { paddingVertical: 12 },
+  fill: { flex: 1, paddingHorizontal: space.lg, paddingBottom: space.md, paddingTop: space.md },
+  body: { flex: 1, justifyContent: "center" },
+  actions: { gap: 10 },
 });

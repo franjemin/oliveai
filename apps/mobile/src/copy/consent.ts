@@ -4,7 +4,9 @@ import { AUDIO_RETENTION } from "@/src/copy/retention";
 export const AUDIO_DISCLOSURE = {
   id: DISCLOSURE_SCRIPT_ID,
   title: "AI scribe for this visit",
+  shortTitle: "Record this visit?",
   lead: "Olive can listen to this appointment to draft a clinical note and a follow-up for you to review. Care is the same if you refuse.",
+  shortLead: "Olive drafts a note from the audio. Care is the same if you refuse.",
   points: [
     {
       heading: "What is recorded",
