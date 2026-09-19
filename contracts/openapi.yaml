@@ -277,6 +277,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Visit"
 
+  /v1/visits/{id}/consents:
+    get:
+      tags: [Recording]
+      summary: OLI-6 consent evidence for the visit
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Consent evidence rows
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [consents]
+                properties:
+                  consents:
+                    type: array
+                    items: { $ref: "#/components/schemas/Consent" }
+
   /v1/visits/{id}/recording-gate:
     get:
       tags: [Recording]
@@ -750,14 +769,16 @@ components:
         id: { type: string, format: uuid }
         email: { type: string }
         name: { type: string }
-        role: { type: string, enum: [owner, od, staff] }
+        role: { type: string, enum: [dentist, staff, admin] }
         clinicId: { type: string, format: uuid }
+        tenantId: { type: string, format: uuid, description: "Same as clinicId (OLI-12). MFA is Wave B." }
 
     Clinic:
       type: object
       description: PHIPA agent/ESP fields are nullable and non-blocking for local scaffold
       properties:
         id: { type: string, format: uuid }
+        tenantId: { type: string, format: uuid, description: Same as id }
         name: { type: string }
         legalName: { type: string }
         smsIdentity: { type: string }

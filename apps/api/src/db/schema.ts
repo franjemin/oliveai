@@ -11,7 +11,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnum = pgEnum("user_role", ["owner", "od", "staff"]);
+export const userRoleEnum = pgEnum("user_role", ["dentist", "staff", "admin"]);
 export const visitStatusEnum = pgEnum("visit_status", ["in_progress", "completed"]);
 export const consentTypeEnum = pgEnum("consent_type", ["audio_capture", "messaging", "training"]);
 export const messageClassEnum = pgEnum("message_class", ["clinical_transactional", "promotional"]);
@@ -53,7 +53,7 @@ export const users = pgTable("users", {
   ...clinicScoped,
   email: text("email").notNull(),
   name: text("name").notNull(),
-  role: userRoleEnum("role").notNull().default("od"),
+  role: userRoleEnum("role").notNull().default("dentist"),
   passwordHash: text("password_hash").notNull(),
 });
 

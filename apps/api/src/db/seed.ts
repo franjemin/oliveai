@@ -37,7 +37,7 @@ export async function seedDemo(db: import("./client.js").Db, password = "demo"):
     clinicId: DEMO.clinicId,
     email: "od@demo.olive.local",
     name: "Dr. Maya Chen",
-    role: "od",
+    role: "dentist",
     passwordHash: await hashPassword(password),
     createdAt: now,
   });

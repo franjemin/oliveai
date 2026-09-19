@@ -1,4 +1,4 @@
-CREATE TYPE "user_role" AS ENUM ('owner', 'od', 'staff');
+CREATE TYPE "user_role" AS ENUM ('dentist', 'staff', 'admin');
 CREATE TYPE "visit_status" AS ENUM ('in_progress', 'completed');
 CREATE TYPE "consent_type" AS ENUM ('audio_capture', 'messaging', 'training');
 CREATE TYPE "message_class" AS ENUM ('clinical_transactional', 'promotional');
@@ -29,7 +29,7 @@ CREATE TABLE "users" (
   "clinic_id" uuid NOT NULL REFERENCES "clinics"("id"),
   "email" text NOT NULL,
   "name" text NOT NULL,
-  "role" "user_role" NOT NULL DEFAULT 'od',
+  "role" "user_role" NOT NULL DEFAULT 'dentist',
   "password_hash" text NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT now()
 );

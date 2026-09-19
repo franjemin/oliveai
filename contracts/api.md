@@ -58,6 +58,9 @@ Consent body:
 - `GET /v1/visits/:id`
 - `POST /v1/visits/:id/end` — sets `audio.delete_after = ended_at + 24h`
 
+### `GET /v1/visits/:id/consents`
+OLI-6 consent evidence (disclosure script id, granted_at, actor, type).
+
 ### `GET /v1/visits/:id/recording-gate`
 ```json
 { "allowed": false, "reason": "missing_audio_capture_consent" }

@@ -38,6 +38,15 @@ export async function activeAudioConsent(db: Db, clinicId: string, visitId: stri
   return row ?? null;
 }
 
+export async function listVisitConsents(db: Db, clinicId: string, visitId: string) {
+  await getVisit(db, clinicId, visitId);
+  return db
+    .select()
+    .from(consents)
+    .where(and(eq(consents.clinicId, clinicId), eq(consents.visitId, visitId)))
+    .orderBy(desc(consents.createdAt));
+}
+
 export async function recordingGate(db: Db, clinicId: string, visitId: string): Promise<RecordingGate> {
   await getVisit(db, clinicId, visitId);
   const consent = await activeAudioConsent(db, clinicId, visitId);

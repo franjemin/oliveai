@@ -6,7 +6,7 @@ import { AppError, unauthorized } from "../lib/errors.js";
 import { login, publicClinic, publicUser, sessionFromToken } from "../services/auth.js";
 import { deleteVisitAudio, ingestAudio } from "../services/audio.js";
 import { listChat, patientProfile, postChat, getPatient } from "../services/chat.js";
-import { getVisit, recordConsent, recordingGate } from "../services/consent.js";
+import { getVisit, listVisitConsents, recordConsent, recordingGate } from "../services/consent.js";
 import { dayPatients, dayPatientsErrorShape, finishDay } from "../services/days.js";
 import { resolveFlags } from "../services/flags.js";
 import {
@@ -216,6 +216,15 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
       const actor = actorOf(request);
       const { id } = z.object({ id: uuid }).parse(request.params);
       return endVisit(ctx, { clinicId: actor.clinicId, actorId: actor.userId, visitId: id });
+    }),
+  );
+
+  app.get(
+    "/v1/visits/:id/consents",
+    wrap(ctx, async (request) => {
+      const actor = actorOf(request);
+      const { id } = z.object({ id: uuid }).parse(request.params);
+      return { consents: await listVisitConsents(ctx.db, actor.clinicId, id) };
     }),
   );
 

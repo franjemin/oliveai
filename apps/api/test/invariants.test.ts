@@ -174,6 +174,8 @@ describe("Olive v1 privacy invariants", () => {
       headers: auth(kit.token),
     });
     expect(session.json()).toMatchObject({
+      user: { role: "dentist", tenantId: DEMO.clinicId, clinicId: DEMO.clinicId },
+      clinic: { tenantId: DEMO.clinicId },
       flags: {
         aftercare: false,
         claimsGuard: false,

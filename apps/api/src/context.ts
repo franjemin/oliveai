@@ -11,7 +11,7 @@ export type Actor = {
   clinicId: string;
   email: string;
   name: string;
-  role: "owner" | "od" | "staff";
+  role: "dentist" | "staff" | "admin";
 };
 
 export type AppContext = {

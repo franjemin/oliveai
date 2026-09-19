@@ -46,7 +46,7 @@ Secure/in-app thread uses the same `MessagingVendor` interface.
 
 ## 7. Every row is clinic-scoped
 
-All operational tables include `clinic_id`. Session actor supplies the tenant; queries filter on it.
+All operational tables include `clinic_id` (the tenant; API also returns `tenantId`). Roles are `dentist` | `staff` | `admin`. MFA is Wave B.
 
 ## 8. Clinic PHIPA agent/ESP fields (nullable)
 

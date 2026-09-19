@@ -30,4 +30,4 @@ npm test
 Demo login: `od@demo.olive.local` / `demo`  
 Seeded visit: `00000000-0000-4000-8000-000000000005`
 
-Contracts for FE mocks: [`contracts/openapi.yaml`](contracts/openapi.yaml). Invariants: [`apps/api/docs/hipaa-invariants.md`](apps/api/docs/hipaa-invariants.md).
+Contracts for FE mocks: [`contracts/openapi.yaml`](contracts/openapi.yaml). Invariants: [`apps/api/docs/hipaa-invariants.md`](apps/api/docs/hipaa-invariants.md). Privacy ticket map: [`docs/privacy-tickets.md`](docs/privacy-tickets.md) (OLI-5/6/8/9/11/12/13/15/16/19 Wave A).

@@ -48,12 +48,20 @@ export async function sessionFromToken(ctx: AppContext, token: string) {
 }
 
 export function publicUser(user: typeof users.$inferSelect) {
-  return { id: user.id, email: user.email, name: user.name, role: user.role, clinicId: user.clinicId };
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    clinicId: user.clinicId,
+    tenantId: user.clinicId,
+  };
 }
 
 export function publicClinic(clinic: typeof clinics.$inferSelect) {
   return {
     id: clinic.id,
+    tenantId: clinic.id,
     name: clinic.name,
     legalName: clinic.legalName,
     smsIdentity: clinic.smsIdentity,
