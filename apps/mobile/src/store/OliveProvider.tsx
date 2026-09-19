@@ -238,6 +238,12 @@ export function OliveProvider({ children }: { children: ReactNode }) {
       saveFollowUpEdit: async (id, before, after) => {
         const updated = await api.patchFollowUp(id, after);
         await api.recordFollowUpEdit(id, before, after);
+        await api.recordLearningEvent({
+          source: "follow_up_edit",
+          before,
+          after,
+          resourceId: id,
+        });
         return updated;
       },
       finishDay: async () => {

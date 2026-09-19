@@ -18,7 +18,12 @@ export const mockApi: OliveApi = {
     } satisfies Session;
   },
   async session() {
-    return { user: store.getUser(), clinic: store.getClinic(), flags: store.getFlags() };
+    return {
+      user: store.getUser(),
+      clinic: store.getClinic(),
+      flags: store.getFlags(),
+      style: store.sessionStyle(),
+    };
   },
   async clinic() {
     return store.getClinic();
@@ -88,6 +93,9 @@ export const mockApi: OliveApi = {
   },
   async recordLearningEvent(input) {
     store.recordLearningEvent(input);
+  },
+  async listLearningEvents() {
+    return store.listLearningEvents();
   },
   async getChat(patientId) {
     return store.getChat(patientId);

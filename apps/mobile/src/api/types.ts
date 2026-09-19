@@ -234,12 +234,17 @@ export type NotifyStub = {
   inboxToken: string;
 };
 
+export type LearningEventSource = "follow_up_edit" | "note_edit" | "note_sign";
+
+/** FE + mock until a dedicated learning route lands. Follow-up uses FollowUpEdit `{before, after}`. */
 export type LearningEvent = {
-  source: "follow_up_edit" | "note_edit" | "note_sign";
+  source: LearningEventSource;
   before: string;
   after: string;
   resourceId: string;
 };
+
+export type StoredLearningEvent = LearningEvent & { at: string };
 
 export type TranscriptSegment = {
   id: string;
@@ -363,8 +368,12 @@ export interface OliveApi {
   skipFollowUp(id: string, reason?: string): Promise<FollowUp>;
   patchFollowUp(id: string, body: string): Promise<FollowUp>;
   recordFollowUpEdit(id: string, before: string, after: string): Promise<FollowUpEdit>;
-  /** Mock/local until a dedicated contract exists (OpenAPI only stores follow-up edits). */
+  /**
+   * Persist a before/after voice-learning event. Never a no-op.
+   * Follow-up edits also POST OpenAPI `{ before, after }` when the HTTP client is live.
+   */
   recordLearningEvent(input: LearningEvent): Promise<void>;
+  listLearningEvents(): Promise<StoredLearningEvent[]>;
   getChat(patientId: string): Promise<{ thread: ChatThread | null; messages: ChatMessage[] }>;
   /** FE convenience — no `GET /v1/chats`. Composed from patients + per-patient chat. */
   listThreads(): Promise<ChatThreadView[]>;

@@ -13,7 +13,7 @@ Error shape: `{ "error": string, "message": string, "details"?: unknown }`.
 Returns `{ token, expiresAt, user, clinic, flags }`.
 
 ### `GET /v1/session`
-Bootstrap after login. Returns `{ user, clinic, flags }`.
+Bootstrap after login. Returns `{ user, clinic, flags, style? }`. `style` is a clinician draft heuristic (`preferShorter`, `greeting`, `editCount`) — not PHI training.
 
 Clinic includes nullable PHIPA fields (`phipaAgreementVersion`, `phipaAgreementAckedAt`, `phipaAgreementAckedBy`). Missing values **do not** block local scaffold.
 

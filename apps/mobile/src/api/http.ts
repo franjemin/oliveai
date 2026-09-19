@@ -1,4 +1,5 @@
-import { DEMO, ApiError, type Consent, type FollowUp, type OliveApi, type Patient } from "./types";
+import { followUpEditContractBody, httpLearningLog } from "./learning";
+import { DEMO, ApiError, type Consent, type FollowUp, type FollowUpEdit, type OliveApi, type Patient } from "./types";
 import {
   isPendingFollowUp,
   mapDayFeed,
@@ -13,6 +14,28 @@ import { clinicDayDates } from "./walkthrough";
 const base = process.env.EXPO_PUBLIC_API_BASE ?? "http://localhost:3000";
 
 let token: string | null = null;
+const postedFollowUpEdits = new Set<string>();
+
+function followUpEditKey(id: string, before: string, after: string): string {
+  return `${id}\0${before}\0${after}`;
+}
+
+async function postFollowUpEdit(id: string, before: string, after: string): Promise<FollowUpEdit> {
+  const key = followUpEditKey(id, before, after);
+  if (postedFollowUpEdits.has(key)) {
+    return { id: `dedup-edit-${id}`, followUpId: id, before, after };
+  }
+  postedFollowUpEdits.add(key);
+  try {
+    return await req<FollowUpEdit>(`/v1/follow-ups/${id}/edits`, {
+      method: "POST",
+      body: JSON.stringify(followUpEditContractBody({ before, after })),
+    });
+  } catch {
+    postedFollowUpEdits.delete(key);
+    return { id: `local-edit-${id}`, followUpId: id, before, after };
+  }
+}
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${base}${path}`, {
@@ -115,10 +138,17 @@ export const httpApi: OliveApi = {
     req(`/v1/follow-ups/${id}/skip`, { method: "POST", body: JSON.stringify({ reason }) }),
   patchFollowUp: (id, body) =>
     req(`/v1/follow-ups/${id}`, { method: "PATCH", body: JSON.stringify({ body }) }),
-  recordFollowUpEdit: (id, before, after) =>
-    req(`/v1/follow-ups/${id}/edits`, { method: "POST", body: JSON.stringify({ before, after }) }),
-  async recordLearningEvent() {
-    /* OpenAPI only stores follow-up edits. Note-edit / sign heuristics stay local. */
+  async recordFollowUpEdit(id, before, after) {
+    httpLearningLog.remember({ source: "follow_up_edit", before, after, resourceId: id });
+    return postFollowUpEdit(id, before, after);
+  },
+  async recordLearningEvent(input) {
+    httpLearningLog.remember(input);
+    if (input.source !== "follow_up_edit") return;
+    await postFollowUpEdit(input.resourceId, input.before, input.after);
+  },
+  async listLearningEvents() {
+    return httpLearningLog.list();
   },
   async getChat(patientId) {
     const raw = await req<{ thread?: { id: string; patientId: string; visitId: string | null } | null; messages?: unknown[] }>(

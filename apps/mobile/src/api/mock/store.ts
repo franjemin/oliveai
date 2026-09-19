@@ -9,12 +9,15 @@ import {
   type FollowUp,
   type FollowUpEdit,
   type FollowUpSendResult,
+  type LearningEvent,
   type MagicInbox,
   type Note,
   type NotifyStub,
+  type StoredLearningEvent,
   type TranscriptSegment,
   type Visit,
 } from "../types";
+import { appendLearningEvent, styleHeuristicFromEvents } from "../learning";
 import { DISCLOSURE_SCRIPT_ID } from "./seed";
 import {
   TODAY,
@@ -56,13 +59,7 @@ export type MockState = {
   threads: ChatThreadView[];
   notifies: NotifyStub[];
   inboxTokens: Record<string, string>;
-  learningEvents: Array<{
-    source: "follow_up_edit" | "note_edit" | "note_sign";
-    before: string;
-    after: string;
-    resourceId: string;
-    at: string;
-  }>;
+  learningEvents: StoredLearningEvent[];
 };
 
 export function createInitialState(): MockState {
@@ -418,16 +415,16 @@ export function recordFollowUpEdit(id: string, before: string, after: string): F
   return { id: nid("edit"), followUpId: id, before, after };
 }
 
-export function recordLearningEvent(input: {
-  source: "follow_up_edit" | "note_edit" | "note_sign";
-  before: string;
-  after: string;
-  resourceId: string;
-}): void {
-  state.learningEvents = [
-    ...state.learningEvents,
-    { ...input, at: nowIso() },
-  ];
+export function recordLearningEvent(input: LearningEvent): void {
+  state.learningEvents = appendLearningEvent(state.learningEvents, input, nowIso());
+}
+
+export function listLearningEvents(): StoredLearningEvent[] {
+  return state.learningEvents.slice();
+}
+
+export function sessionStyle() {
+  return styleHeuristicFromEvents(state.learningEvents);
 }
 
 export function skipFollowUp(id: string, reason?: string): FollowUp {

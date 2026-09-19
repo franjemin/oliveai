@@ -6,6 +6,7 @@ import { ApiError, DEMO } from "../types";
 import { CORE_WALKTHROUGH } from "../walkthrough";
 import { mockApi } from "./client";
 import { resetState } from "./store";
+import { followUpEditContractBody } from "../learning";
 
 test("Core walkthrough logs in and loads seeded visit 005", async () => {
   resetState();
@@ -109,6 +110,46 @@ test("OLI-16 mock send returns STOP and CASL consent rejects", async () => {
     assert.equal(err.error, "stop_fail_closed");
     return true;
   });
+});
+
+test("voice learning keeps before/after on follow-up edit and note edit/sign", async () => {
+  resetState();
+  await mockApi.recordVisitConsent(DEMO.visitAlexId, {
+    type: "audio_capture",
+    granted: true,
+    visitId: DEMO.visitAlexId,
+    disclosureScriptId: "audio-disclosure-v1",
+  });
+  await mockApi.endVisit(DEMO.visitAlexId);
+  const draft = await mockApi.getNote(DEMO.visitAlexId);
+  const editedBody = `${draft.body}\n\nShortened plan for the patient.`;
+  const edited = await mockApi.patchNote(DEMO.visitAlexId, editedBody);
+  const signed = await mockApi.signNote(DEMO.visitAlexId);
+  const [fu] = await mockApi.listFollowUps(DEMO.visitAlexId);
+  assert.ok(fu);
+  const afterFollowUp = "Hi Alex — keep the interdental brush nightly.";
+  await mockApi.patchFollowUp(fu.id, afterFollowUp);
+  const contract = await mockApi.recordFollowUpEdit(fu.id, fu.body, afterFollowUp);
+  assert.deepEqual(followUpEditContractBody(contract), { before: fu.body, after: afterFollowUp });
+
+  const events = await mockApi.listLearningEvents();
+  const noteEdit = events.find((row) => row.source === "note_edit");
+  const noteSign = events.find((row) => row.source === "note_sign");
+  const followUpEdit = events.find((row) => row.source === "follow_up_edit");
+  assert.ok(noteEdit);
+  assert.equal(noteEdit.before, draft.body);
+  assert.equal(noteEdit.after, edited.body);
+  assert.equal(noteEdit.resourceId, edited.id);
+  assert.ok(noteSign);
+  assert.equal(noteSign.before, edited.body);
+  assert.equal(noteSign.after, signed.body);
+  assert.ok(followUpEdit);
+  assert.equal(followUpEdit.before, fu.body);
+  assert.equal(followUpEdit.after, afterFollowUp);
+  assert.equal(followUpEdit.resourceId, fu.id);
+
+  const session = await mockApi.session();
+  assert.ok((session.style?.editCount ?? 0) >= 2);
 });
 
 test("send publishes channel=secure and a contract inbox payload", async () => {

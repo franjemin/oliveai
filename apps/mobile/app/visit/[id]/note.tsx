@@ -44,15 +44,18 @@ export default function NoteScreen() {
   const canSign = note?.status === "draft";
   const preview = useMemo(() => soapPreview(soap), [soap]);
 
-  const persist = async (next: Soap) => {
-    if (!id || signed) return;
-    setSoap(next);
+  const persistIfDirty = async (nextSoap = soap) => {
+    if (!id || signed) return note;
+    const nextBody = formatSoap(nextSoap);
+    if (!note || nextBody === note.body) return note;
     try {
-      const n = await olive.patchNote(id, formatSoap(next));
+      const n = await olive.patchNote(id, nextBody);
       setNote(n);
       setError(null);
+      return n;
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save.");
+      return note;
     }
   };
 
@@ -60,6 +63,7 @@ export default function NoteScreen() {
     if (!id || !canSign) return;
     setBusy(true);
     try {
+      await persistIfDirty();
       const n = await olive.signNote(id);
       setNote(n);
       setSoap(parseSoap(n.body));
@@ -128,7 +132,7 @@ export default function NoteScreen() {
                     multiline
                     editable={!signed}
                     value={soap[section.key]}
-                    onChangeText={(text) => void persist({ ...soap, [section.key]: text })}
+                    onChangeText={(text) => setSoap({ ...soap, [section.key]: text })}
                     style={styles.section}
                     textAlignVertical="top"
                   />
@@ -138,7 +142,13 @@ export default function NoteScreen() {
           ) : (
             <Body style={styles.preview}>{preview}</Body>
           )}
-          <Pressable onPress={() => setEditing((v) => !v)} style={styles.editPill}>
+          <Pressable
+            onPress={() => {
+              if (editing) void persistIfDirty();
+              setEditing((v) => !v);
+            }}
+            style={styles.editPill}
+          >
             <Caption style={{ color: color.olive, fontFamily: font.uiMed }}>
               {editing ? "Done" : "Edit full note"}
             </Caption>
@@ -149,7 +159,9 @@ export default function NoteScreen() {
           <Caption style={{ textAlign: "center", marginBottom: 12 }}>{EDGE.signConfirm.oliveTruth}</Caption>
           <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
           <Pressable
-            onPress={() => router.replace("/")}
+            onPress={() => {
+              void persistIfDirty().then(() => router.replace("/"));
+            }}
             style={{ paddingVertical: 14 }}
           >
             <Caption style={{ textAlign: "center", color: color.inkFaint }}>Save draft</Caption>

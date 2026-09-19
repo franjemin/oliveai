@@ -84,6 +84,7 @@ Nothing on the Wed hard-fail list is **missing**.
 - **Demo simplicity cuts** (Core simplicity bar): one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
 - **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
 - **Messaging (05 / 05b):** chip **Secure message**. CTA **Send** (not Send SMS). Microcopy: “We’ll text them a link to open it securely.” Edit in the card; Skip/Send below. Draft = in-app secure message, not the SMS body. After card edit-save only: toast “Saved — Olive will use this to sound more like you.” (no queue rewrite / bulk regen claim). Notify SMS is a stub with clinic ID + STOP.
+- **Voice learning:** on follow-up edit-save **and** note edit/sign, fire `{ source, before, after, resourceId }` to mocks and the HTTP log. Follow-up also `POST /v1/follow-ups/:id/edits` `{ before, after }` (OpenAPI `FollowUpEdit`). Session `style` is a local heuristic (`editCount` / `preferShorter` / `greeting`) — not PHI training and not a batch-apply / queue rewrite.
 
 ## Screens
 
@@ -139,4 +140,4 @@ Snapshot of PR #1 contracts: [`contracts/`](contracts/) (Backend remains SoT —
 
 Patients chrome · Aftercare / Claims · OD/PMS · MFA/settings · real mic · Quebec Law 25 · full chat product.
 
-`npm run test:invariants` — gate / sign / CASL notify rejects.
+`npm run test:invariants` — gate / sign / CASL notify rejects / voice-learning before/after payloads.
