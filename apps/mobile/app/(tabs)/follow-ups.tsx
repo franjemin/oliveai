@@ -160,13 +160,14 @@ export default function FollowUpsTab() {
                 <View style={styles.message}>
                   <TextInput
                     multiline
+                    scrollEnabled={false}
                     value={draft}
                     onChangeText={setDraft}
                     onBlur={() => void saveEdit()}
                     style={styles.edit}
                     textAlignVertical="top"
                   />
-                  <Caption style={{ color: color.sage, marginTop: 8 }}>Tap to edit</Caption>
+                  <Caption style={styles.tapEdit}>Tap to edit</Caption>
                 </View>
               </Card>
             </SwipeDeck>
@@ -237,17 +238,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 14,
     minHeight: 160,
-    flexGrow: 1,
   },
   edit: {
-    minHeight: 72,
-    flexGrow: 1,
+    minHeight: 144,
     fontSize: 16,
     lineHeight: 24,
     color: color.ink,
     fontFamily: font.ui,
     borderWidth: 0,
   },
+  tapEdit: { color: color.sage, marginTop: 8 },
   empty: { flex: 1, minHeight: 0, justifyContent: "center", paddingHorizontal: space.lg },
   footer: {
     flexShrink: 0,
