@@ -1,57 +1,26 @@
 import { Tabs } from "expo-router";
-import { Platform, Text } from "react-native";
 
-import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import { Dock } from "@/src/components/Dock";
 import { color } from "@/src/theme/tokens";
-
-function Glyph({ mark, tint }: { mark: string; tint: string }) {
-  return <Text style={{ color: tint, fontSize: 16, fontWeight: "700" }}>{mark}</Text>;
-}
 
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={({ state }) => {
+        const name = state.routes[state.index]?.name ?? "index";
+        const active =
+          name === "follow-ups" ? "follow-ups" : name === "chats" ? "chats" : name === "patients" ? "patients" : "today";
+        return <Dock active={active} />;
+      }}
       screenOptions={{
-        tabBarActiveTintColor: color.olive,
-        tabBarInactiveTintColor: color.inkFaint,
-        tabBarStyle: {
-          backgroundColor: color.paper,
-          borderTopColor: color.line,
-          height: Platform.OS === "web" ? 64 : 84,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
-        headerShown: useClientOnlyValue(false, false),
+        headerShown: false,
+        sceneStyle: { backgroundColor: color.paper },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Today",
-          tabBarIcon: ({ color: tint }) => <Glyph mark="●" tint={String(tint)} />,
-        }}
-      />
-      <Tabs.Screen
-        name="follow-ups"
-        options={{
-          title: "Follow-ups",
-          tabBarIcon: ({ color: tint }) => <Glyph mark="↔" tint={String(tint)} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chats"
-        options={{
-          title: "Chats",
-          tabBarIcon: ({ color: tint }) => <Glyph mark="◯" tint={String(tint)} />,
-        }}
-      />
-      <Tabs.Screen
-        name="patients"
-        options={{
-          title: "Patients",
-          tabBarIcon: ({ color: tint }) => <Glyph mark="☰" tint={String(tint)} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Today" }} />
+      <Tabs.Screen name="follow-ups" options={{ title: "Follow-ups" }} />
+      <Tabs.Screen name="chats" options={{ title: "Chats" }} />
+      <Tabs.Screen name="patients" options={{ title: "Patients" }} />
     </Tabs>
   );
 }

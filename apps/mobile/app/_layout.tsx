@@ -20,6 +20,13 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    Nunito: require("../assets/fonts/Nunito-Regular.ttf"),
+    "Nunito-SemiBold": require("../assets/fonts/Nunito-SemiBold.ttf"),
+    "Nunito-Bold": require("../assets/fonts/Nunito-Bold.ttf"),
+    "Nunito-ExtraBold": require("../assets/fonts/Nunito-ExtraBold.ttf"),
+    Inter: require("../assets/fonts/Inter-Regular.ttf"),
+    "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
+    "Inter-SemiBold": require("../assets/fonts/Inter-SemiBold.ttf"),
   });
 
   useEffect(() => {
@@ -39,7 +46,7 @@ export default function RootLayout() {
         <Stack
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: color.mist },
+            contentStyle: { backgroundColor: color.paper },
             animation: "slide_from_right",
           }}
         >

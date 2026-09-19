@@ -3,13 +3,16 @@ import { AUDIO_RETENTION } from "@/src/copy/retention";
 
 export const AUDIO_DISCLOSURE = {
   id: DISCLOSURE_SCRIPT_ID,
-  title: "AI scribe for this visit",
-  shortTitle: "Record this visit?",
-  lead: "Olive can listen to this appointment to draft a clinical note and a follow-up for you to review. Care is the same if you refuse.",
-  shortLead: "Olive drafts a note from the audio. Care is the same if you refuse.",
+  title: "OK to listen?",
+  shortTitle: "OK to listen?",
+  eyebrow: "Before we begin",
+  lead: "Olive will listen during this visit and draft notes for Dr. Chen. Personal health info stays with this clinic.",
+  shortLead:
+    "Olive will listen during this visit and draft notes for Dr. Chen. Personal health info stays with this clinic.",
+  whyLink: "Why we ask",
   startCta: "Start recording",
-  agreeMicrocopy: "By starting, you confirm they agreed to this visit’s AI scribe.",
-  refuseCta: "Refuse",
+  agreeMicrocopy: "I confirmed the patient agreed.",
+  refuseCta: "Not recording this visit",
   points: [
     {
       heading: "What is recorded",
@@ -41,3 +44,8 @@ export const AUDIO_DISCLOSURE = {
     },
   ],
 } as const;
+
+export function consentLead(clinicianName = "Dr. Chen"): string {
+  const last = clinicianName.replace(/^Dr\.?\s*/i, "").trim().split(/\s+/).pop() ?? "Chen";
+  return `Olive will listen during this visit and draft notes for Dr. ${last}. Personal health info stays with this clinic.`;
+}

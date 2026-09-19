@@ -27,7 +27,6 @@ export default function ChatsScreen() {
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Caption>Clinic</Caption>
           <Title>Chats</Title>
           <View style={{ marginTop: 20, gap: 12 }}>
             {threads.length === 0 ? (
@@ -57,5 +56,5 @@ export default function ChatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: 48 },
+  pad: { paddingHorizontal: space.lg, paddingTop: 8, paddingBottom: 120 },
 });

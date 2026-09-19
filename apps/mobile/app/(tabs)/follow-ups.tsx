@@ -1,22 +1,34 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { type Href, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ApiError } from "@/src/api";
+import { tokenFromInboxPath } from "@/src/api/map";
 import type { FollowUp } from "@/src/api/types";
-import { Body, Button, Caption, Card, Screen, Title } from "@/src/components/ui";
+import { Body, Button, Caption, Card, Kicker, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
+import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY, VOICE_LEARNING_TOAST } from "@/src/copy/messaging";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, space } from "@/src/theme/tokens";
+import { color, font, radius, shadow, space } from "@/src/theme/tokens";
 
 export default function FollowUpsTab() {
   const olive = useOlive();
   const router = useRouter();
   const pending = olive.pendingFollowUps;
-  const [items, setItems] = useState<FollowUp[]>([]);
+  const [queue, setQueue] = useState<FollowUp[]>([]);
+  const [total, setTotal] = useState(0);
+  const [draft, setDraft] = useState("");
+  const [status, setStatus] = useState<{ title: string; body: string; tone: "ok" | "refuse" } | null>(null);
+  const [inboxToken, setInboxToken] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    setItems(await pending());
+    const next = await pending();
+    setQueue(next);
+    setDraft(next[0]?.body ?? "");
+    setTotal((prev) => (prev === 0 ? Math.max(next.length, 1) : Math.max(prev, next.length)));
   }, [pending]);
 
   useFocusEffect(
@@ -25,41 +37,183 @@ export default function FollowUpsTab() {
     }, [load]),
   );
 
+  const current = queue[0];
+  const patient = olive.day.patients.find((p) => p.patientId === current?.patientId);
+  const index = Math.max(1, total - queue.length + (current ? 1 : 0));
+  const progress = total === 0 ? 0 : Math.min(1, (total - queue.length) / total);
+
+  const saveEdit = async () => {
+    if (!current || draft === current.body) return;
+    const before = current.body;
+    await olive.saveFollowUpEdit(current.id, before, draft);
+    setToast(VOICE_LEARNING_TOAST);
+    setTimeout(() => setToast(null), 2800);
+    await load();
+  };
+
+  const send = async () => {
+    if (!current) return;
+    setBusy(true);
+    try {
+      if (draft !== current.body) await saveEdit();
+      const sent = await olive.sendFollowUp(current.id);
+      const notify = await olive.lastNotify(sent.id);
+      setInboxToken(notify?.inboxToken ?? sent.magicLinkToken ?? tokenFromInboxPath(sent.inboxPath) ?? null);
+      setStatus(null);
+      setToast(null);
+      await load();
+    } catch (err) {
+      const code = err instanceof ApiError ? err.error : "send_failed";
+      const copy = SEND_FAIL_COPY[code] ?? {
+        title: "Not sent",
+        body: err instanceof Error ? err.message : "Notify send failed closed.",
+      };
+      setInboxToken(null);
+      setStatus({ ...copy, tone: "refuse" });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <ScrollView contentContainerStyle={styles.pad}>
-          <Caption>Today</Caption>
+        <View style={styles.pad}>
           <Title>Follow-ups</Title>
-          <View style={{ marginTop: 20, gap: 12 }}>
-            {items.length === 0 ? (
-              <Body style={{ color: color.inkMuted }}>{EDGE.emptySwipe.body}</Body>
-            ) : (
-              items.map((fu) => (
-                <Pressable key={fu.id} onPress={() => router.push("/swipe")}>
-                  <Card>
-                    <Caption>
-                      {olive.day.patients.find((p) => p.patientId === fu.patientId)?.displayName ?? "Patient"}
-                    </Caption>
-                    <Body style={{ marginTop: 8 }} numberOfLines={3}>
-                      {fu.body}
-                    </Body>
-                  </Card>
+          <View style={styles.progressRow}>
+            <View style={styles.track}>
+              <View style={[styles.fill, { width: `${Math.max(8, progress * 100)}%` }]} />
+            </View>
+            <Caption>
+              {current ? `${index} of ${Math.max(total, index)}` : "0 of 0"}
+            </Caption>
+          </View>
+
+          {status ? (
+            <View
+              style={[
+                styles.banner,
+                { backgroundColor: status.tone === "ok" ? color.okSoft : color.refuseSoft },
+              ]}
+            >
+              <Caption style={{ color: status.tone === "ok" ? color.oliveInk : color.refuse }}>
+                {status.title}
+              </Caption>
+              <Body style={{ marginTop: 4 }}>{status.body}</Body>
+              {inboxToken ? (
+                <Pressable onPress={() => router.push(`/inbox/${inboxToken}` as Href)} style={{ marginTop: 10 }}>
+                  <Caption style={{ color: color.olive }}>Open patient inbox</Caption>
                 </Pressable>
-              ))
-            )}
-          </View>
-        </ScrollView>
-        {items.length > 0 ? (
-          <View style={{ paddingHorizontal: space.lg, paddingBottom: space.md }}>
-            <Button label="Review follow-ups" onPress={() => router.push("/swipe")} />
-          </View>
-        ) : null}
+              ) : null}
+            </View>
+          ) : null}
+
+          {current ? (
+            <Card style={{ marginTop: 18, flex: 1 }}>
+              <Kicker style={{ color: color.sage }}>Secure message</Kicker>
+              <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
+              <Caption style={{ marginTop: 4 }}>
+                Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
+              </Caption>
+              <View style={styles.message}>
+                <TextInput
+                  multiline
+                  value={draft}
+                  onChangeText={setDraft}
+                  onBlur={() => void saveEdit()}
+                  style={styles.edit}
+                  textAlignVertical="top"
+                />
+                <Caption style={{ color: color.sage, marginTop: 8 }}>Tap to edit</Caption>
+              </View>
+            </Card>
+          ) : (
+            <View style={styles.empty}>
+              <Title>{EDGE.emptySwipe.title}</Title>
+              <Body style={{ color: color.inkMuted, marginTop: 8 }}>{EDGE.emptySwipe.body}</Body>
+            </View>
+          )}
+        </View>
+        <View style={styles.actions}>
+          {toast ? (
+            <View style={styles.toast}>
+              <Caption style={{ color: color.charcoal, fontFamily: font.uiMed }}>{toast}</Caption>
+            </View>
+          ) : null}
+          {current ? (
+            <>
+              <View style={styles.row}>
+                <View style={{ flex: 1 }}>
+                  <Button
+                    label="Skip"
+                    variant="secondary"
+                    disabled={busy}
+                    onPress={async () => {
+                      setBusy(true);
+                      try {
+                        await olive.skipFollowUp(current.id);
+                        setInboxToken(null);
+                        setStatus(null);
+                        await load();
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  />
+                </View>
+                <View style={{ flex: 1.15 }}>
+                  <Button label="Send" disabled={busy} onPress={() => void send()} />
+                </View>
+              </View>
+              <Caption style={{ textAlign: "center", marginTop: 12 }}>{SECURE_SEND_MICROCOPY}</Caption>
+            </>
+          ) : (
+            <Button label={EDGE.emptySwipe.cta} onPress={() => router.replace("/")} />
+          )}
+        </View>
       </SafeAreaView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: 48 },
+  pad: { flex: 1, paddingHorizontal: space.lg, paddingTop: 8 },
+  progressRow: { marginTop: 18, flexDirection: "row", alignItems: "center", gap: 12 },
+  track: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(44, 43, 40, 0.08)",
+    overflow: "hidden",
+  },
+  fill: { height: 4, backgroundColor: color.olive, borderRadius: 2 },
+  banner: { marginTop: 16, borderRadius: 16, padding: 14 },
+  cardName: { marginTop: 10, fontSize: 26, lineHeight: 30 },
+  message: {
+    marginTop: 16,
+    backgroundColor: color.paperAlt,
+    borderRadius: radius.md,
+    padding: 14,
+    flex: 1,
+  },
+  edit: {
+    minHeight: 140,
+    fontSize: 16,
+    lineHeight: 24,
+    color: color.ink,
+    fontFamily: font.ui,
+  },
+  empty: { flex: 1, justifyContent: "center" },
+  actions: { paddingHorizontal: space.lg, paddingBottom: 108 },
+  row: { flexDirection: "row", gap: 10 },
+  toast: {
+    alignSelf: "center",
+    marginBottom: 12,
+    backgroundColor: color.white,
+    borderRadius: radius.pill,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...shadow.toast,
+  },
 });

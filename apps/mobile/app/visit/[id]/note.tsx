@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
@@ -9,7 +9,7 @@ import { Body, Button, Caption, Pill, Screen, Title } from "@/src/components/ui"
 import { EDGE } from "@/src/copy/edges";
 import { formatSoap, parseSoap, SOAP_LABELS, soapPreview, type Soap } from "@/src/copy/soap";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, radius, space } from "@/src/theme/tokens";
+import { color, font, radius, space } from "@/src/theme/tokens";
 
 export default function NoteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,7 +20,6 @@ export default function NoteScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [confirm, setConfirm] = useState(false);
   const patient = olive.day.patients.find((p) => p.visitId === id);
   const declined = patient?.recording === "declined";
   const aiDraft = note ? isAiAssistedDraft(note, declined) : false;
@@ -62,7 +61,6 @@ export default function NoteScreen() {
       const n = await olive.signNote(id);
       setNote(n);
       setSoap(parseSoap(n.body));
-      setConfirm(false);
       setEditing(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Sign failed.");
@@ -71,24 +69,53 @@ export default function NoteScreen() {
     }
   };
 
+  const patientLine = [
+    patient?.displayName ?? "Visit",
+    patient?.reason ? patient.reason.split("·")[0].trim() : null,
+    signed ? EDGE.postSign.body : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  if (signed) {
+    return (
+      <Screen>
+        <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
+          <View style={styles.signedCenter}>
+            <View style={styles.check}>
+              <Caption style={styles.checkMark}>✓</Caption>
+            </View>
+            <Title style={{ marginTop: 28, textAlign: "center" }}>{EDGE.postSign.title}</Title>
+            <Caption style={{ marginTop: 12, textAlign: "center" }}>{patientLine}</Caption>
+            <View style={{ marginTop: 16, alignItems: "center" }}>
+              <Pill label={EDGE.postSign.chip} tone="olive" />
+            </View>
+          </View>
+          <View style={styles.actions}>
+            <Button label={EDGE.postSign.cta} onPress={() => router.replace("/follow-ups")} />
+            <View style={{ height: 10 }} />
+            <Button label={EDGE.postSign.back} variant="secondary" onPress={() => router.replace("/")} />
+          </View>
+        </SafeAreaView>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Caption style={{ color: color.olive }} onPress={() => router.back()}>
-            ← Back
-          </Caption>
-          <Caption style={{ marginTop: 16 }}>{patient?.displayName ?? "Visit"}</Caption>
-          <Title style={{ marginTop: 4 }}>{signed ? EDGE.postSign.title : soap.title || "Note"}</Title>
-          <View style={styles.badges}>
-            {!signed && aiDraft ? <Pill label="AI draft" tone="warn" /> : null}
-            {!signed && declined ? <Pill label="Not recorded" tone="refuse" /> : null}
+          <View style={styles.noteTop}>
+            <Pressable onPress={() => router.replace("/")}>
+              <Caption style={{ color: color.inkMuted }}>← Today</Caption>
+            </Pressable>
+            {aiDraft ? <Pill label="AI-assisted draft" tone="olive" /> : null}
           </View>
+          <Title style={{ marginTop: 18 }}>Note</Title>
+          <Caption style={{ marginTop: 6 }}>{patientLine}</Caption>
 
-          {signed && !editing ? (
-            <Body style={{ marginTop: 20, color: color.inkMuted }}>{EDGE.postSign.body}</Body>
-          ) : editing ? (
-            <View style={{ marginTop: 20, gap: 14 }}>
+          {editing ? (
+            <View style={{ marginTop: 22, gap: 14 }}>
               {SOAP_LABELS.map((section) => (
                 <View key={section.key}>
                   <Caption>
@@ -99,72 +126,75 @@ export default function NoteScreen() {
                     editable={!signed}
                     value={soap[section.key]}
                     onChangeText={(text) => void persist({ ...soap, [section.key]: text })}
-                    style={[styles.section, signed && styles.locked]}
+                    style={styles.section}
                     textAlignVertical="top"
                   />
                 </View>
               ))}
             </View>
           ) : (
-            <Body style={{ marginTop: 20, color: color.inkMuted }}>{preview}</Body>
+            <Body style={styles.preview}>{preview}</Body>
           )}
+          <Pressable onPress={() => setEditing((v) => !v)} style={styles.editPill}>
+            <Caption style={{ color: color.olive, fontFamily: font.uiMed }}>
+              {editing ? "Done" : "Edit full note"}
+            </Caption>
+          </Pressable>
           {error ? <Body style={{ color: color.refuse, marginTop: 10 }}>{error}</Body> : null}
         </ScrollView>
-        {confirm ? (
-          <View style={styles.confirm}>
-            <Title>{EDGE.signConfirm.title}</Title>
-            <Caption style={{ marginTop: 10 }}>{EDGE.signConfirm.oliveTruth}</Caption>
-            <Caption style={{ marginTop: 6 }}>{EDGE.signConfirm.audio}</Caption>
-            <Caption style={{ marginTop: 6 }}>{EDGE.signConfirm.noOd}</Caption>
-            <View style={{ marginTop: 16, gap: 8 }}>
-              <Button label={EDGE.signConfirm.sign} disabled={busy} onPress={sign} />
-              <Button label={EDGE.signConfirm.cancel} variant="ghost" onPress={() => setConfirm(false)} />
-            </View>
-          </View>
-        ) : (
-          <View style={styles.actions}>
-            {signed ? (
-              <Button label={EDGE.postSign.cta} onPress={() => router.replace("/swipe")} />
-            ) : (
-              <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
-            )}
-            {signed ? null : (
-              <Button
-                label={editing ? "Done" : "Edit"}
-                variant="ghost"
-                onPress={() => setEditing((v) => !v)}
-              />
-            )}
-          </View>
-        )}
+        <View style={styles.actions}>
+          <Caption style={{ textAlign: "center", marginBottom: 12 }}>{EDGE.signConfirm.oliveTruth}</Caption>
+          <Button label="Sign note" disabled={!canSign || busy} onPress={() => void sign()} />
+          <Pressable
+            onPress={() => router.replace("/")}
+            style={{ paddingVertical: 14 }}
+          >
+            <Caption style={{ textAlign: "center", color: color.inkFaint }}>Save draft</Caption>
+          </Pressable>
+        </View>
       </SafeAreaView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1, paddingHorizontal: space.lg, paddingBottom: 8 },
   pad: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 24 },
-  badges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
+  noteTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  preview: {
+    marginTop: 22,
+    color: color.ink,
+    fontSize: 17,
+    lineHeight: 26,
+  },
+  editPill: {
+    alignSelf: "flex-start",
+    marginTop: 20,
+    backgroundColor: color.white,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: radius.pill,
+  },
   section: {
     marginTop: 6,
     minHeight: 72,
-    backgroundColor: color.card,
+    backgroundColor: color.white,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: color.line,
     padding: space.sm,
     fontSize: 16,
     lineHeight: 22,
     color: color.ink,
+    fontFamily: font.ui,
   },
-  locked: { backgroundColor: color.mistWash },
-  actions: { paddingHorizontal: space.lg, paddingBottom: space.md },
-  confirm: {
-    paddingHorizontal: space.lg,
-    paddingBottom: space.md,
-    paddingTop: space.sm,
-    borderTopWidth: 1,
-    borderTopColor: color.line,
-    backgroundColor: color.paper,
+  actions: { paddingHorizontal: space.lg, paddingBottom: 8 },
+  signedCenter: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },
+  check: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: color.olive,
+    alignItems: "center",
+    justifyContent: "center",
   },
+  checkMark: { color: color.white, fontSize: 22, fontFamily: font.uiSemi },
 });

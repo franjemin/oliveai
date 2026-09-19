@@ -7,12 +7,13 @@ import { ApiError } from "@/src/api";
 import { startAmbientCapture } from "@/src/api/recordingGate";
 import { api } from "@/src/api";
 import type { TranscriptSegment } from "@/src/api/types";
+import { SlideToEnd } from "@/src/components/SlideToEnd";
 import { TranscriptSheet } from "@/src/components/TranscriptSheet";
 import { Waveform } from "@/src/components/Waveform";
-import { Body, Button, Caption, Display, Screen } from "@/src/components/ui";
+import { Body, Button, Caption, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, radius, space } from "@/src/theme/tokens";
+import { color, font, radius, space } from "@/src/theme/tokens";
 
 export default function LiveScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -82,8 +83,13 @@ export default function LiveScreen() {
   return (
     <Screen>
       <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
-        <View style={styles.wash} />
-        <Caption style={{ textAlign: "center" }}>{patient?.displayName ?? "Visit"}</Caption>
+        <View>
+          <Title>Visit</Title>
+          <Caption style={{ marginTop: 6 }}>
+            {patient?.displayName ?? "Visit"}
+            {patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
+          </Caption>
+        </View>
         {badAudio ? (
           <View style={styles.badBanner}>
             <Caption style={{ color: color.warn }}>{EDGE.badAudio.title}</Caption>
@@ -104,14 +110,27 @@ export default function LiveScreen() {
           </View>
         ) : null}
         <View style={styles.center}>
-          <Caption>{gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}</Caption>
-          <Display style={styles.timer}>{clock}</Display>
-          <Waveform active={capturing && !paused} />
+          <Body style={styles.timer}>{clock}</Body>
+          <View style={styles.listen}>
+            <View style={[styles.dot, { backgroundColor: capturing && !paused ? color.sage : color.inkFaint }]} />
+            <Caption>
+              {gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}
+            </Caption>
+          </View>
+          <View style={{ marginTop: 18 }}>
+            <Waveform active={capturing && !paused} />
+          </View>
           {gateError ? (
             <Body style={{ color: color.refuse, textAlign: "center", marginTop: 16 }}>{gateError}</Body>
-          ) : null}
+          ) : (
+            <Pressable onPress={() => setSheet(true)} style={styles.transcript}>
+              <Caption style={{ color: color.olive, fontFamily: font.uiMed }}>View transcript</Caption>
+            </Pressable>
+          )}
         </View>
         <View style={styles.bottom}>
+          <SlideToEnd disabled={!capturing && !gateError} onComplete={() => void end()} />
+          <View style={{ height: 10 }} />
           <Button
             label={paused ? "Resume" : "Pause"}
             variant="secondary"
@@ -119,10 +138,6 @@ export default function LiveScreen() {
             disabled={!capturing}
             onPress={() => setPaused((p) => !p)}
           />
-          <Button label="End visit" variant="end" disabled={!capturing && !gateError} onPress={end} />
-          <Pressable onPress={() => setSheet(true)} style={styles.link}>
-            <Caption style={{ color: color.olive }}>View transcript</Caption>
-          </Pressable>
         </View>
         <TranscriptSheet visible={sheet} onClose={() => setSheet(false)} segments={segments} />
       </SafeAreaView>
@@ -131,20 +146,26 @@ export default function LiveScreen() {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, paddingHorizontal: space.lg },
-  wash: {
-    position: "absolute",
-    top: 80,
-    left: 24,
-    right: 24,
-    height: 280,
-    backgroundColor: color.mistWash,
-    borderRadius: 160,
-  },
+  fill: { flex: 1, paddingHorizontal: space.lg, paddingBottom: 8 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  timer: { fontSize: 72, lineHeight: 76, marginVertical: 20, letterSpacing: -2 },
-  bottom: { paddingBottom: space.md, gap: 4 },
-  link: { alignItems: "center", paddingVertical: 8 },
+  timer: {
+    fontFamily: font.display,
+    fontSize: 80,
+    lineHeight: 84,
+    letterSpacing: -2.4,
+    color: color.charcoal,
+    fontWeight: "400",
+  },
+  listen: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  transcript: {
+    marginTop: 22,
+    backgroundColor: color.white,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: radius.pill,
+  },
+  bottom: { paddingBottom: 8 },
   badBanner: {
     backgroundColor: color.warnSoft,
     borderRadius: radius.sm,

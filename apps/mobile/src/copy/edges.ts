@@ -1,6 +1,6 @@
 /**
- * Edge-state CTAs from Design cuts 1–4 (hi-fi PNGs not mounted).
- * Sign confirm is the short three-beat sheet Product/TL approved for demo week.
+ * Edge + post-sign copy aligned to hi-fi 01–05b.
+ * No 24h wipe language — audio stays with the clinic record (OLI-11).
  */
 export const EDGE = {
   consentDenied: {
@@ -21,15 +21,17 @@ export const EDGE = {
   },
   signConfirm: {
     title: "Sign this note?",
-    oliveTruth: "Olive drafted this. You sign it.",
-    audio: "Audio is deleted in 24 hours.",
+    oliveTruth: "You’re signing this as the clinical record.",
+    audio: "Audio stays with the clinic record.",
     noOd: "No Open Dental write-back.",
     sign: "Sign note",
     cancel: "Cancel",
   },
   postSign: {
-    title: "Signed",
-    body: "A follow-up is ready to review.",
+    title: "Note signed.\nReview follow-ups?",
+    body: "now in the clinic record",
     cta: "Review follow-ups",
+    back: "Back to Today",
+    chip: "Signed",
   },
 } as const;

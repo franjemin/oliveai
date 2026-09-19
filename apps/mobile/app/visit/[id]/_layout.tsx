@@ -7,7 +7,7 @@ export default function VisitLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: color.mist },
+        contentStyle: { backgroundColor: color.paper },
       }}
     />
   );

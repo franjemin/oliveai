@@ -73,7 +73,11 @@ export function formatSoap(soap: Soap): string {
 }
 
 export function soapPreview(soap: Soap): string {
-  return soap.subjective.trim() || soap.title.trim() || "Draft ready to sign.";
+  const parts = [soap.subjective, soap.objective, soap.assessment, soap.plan]
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return soap.title.trim() || "Draft ready to sign.";
+  return parts.join(" ");
 }
 
 export const SOAP_LABELS = [

@@ -1,9 +1,8 @@
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import type { TranscriptSegment } from "@/src/api/types";
-import { AUDIO_RETENTION } from "@/src/copy/retention";
-import { color, radius, space } from "@/src/theme/tokens";
-import { Body, Caption, Mono, Title } from "./ui";
+import { color, font, radius, shadow, space } from "@/src/theme/tokens";
+import { Body, Caption, Title } from "./ui";
 
 export function TranscriptSheet({
   visible,
@@ -22,18 +21,20 @@ export function TranscriptSheet({
       <View style={styles.sheet}>
         <View style={styles.handle} />
         <Title>Transcript</Title>
-        <Caption style={{ marginTop: 6, marginBottom: 16 }}>{AUDIO_RETENTION.short}</Caption>
+        <Caption style={{ marginTop: 6, marginBottom: 16 }}>Live draft — not the signed note.</Caption>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }}>
           {declined ? (
             <Body>No transcript. Recording was declined for this visit.</Body>
           ) : segments.length === 0 ? (
-            <Body>Listening… segments appear as the visit is diarized.</Body>
+            <Body style={{ color: color.inkMuted }}>Listening… segments appear as the visit is diarized.</Body>
           ) : (
             segments.map((seg) => {
               const clinician = seg.speakerLabel === "speaker_clinician";
               return (
                 <View key={seg.id} style={[styles.bubble, clinician ? styles.clinician : styles.patient]}>
-                  <Mono>{clinician ? "Dr. Chen" : "Patient"}</Mono>
+                  <Caption style={{ color: color.sage, fontFamily: font.uiSemi }}>
+                    {clinician ? "Dr. Chen" : "Patient"}
+                  </Caption>
                   <Body style={{ marginTop: 4 }}>{seg.text}</Body>
                 </View>
               );
@@ -41,7 +42,7 @@ export function TranscriptSheet({
           )}
         </ScrollView>
         <Pressable onPress={onClose} style={styles.close}>
-          <Body style={{ color: color.olive, fontWeight: "600" }}>Close</Body>
+          <Body style={{ color: color.olive, fontFamily: font.uiSemi }}>Close</Body>
         </Pressable>
       </View>
     </Modal>
@@ -56,18 +57,19 @@ const styles = StyleSheet.create({
   sheet: {
     height: "72%",
     backgroundColor: color.paper,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
     paddingHorizontal: space.lg,
     paddingTop: space.sm,
     paddingBottom: space.lg,
+    ...shadow.glass,
   },
   handle: {
     alignSelf: "center",
-    width: 44,
+    width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: color.line,
+    backgroundColor: "rgba(44, 43, 40, 0.14)",
     marginBottom: space.md,
   },
   bubble: {
@@ -79,7 +81,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.okSoft,
   },
   patient: {
-    backgroundColor: color.mistWashStrong,
+    backgroundColor: color.paperAlt,
   },
   close: {
     alignItems: "center",

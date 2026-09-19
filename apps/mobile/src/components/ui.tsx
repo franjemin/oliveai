@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   Pressable,
   StyleSheet,
@@ -10,7 +11,7 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { color, font, radius, space, type } from "@/src/theme/tokens";
+import { color, font, gradient, radius, shadow, space, type } from "@/src/theme/tokens";
 
 export function Screen({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.screen, style]}>{children}</View>;
@@ -56,6 +57,14 @@ export function Caption({ children, style, ...rest }: TextProps) {
   );
 }
 
+export function Kicker({ children, style, ...rest }: TextProps) {
+  return (
+    <Text {...rest} style={[styles.kicker, style]}>
+      {children}
+    </Text>
+  );
+}
+
 export function Mono({ children, style, ...rest }: TextProps) {
   return (
     <Text {...rest} style={[styles.mono, style]}>
@@ -72,14 +81,14 @@ export function Pill({
   tone?: "olive" | "warn" | "refuse" | "mist";
 }) {
   const map = {
-    olive: { bg: color.okSoft, fg: color.oliveInk },
-    warn: { bg: color.warnSoft, fg: color.warn },
+    olive: { bg: color.okSoft, fg: color.oliveDeep },
+    warn: { bg: color.okSoft, fg: color.oliveDeep },
     refuse: { bg: color.refuseSoft, fg: color.refuse },
-    mist: { bg: color.mistWashStrong, fg: color.inkMuted },
+    mist: { bg: color.paperAlt, fg: color.inkMuted },
   } as const;
   return (
     <View style={[styles.pill, { backgroundColor: map[tone].bg }]}>
-      <Caption style={{ color: map[tone].fg }}>{label}</Caption>
+      <Caption style={{ color: map[tone].fg, fontFamily: font.uiMed }}>{label}</Caption>
     </View>
   );
 }
@@ -97,29 +106,45 @@ export function Button({
   size?: "md" | "lg";
 }) {
   const palette = {
-    primary: { bg: color.olive, fg: color.white, border: color.olive },
-    secondary: { bg: color.white, fg: color.oliveInk, border: color.line },
-    ghost: { bg: "transparent", fg: color.olive, border: "transparent" },
-    refuse: { bg: color.white, fg: color.refuse, border: "rgba(122, 58, 50, 0.28)" },
-    end: { bg: color.ink, fg: color.white, border: color.ink },
+    primary: { bg: color.olive, fg: color.white, border: "transparent" },
+    secondary: { bg: color.paperAlt, fg: color.charcoal, border: "transparent" },
+    ghost: { bg: "transparent", fg: color.inkMuted, border: "transparent" },
+    refuse: { bg: "transparent", fg: color.inkFaint, border: "transparent" },
+    end: { bg: color.charcoal, fg: color.white, border: "transparent" },
   }[variant];
+
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
       style={(state) => [
-        styles.btn,
+        styles.btnWrap,
         size === "lg" && styles.btnLg,
-        {
-          backgroundColor: palette.bg,
-          borderColor: palette.border,
-          opacity: disabled ? 0.4 : state.pressed ? 0.86 : 1,
-        },
         typeof style === "function" ? style(state) : style,
+        { opacity: disabled ? 0.4 : state.pressed ? 0.88 : 1 },
       ]}
       {...rest}
     >
-      <Text style={[styles.btnLabel, size === "lg" && styles.btnLabelLg, { color: palette.fg }]}>{label}</Text>
+      {variant === "primary" ? (
+        <LinearGradient
+          colors={[...gradient.cta]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={[styles.btnFill, size === "lg" && styles.btnLg]}
+        >
+          <Text style={[styles.btnLabel, size === "lg" && styles.btnLabelLg, { color: color.white }]}>{label}</Text>
+        </LinearGradient>
+      ) : (
+        <View
+          style={[
+            styles.btnFill,
+            size === "lg" && styles.btnLg,
+            { backgroundColor: palette.bg, borderColor: palette.border },
+          ]}
+        >
+          <Text style={[styles.btnLabel, size === "lg" && styles.btnLabelLg, { color: palette.fg }]}>{label}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -131,22 +156,22 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: color.mist,
+    backgroundColor: color.paper,
   },
   display: {
     ...type.display,
     color: color.ink,
-    fontFamily: font.display,
+    fontFamily: font.displayBlack,
   },
   title: {
     ...type.title,
     color: color.ink,
-    fontFamily: font.display,
+    fontFamily: font.displayBold,
   },
   subtitle: {
     ...type.subtitle,
     color: color.ink,
-    fontFamily: font.ui,
+    fontFamily: font.displayBold,
   },
   body: {
     ...type.body,
@@ -158,41 +183,49 @@ const styles = StyleSheet.create({
     color: color.inkMuted,
     fontFamily: font.ui,
   },
+  kicker: {
+    ...type.kicker,
+    color: color.inkFaint,
+    fontFamily: font.uiSemi,
+  },
   mono: {
     ...type.mono,
-    color: color.oliveMid,
-    fontFamily: font.mono,
+    color: color.olive,
+    fontFamily: font.uiMed,
   },
   pill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: radius.pill,
     alignSelf: "flex-start",
   },
-  btn: {
-    minHeight: 54,
-    borderRadius: radius.lg,
+  btnWrap: {
+    minHeight: 56,
+    borderRadius: radius.pill,
+    overflow: "hidden",
+  },
+  btnFill: {
+    minHeight: 56,
+    borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: space.lg,
-    borderWidth: 1,
   },
   btnLg: {
-    minHeight: 68,
+    minHeight: 64,
   },
   btnLabel: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: font.ui,
+    fontFamily: font.uiSemi,
   },
   btnLabelLg: {
-    fontSize: 18,
+    fontSize: 17,
   },
   card: {
-    backgroundColor: color.card,
-    borderRadius: radius.lg,
-    padding: space.md,
-    borderWidth: 1,
-    borderColor: color.line,
+    backgroundColor: color.white,
+    borderRadius: radius.xl,
+    padding: 22,
+    ...shadow.glass,
   },
 });

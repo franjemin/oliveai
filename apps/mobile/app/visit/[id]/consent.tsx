@@ -1,12 +1,11 @@
 import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
-import { Body, Button, Caption, Screen, Title } from "@/src/components/ui";
-import { AUDIO_DISCLOSURE } from "@/src/copy/consent";
+import { Body, Button, Caption, Kicker, Title } from "@/src/components/ui";
+import { AUDIO_DISCLOSURE, consentLead } from "@/src/copy/consent";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, space } from "@/src/theme/tokens";
+import { color, font, radius, shadow, space } from "@/src/theme/tokens";
 
 export default function ConsentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -14,6 +13,7 @@ export default function ConsentScreen() {
   const router = useRouter();
   const [busy, setBusy] = useState<"accept" | "refuse" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [why, setWhy] = useState(false);
   const patient = olive.day.patients.find((p) => p.visitId === id);
 
   const accept = async () => {
@@ -45,29 +45,68 @@ export default function ConsentScreen() {
   };
 
   return (
-    <Screen>
-      <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
-        <Pressable onPress={() => router.back()}>
-          <Caption style={{ color: color.olive }}>← Today</Caption>
+    <View style={styles.root}>
+      <Pressable style={styles.dim} onPress={() => router.back()}>
+        <Caption style={styles.ghostBack}>Today</Caption>
+      </Pressable>
+      <View style={styles.sheet}>
+        <View style={styles.handle} />
+        <Kicker style={{ color: color.sage }}>{AUDIO_DISCLOSURE.eyebrow}</Kicker>
+        <Title style={{ marginTop: 8 }}>{AUDIO_DISCLOSURE.shortTitle}</Title>
+        <Caption style={{ marginTop: 8 }}>
+          {patient?.displayName ?? "Patient"}
+          {patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
+        </Caption>
+        <Body style={{ marginTop: 16, color: color.inkMuted }}>{consentLead(olive.user.name)}</Body>
+        {error ? <Body style={{ color: color.refuse, marginTop: 12 }}>{error}</Body> : null}
+
+        <Pressable onPress={() => setWhy((v) => !v)} style={styles.why}>
+          <Caption style={{ color: color.sage, fontFamily: font.uiSemi }}>{AUDIO_DISCLOSURE.whyLink}</Caption>
         </Pressable>
-        <View style={styles.body}>
-          <Caption>{patient?.displayName ?? "Patient"}</Caption>
-          <Title style={{ marginTop: 8 }}>{AUDIO_DISCLOSURE.shortTitle}</Title>
-          <Body style={{ marginTop: 12, color: color.inkMuted }}>{AUDIO_DISCLOSURE.shortLead}</Body>
-          {error ? <Body style={{ color: color.refuse, marginTop: 16 }}>{error}</Body> : null}
-        </View>
-        <View style={styles.actions}>
-          <Button label={AUDIO_DISCLOSURE.startCta} disabled={busy !== null} onPress={accept} />
-          <Caption style={{ textAlign: "center" }}>{AUDIO_DISCLOSURE.agreeMicrocopy}</Caption>
-          <Button label={AUDIO_DISCLOSURE.refuseCta} variant="refuse" disabled={busy !== null} onPress={refuse} />
-        </View>
-      </SafeAreaView>
-    </Screen>
+        {why ? (
+          <ScrollView style={styles.whyBox} contentContainerStyle={{ gap: 10, paddingBottom: 8 }}>
+            {AUDIO_DISCLOSURE.points.map((point) => (
+              <View key={point.heading}>
+                <Caption style={{ color: color.charcoal, fontFamily: font.uiSemi }}>{point.heading}</Caption>
+                <Caption style={{ marginTop: 2 }}>{point.body}</Caption>
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
+
+        <Caption style={styles.agree}>{AUDIO_DISCLOSURE.agreeMicrocopy}</Caption>
+        <Button label={AUDIO_DISCLOSURE.startCta} disabled={busy !== null} onPress={accept} />
+        <Pressable onPress={refuse} disabled={busy !== null} style={styles.refuse}>
+          <Caption style={{ color: color.inkFaint, textAlign: "center" }}>{AUDIO_DISCLOSURE.refuseCta}</Caption>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, paddingHorizontal: space.lg, paddingBottom: space.md, paddingTop: space.md },
-  body: { flex: 1, justifyContent: "center" },
-  actions: { gap: 10 },
+  root: { flex: 1, backgroundColor: "rgba(44, 43, 40, 0.18)", justifyContent: "flex-end" },
+  dim: { flex: 1, justifyContent: "flex-start", paddingHorizontal: space.lg, paddingTop: 18 },
+  ghostBack: { color: "rgba(44, 43, 40, 0.28)", fontSize: 22, fontFamily: font.displayBold },
+  sheet: {
+    backgroundColor: color.paper,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    paddingHorizontal: space.lg,
+    paddingTop: 12,
+    paddingBottom: 28,
+    ...shadow.glass,
+  },
+  handle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(44, 43, 40, 0.14)",
+    marginBottom: 18,
+  },
+  why: { alignSelf: "center", paddingVertical: 16 },
+  whyBox: { maxHeight: 160, marginBottom: 8 },
+  agree: { textAlign: "center", marginBottom: 12 },
+  refuse: { paddingVertical: 14 },
 });

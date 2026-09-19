@@ -5,9 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Body, Button, Caption, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, space } from "@/src/theme/tokens";
+import { space } from "@/src/theme/tokens";
 
-/** 01-consent-denied — Continue without recording */
 export default function ConsentDeniedScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const olive = useOlive();
@@ -20,7 +19,7 @@ export default function ConsentDeniedScreen() {
         <View style={{ flex: 1, justifyContent: "center" }}>
           <Caption>{patient?.displayName ?? "Visit"}</Caption>
           <Title style={{ marginTop: 8 }}>{EDGE.consentDenied.title}</Title>
-          <Body style={{ marginTop: 12, color: color.inkMuted }}>{EDGE.consentDenied.body}</Body>
+          <Body style={{ marginTop: 12, color: "#2C2B288F" }}>{EDGE.consentDenied.body}</Body>
         </View>
         <Button
           label={EDGE.consentDenied.cta}

@@ -6,7 +6,9 @@ Expo + Expo Router + TypeScript under **`apps/mobile/` only**. Do not edit `apps
 **Branch:** `cursor/olive-v1-core-mobile-56b9`  
 **Base:** `main` (does not rewrite Backend PR #1)
 
-Copy in this app is **draft pending counsel**. Edge CTAs are from `olive-v1/hifi/edges/` filenames (PNGs were not mounted). Tokens: solid olive bars, softened mist. Demo simplicity cuts on primary surfaces — no PHIPA chips / no “record of truth.”
+Copy in this app is **draft pending counsel** — do not treat UX strings as legal-approved.
+
+**Visual pass (hi-fi 01–05b):** cream paper `#FFFEFA` / `#F7F5F0`, sage→olive CTA `#7A9E7E → #6B8F71`, charcoal `#2C2B28`. Nunito (brand) + Inter (UI). Glass cards, floating pill tabs, slide-to-end Live, Sign-first Note, Secure message Send + voice toast. No PHIPA chips. No 24h wipe copy.
 
 ## Ready-to-run packet (Tech Lead)
 
@@ -58,7 +60,7 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 2. Today → tap Alex → visit `…0005`
 3. Consent → **Start recording** (agree microcopy; Refuse first-class) → Live
 4. Live polls `GET /v1/visits/:id/transcript` (mocks attach segments; live POSTs stub audio + `POST /v1/dev/process-jobs`)
-5. **End visit** → Note preview → **Sign note** → **Review follow-ups**
+5. **Slide to end visit** → Note preview → **Sign note** → **Review follow-ups**
 6. If BE has no follow-up yet, FE `POST /v1/visits/:id/follow-ups` then Swipe **Send** (secure + notify stub)
 7. **Finish day** uses the loaded day date (today on live seed; `2026-09-19` on mocks)
 
@@ -67,7 +69,7 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 | # | Step | Status |
 | --- | --- | --- |
 | 1 | Core loop on demo login | **wired** (mocks; API swap via env) |
-| 2 | Retention copy | **wired** (clinic-controlled except short sign confirm: 24h audio beat) |
+| 2 | Retention copy | **wired** (clinic-controlled; no 24h wipe on Consent / Note / Live) |
 | 3 | No PHIPA chips / “record of truth” on primary surfaces | **wired** |
 | 4 | Today → Consent **Start recording** + Refuse + recording-gate | **wired** |
 | 5 | Live Pause/End + 03b transcript sheet | **wired** (capture simulated after gate) |
@@ -84,19 +86,19 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 
 ## Product locks
 
-- **Retention:** clinic-controlled on primary surfaces. Demo-week sign confirm uses the approved three-beat sheet (Olive truth · 24h audio · no OD).
+- **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
 - **Messaging:** swipe card ≠ SMS body of record. Notify text is a short stub with clinic identity + STOP. Secure thread is the record.
 
 ## Screens
 
 | Route | Hero CTA | Happy path |
 | --- | --- | --- |
-| Today | Tap the next patient | Roster only. Finish day is ghost. Reset = long-press Today. |
-| Consent | **Start recording** | Short sheet + agree microcopy. Refuse first-class. |
+| Today | **Start** on NEXT UP card | Olive mark + wordmark. LATER rows. Reset = long-press Today. |
+| Consent | **Start recording** | Bottom sheet. **Why we ask** + agree line. Refuse = **Not recording this visit**. |
 | Consent denied | **Continue without recording** | Edge only |
-| Live | **End visit** (ink, not Start olive) | Bigger **Pause**. Transcript is 03b sheet. Bad-audio top banner. |
-| Note | **Sign note** | Preview on land. Edit → SOAP. After Sign: **Review follow-ups**. |
-| Swipe | **Send** | Card + microcopy. Skip is a text link. |
+| Live | **Slide to end visit** | Large **Pause**. **View transcript** pill. |
+| Note | **Sign note** | Preview on land. **Edit full note**. After Sign: **Review follow-ups**. |
+| Follow-ups / Swipe | **Send** | Secure message chip. Skip + Send. Voice toast on edit. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |
 | Chats | Secure threads after Send (not full chat chrome) |

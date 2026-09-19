@@ -1,11 +1,13 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Body, Button, Caption, Card, Display, Pill, Screen } from "@/src/components/ui";
+import { Body, Button, Caption, Card, Display, Kicker, Screen } from "@/src/components/ui";
+import { OliveWordmark } from "@/src/components/OliveMark";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, space } from "@/src/theme/tokens";
+import { prettyTime, shortReason, weekdayStamp } from "@/src/theme/format";
+import { color, font, space } from "@/src/theme/tokens";
 import type { DayPatient } from "@/src/api/types";
 
 export default function TodayScreen() {
@@ -19,6 +21,17 @@ export default function TodayScreen() {
       void refreshDay();
     }, [refreshDay]),
   );
+
+  const { next, later } = useMemo(() => {
+    const open = olive.day.patients.filter(
+      (row) => row.visitStatus !== "completed" && row.recording !== "captured",
+    );
+    const nextUp = open[0] ?? null;
+    return {
+      next: nextUp,
+      later: olive.day.patients.filter((row) => row.patientId !== nextUp?.patientId),
+    };
+  }, [olive.day.patients]);
 
   const open = async (row: DayPatient) => {
     setBusyId(row.patientId);
@@ -44,12 +57,15 @@ export default function TodayScreen() {
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <View style={styles.mist} />
-          <Caption>Harbourfront Dental</Caption>
+          <View style={styles.top}>
+            <OliveWordmark />
+            <Caption>{weekdayStamp()}</Caption>
+          </View>
           <Display
             onLongPress={() => {
               void olive.resetDemo();
             }}
+            style={styles.today}
           >
             Today
           </Display>
@@ -57,54 +73,73 @@ export default function TodayScreen() {
             <Body style={{ color: color.refuse, marginTop: 10 }}>{olive.sessionError}</Body>
           ) : null}
 
-          <View style={{ gap: 12, marginTop: 28 }}>
-            {olive.day.patients.map((row) => (
-              <Pressable key={row.patientId} onPress={() => open(row)} disabled={busyId === row.patientId}>
-                <Card>
-                  <View style={styles.cardTop}>
-                    <Caption>{row.time ?? "—"}</Caption>
-                    <StatusChip row={row} />
-                  </View>
-                  <Body style={{ fontWeight: "600", fontSize: 18, marginTop: 4 }}>{row.displayName}</Body>
-                  {row.reason ? <Caption style={{ marginTop: 2 }}>{row.reason}</Caption> : null}
-                </Card>
-              </Pressable>
-            ))}
-          </View>
+          {next ? (
+            <View style={{ marginTop: 28 }}>
+              <Kicker>
+                Next up · {prettyTime(next.time)}
+              </Kicker>
+              <Card style={{ marginTop: 12 }}>
+                <Body style={styles.heroName}>{next.displayName}</Body>
+                <Caption style={{ marginTop: 6 }}>{next.reason ?? "Visit"}</Caption>
+                <View style={{ marginTop: 22 }}>
+                  <Button
+                    label="Start"
+                    disabled={busyId === next.patientId}
+                    onPress={() => open(next)}
+                  />
+                </View>
+              </Card>
+            </View>
+          ) : null}
 
-          <View style={{ marginTop: 32 }}>
-            <Button
-              label="Finish day"
-              variant="ghost"
-              onPress={async () => {
-                await olive.finishDay();
-                router.push("/swipe");
-              }}
-            />
-          </View>
+          {later.length > 0 ? (
+            <View style={{ marginTop: 36 }}>
+              <Kicker>Later</Kicker>
+              <View style={{ marginTop: 8 }}>
+                {later.map((row) => (
+                  <Pressable
+                    key={row.patientId}
+                    onPress={() => open(row)}
+                    disabled={busyId === row.patientId}
+                    style={styles.laterRow}
+                  >
+                    <Caption style={styles.laterTime}>{prettyTime(row.time)}</Caption>
+                    <Body style={styles.laterName}>{row.displayName}</Body>
+                    <Caption style={styles.laterReason}>{shortReason(row.reason)}</Caption>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </Screen>
   );
 }
 
-function StatusChip({ row }: { row: DayPatient }) {
-  if (row.recording === "declined") return <Pill label="Declined" tone="refuse" />;
-  if (row.recording === "live") return <Pill label="Live" tone="olive" />;
-  if (row.recording === "captured" || row.visitStatus === "completed") return <Pill label="Done" tone="mist" />;
-  if (row.visitStatus === "in_progress") return <Pill label="Next" tone="olive" />;
-  return <Pill label="Later" tone="mist" />;
-}
-
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: 48 },
-  mist: {
-    position: "absolute",
-    top: -40,
-    left: -20,
-    right: -20,
-    height: 220,
-    backgroundColor: color.mistWash,
+  pad: { paddingHorizontal: space.lg, paddingTop: 8, paddingBottom: 120 },
+  top: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  today: { marginTop: 22 },
+  heroName: {
+    fontFamily: font.displayBold,
+    fontSize: 26,
+    lineHeight: 30,
+    letterSpacing: -0.5,
+  },
+  laterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: color.line,
+    gap: 14,
+  },
+  laterTime: { width: 52, color: color.inkFaint },
+  laterName: { flex: 1, fontFamily: font.uiMed, fontSize: 16 },
+  laterReason: { color: color.inkFaint },
 });
