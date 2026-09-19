@@ -32,4 +32,12 @@ const https =
 const app = await buildApp(ctx, https);
 await app.listen({ host: config.host, port: config.port });
 const scheme = https.https ? "https" : "http";
+if (config.nodeEnv === "production" && !https.https) {
+  console.warn(
+    "Wave A TLS baseline: this process is HTTP. Terminate TLS in front of the API or set TLS_CERT_PATH/TLS_KEY_PATH.",
+  );
+}
+if (config.nodeEnv === "production" && !config.databaseSsl) {
+  console.warn("Wave A DB baseline: set DATABASE_SSL=true against Postgres in shared/prod.");
+}
 console.log(`Olive API listening on ${scheme}://${config.host}:${config.port} (residency ${config.residencyRegion})`);

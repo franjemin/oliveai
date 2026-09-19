@@ -74,7 +74,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
       secretKey: process.env.S3_SECRET_KEY,
       forcePathStyle: bool(process.env.S3_FORCE_PATH_STYLE, true),
     },
-    databaseSsl: bool(process.env.DATABASE_SSL, false),
+    databaseSsl: bool(process.env.DATABASE_SSL, process.env.NODE_ENV === "production"),
     tls: {
       certPath: process.env.TLS_CERT_PATH,
       keyPath: process.env.TLS_KEY_PATH,

@@ -7,7 +7,8 @@ export type ObjectStore = {
   delete(key: string): Promise<void>;
 };
 
-/** Local filesystem store. MinIO is used when compose is up; this keeps scaffold/tests offline. */
+/** Local filesystem store. MinIO is used when compose is up; this keeps scaffold/tests offline.
+ * Wave A: objects are AES-256-GCM sealed — never written as plaintext PHI. */
 export function createLocalObjectStore(rootDir: string, encryptionKey: string): ObjectStore {
   return {
     async put(key, bytes) {

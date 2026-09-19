@@ -24,10 +24,13 @@ services:
       MINIO_ROOT_USER: olive
       MINIO_ROOT_PASSWORD: oliveolive
       MINIO_REGION_NAME: ca-central-1
+      # Wave A at-rest equivalent (local key). Wave B (OLI-14) replaces this with CMEK/KMS.
+      MINIO_KMS_SECRET_KEY: "olive-demo:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
+      # Shared/prod: place this volume on encrypted disk. App also AES-GCM-seals audio before put.
       - olive_minio:/data
 
   minio-init:
@@ -39,6 +42,7 @@ services:
       sleep 3;
       mc alias set local http://minio:9000 olive oliveolive;
       mc mb --ignore-existing local/olive-audio;
+      mc encrypt set sse-s3 local/olive-audio;
       exit 0;
       "
 

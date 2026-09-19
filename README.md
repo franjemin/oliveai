@@ -27,15 +27,17 @@ npm run worker           # or npm run worker:once
 npm test
 ```
 
-### Encryption (Wave A baseline vs Wave B)
+### Encryption — Wave A baseline (this PR, not deferred) vs Wave B (OLI-14)
 
-| Now (this PR) | Later (OLI-14) |
+| Wave A baseline in this PR | Wave B (OLI-14) — later |
 | --- | --- |
-| **TLS in transit** — set `TLS_CERT_PATH` + `TLS_KEY_PATH`, or terminate TLS in front of the API | KMS/CMEK key management |
-| **Audio/objects at rest** — AES-256-GCM envelope before MinIO/local `.data/objects` | CMEK rotation / HSM |
-| **Postgres at rest** — `DATABASE_SSL=true` in shared/prod; compose volume must live on an encrypted disk outside local demo | no-PHI-in-logs verification polish |
+| **TLS in transit** — `TLS_CERT_PATH` + `TLS_KEY_PATH`, or a TLS terminator in front of the API | KMS/CMEK key management |
+| **Audio/objects at rest** — AES-256-GCM envelope before put (**no plaintext audio on disk**). MinIO bucket SSE-S3 in compose (local key) | CMEK rotation / HSM |
+| **Postgres at rest** — `DATABASE_SSL` defaults **on** in `production`; compose/data volumes must sit on encrypted disks outside local demo | no-PHI-in-logs verification polish |
 
-Local `docker compose` is HTTP + unencrypted developer volumes on purpose. Do not point it at real PHI.
+Stub SMS + stub transcription stay in demo mode (no real carrier / no BAA vendor).
+
+Local `docker compose` is HTTP + developer volumes on purpose. Do not point it at real PHI.
 
 Demo login: `od@demo.olive.local` / `demo`  
 Seeded visit: `00000000-0000-4000-8000-000000000005`
