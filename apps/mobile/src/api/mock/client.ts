@@ -101,4 +101,17 @@ export const mockApi: OliveApi = {
   async getInbox(token) {
     return store.getInbox(token);
   },
+  async postVisitAudio(visitId) {
+    store.attachLiveTranscript(visitId);
+    return {
+      asset: { id: `asset-${visitId}`, visitId, objectKey: "mock://demo" },
+      job: { id: `job-${visitId}`, visitId, status: "queued", vendor: "stub" },
+    };
+  },
+  async processJobs() {
+    return { processed: 1 };
+  },
+  async createFollowUp(visitId, body, messageClass) {
+    return store.createFollowUp(visitId, body, messageClass);
+  },
 };

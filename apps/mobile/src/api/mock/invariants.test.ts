@@ -3,8 +3,20 @@ import { test } from "node:test";
 
 import { startAmbientCapture } from "../recordingGate";
 import { ApiError, DEMO } from "../types";
+import { CORE_WALKTHROUGH } from "../walkthrough";
 import { mockApi } from "./client";
 import { resetState } from "./store";
+
+test("Core walkthrough logs in and loads seeded visit 005", async () => {
+  resetState();
+  const session = await mockApi.login(CORE_WALKTHROUGH.loginEmail, CORE_WALKTHROUGH.loginPassword);
+  assert.equal(session.user.email, CORE_WALKTHROUGH.loginEmail);
+  assert.equal(session.user.role, "dentist");
+  const visit = await mockApi.getVisit(CORE_WALKTHROUGH.visitId);
+  assert.equal(visit.id, CORE_WALKTHROUGH.visitId);
+  assert.equal(visit.patientId, CORE_WALKTHROUGH.patientId);
+  assert.equal(visit.status, "in_progress");
+});
 
 test("OLI-9 refuse keeps recording-gate closed and never starts capture", async () => {
   resetState();

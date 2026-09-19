@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Body, Button, Caption, Card, Display, Pill, Screen } from "@/src/components/ui";
+import { CORE_WALKTHROUGH } from "@/src/api/walkthrough";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, space } from "@/src/theme/tokens";
 import type { DayPatient } from "@/src/api/types";
@@ -45,6 +46,23 @@ export default function TodayScreen() {
     router.push("/swipe");
   };
 
+  const openCoreWalkthrough = async () => {
+    const seeded =
+      olive.day.patients.find((p) => p.visitId === CORE_WALKTHROUGH.visitId) ??
+      olive.day.patients.find((p) => p.patientId === CORE_WALKTHROUGH.patientId);
+    if (seeded) {
+      await open(seeded);
+      return;
+    }
+    setBusyId(CORE_WALKTHROUGH.patientId);
+    try {
+      const visit = await olive.getVisit(CORE_WALKTHROUGH.visitId);
+      router.push(`/visit/${visit.id}/consent`);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
@@ -57,9 +75,25 @@ export default function TodayScreen() {
           </Body>
           <View style={styles.row}>
             <Pill label="Demo" tone="mist" />
+            <Pill label={CORE_WALKTHROUGH.loginEmail} tone="mist" />
+          </View>
+          {olive.sessionError ? (
+            <Body style={{ color: color.refuse, marginTop: 10 }}>{olive.sessionError}</Body>
+          ) : (
+            <Caption style={{ marginTop: 8 }}>
+              Signed in · continue {CORE_WALKTHROUGH.patientName} · {CORE_WALKTHROUGH.visitId.slice(-4)}
+            </Caption>
+          )}
+
+          <View style={{ marginTop: 20 }}>
+            <Button
+              label={`Continue ${CORE_WALKTHROUGH.patientName}`}
+              disabled={busyId === CORE_WALKTHROUGH.patientId}
+              onPress={openCoreWalkthrough}
+            />
           </View>
 
-          <View style={{ gap: 12, marginTop: 28 }}>
+          <View style={{ gap: 12, marginTop: 20 }}>
             {olive.day.patients.map((row) => (
               <Pressable key={row.patientId} onPress={() => open(row)} disabled={busyId === row.patientId}>
                 <Card>

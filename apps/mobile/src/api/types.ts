@@ -49,6 +49,8 @@ export type Clinic = {
   legalName: string;
   smsIdentity: string;
   phone: string;
+  /** Present on BE seed; not in OpenAPI Clinic schema. */
+  email?: string | null;
   residencyRegion: string;
   country: string;
   province: string;
@@ -368,6 +370,14 @@ export interface OliveApi {
   listThreads(): Promise<ChatThreadView[]>;
   lastNotify(followUpId: string): Promise<NotifyStub | null>;
   getInbox(token: string): Promise<MagicInbox>;
+  /** Demo-ready: ingest stub audio (BE queues a fake transcript job). */
+  postVisitAudio(visitId: string, bytesBase64: string): Promise<{
+    asset?: { id?: string; visitId?: string; objectKey?: string };
+    job?: TranscriptionJob;
+  }>;
+  /** Dev-only — process queued transcription jobs once (`happy-path.sh`). */
+  processJobs(): Promise<{ processed?: number }>;
+  createFollowUp(visitId: string, body: string, messageClass?: MessageClass): Promise<FollowUp>;
 }
 
 export const DEMO = {
@@ -379,6 +389,7 @@ export const DEMO = {
   patientJordanId: "00000000-0000-4000-8000-000000000006",
   date: "2026-09-19",
   loginEmail: "od@demo.olive.local",
+  loginPassword: "demo",
 } as const;
 
 /** OLI-5: AI-draft badge when the contract Note omits `aiAssisted`. */

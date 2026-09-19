@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { api } from "@/src/api";
+import { USE_MOCKS, api } from "@/src/api";
 import { startAmbientCapture } from "@/src/api/recordingGate";
+import { clinicDayDates, CORE_WALKTHROUGH, ensureSeededVisit } from "@/src/api/walkthrough";
 import type {
   CaptureSession,
   Clinic,
@@ -30,6 +31,8 @@ type OliveContextValue = {
   clinic: Clinic;
   flags: FeatureFlags;
   day: DayFeed;
+  sessionReady: boolean;
+  sessionError: string | null;
   refreshDay: () => Promise<void>;
   resetDemo: () => Promise<void>;
   openVisit: (patientId: string) => Promise<Visit>;
@@ -56,59 +59,98 @@ type OliveContextValue = {
 
 const OliveContext = createContext<OliveContextValue | null>(null);
 
+const seedBoot = {
+  user: {
+    id: DEMO.userId,
+    clinicId: DEMO.clinicId,
+    email: DEMO.loginEmail,
+    name: "Dr. Maya Chen",
+    role: "dentist" as const,
+    tenantId: DEMO.clinicId,
+  },
+  clinic: {
+    id: DEMO.clinicId,
+    tenantId: DEMO.clinicId,
+    name: "Harbourfront Dental",
+    legalName: "Harbourfront Dental Inc.",
+    smsIdentity: "Harbourfront Dental",
+    phone: "+1-416-555-0199",
+    residencyRegion: "ca-central-1",
+    country: "CA",
+    province: "ON",
+    phipaAgreementVersion: null,
+    phipaAgreementAckedAt: null,
+    phipaAgreementAckedBy: null,
+  },
+  flags: {
+    aftercare: false,
+    claimsGuard: false,
+    phiTrainingAllowed: false,
+    odWriteback: false,
+    quebecLaw25: false,
+  },
+};
+
 export function OliveProvider({ children }: { children: ReactNode }) {
-  const [boot] = useState(() => ({
-    user: {
-      id: "00000000-0000-4000-8000-000000000002",
-      clinicId: "00000000-0000-4000-8000-000000000001",
-      email: "od@demo.olive.local",
-      name: "Dr. Maya Chen",
-      role: "dentist" as const,
-      tenantId: "00000000-0000-4000-8000-000000000001",
-    },
-    clinic: {
-      id: "00000000-0000-4000-8000-000000000001",
-      tenantId: "00000000-0000-4000-8000-000000000001",
-      name: "Harbourfront Dental",
-      legalName: "Harbourfront Dental Inc.",
-      smsIdentity: "Harbourfront Dental",
-      phone: "+1-416-555-0199",
-      residencyRegion: "ca-central-1",
-      country: "CA",
-      province: "ON",
-      phipaAgreementVersion: null,
-      phipaAgreementAckedAt: null,
-      phipaAgreementAckedBy: null,
-    },
-    flags: {
-      aftercare: false,
-      claimsGuard: false,
-      phiTrainingAllowed: false,
-      odWriteback: false,
-      quebecLaw25: false,
-    },
-  }));
-  const [day, setDay] = useState<DayFeed>({ date: "2026-09-19", patients: [] });
+  const [user, setUser] = useState<User>(seedBoot.user);
+  const [clinic, setClinic] = useState<Clinic>(seedBoot.clinic);
+  const [flags, setFlags] = useState<FeatureFlags>(seedBoot.flags);
+  const [day, setDay] = useState<DayFeed>({ date: DEMO.date, patients: [] });
+  const [sessionReady, setSessionReady] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   const refreshDay = useCallback(async () => {
-    const feed = await api.dayPatients(DEMO.date);
+    let feed: DayFeed = { date: clinicDayDates()[0] ?? DEMO.date, patients: [] };
+    for (const date of clinicDayDates()) {
+      const next = await api.dayPatients(date).catch(() => ({ date, patients: [] as DayFeed["patients"] }));
+      if (next.patients.length > 0) {
+        feed = next;
+        break;
+      }
+    }
+    try {
+      const visit = await api.getVisit(CORE_WALKTHROUGH.visitId);
+      const patient = await api.getPatient(visit.patientId).catch(() => null);
+      feed = ensureSeededVisit(feed, visit, patient);
+    } catch {
+      /* visit overlay is best-effort — mocks always have it */
+    }
     setDay(feed);
   }, []);
 
-  useEffect(() => {
-    void refreshDay();
+  const boot = useCallback(async () => {
+    try {
+      const session = await api.login(CORE_WALKTHROUGH.loginEmail, CORE_WALKTHROUGH.loginPassword);
+      setUser(session.user);
+      setClinic({
+        ...session.clinic,
+        tenantId: session.clinic.tenantId ?? session.clinic.id,
+      });
+      setFlags(session.flags);
+      setSessionError(null);
+    } catch (err) {
+      setSessionError(err instanceof Error ? err.message : "Demo login failed");
+    }
+    await refreshDay();
+    setSessionReady(true);
   }, [refreshDay]);
+
+  useEffect(() => {
+    void boot();
+  }, [boot]);
 
   const value = useMemo<OliveContextValue>(
     () => ({
-      user: boot.user,
-      clinic: boot.clinic,
-      flags: boot.flags,
+      user,
+      clinic,
+      flags,
       day,
+      sessionReady,
+      sessionError,
       refreshDay,
       resetDemo: async () => {
         resetState();
-        await refreshDay();
+        await boot();
       },
       openVisit: async (patientId) => {
         const visit = await api.createVisit(patientId);
@@ -126,8 +168,13 @@ export function OliveProvider({ children }: { children: ReactNode }) {
           obtainedFrom,
         });
         const capture = await startAmbientCapture(api, visitId);
-        const { attachLiveTranscript } = await import("@/src/api/mock/store");
-        attachLiveTranscript(visitId);
+        if (USE_MOCKS) {
+          const { attachLiveTranscript } = await import("@/src/api/mock/store");
+          attachLiveTranscript(visitId);
+        } else {
+          await api.postVisitAudio(visitId, CORE_WALKTHROUGH.demoAudioBase64);
+          await api.processJobs();
+        }
         await refreshDay();
         return capture;
       },
@@ -155,7 +202,18 @@ export function OliveProvider({ children }: { children: ReactNode }) {
       },
       getNote: (visitId) => api.getNote(visitId),
       patchNote: (visitId, body) => api.patchNote(visitId, body),
-      signNote: (visitId) => api.signNote(visitId),
+      signNote: async (visitId) => {
+        const signed = await api.signNote(visitId);
+        const existing = await api.listFollowUps(visitId);
+        if (existing.length === 0) {
+          await api.createFollowUp(
+            visitId,
+            CORE_WALKTHROUGH.followUpBody,
+            "clinical_transactional",
+          );
+        }
+        return signed;
+      },
       getTranscript: (visitId) => api.getTranscript(visitId),
       pendingFollowUps: () => api.listPendingFollowUps(),
       sendFollowUp: (id) => api.sendFollowUp(id),
@@ -166,7 +224,7 @@ export function OliveProvider({ children }: { children: ReactNode }) {
         return updated;
       },
       finishDay: async () => {
-        await api.finishDay(DEMO.date);
+        await api.finishDay(day.date);
         return api.listPendingFollowUps();
       },
       getPatient: (id) => api.getPatient(id),
@@ -175,7 +233,7 @@ export function OliveProvider({ children }: { children: ReactNode }) {
       lastNotify: (followUpId) => api.lastNotify(followUpId),
       getInbox: (token) => api.getInbox(token),
     }),
-    [boot, day, refreshDay],
+    [user, clinic, flags, day, sessionReady, sessionError, refreshDay, boot],
   );
 
   return <OliveContext.Provider value={value}>{children}</OliveContext.Provider>;

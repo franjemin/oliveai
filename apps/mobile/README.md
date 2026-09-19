@@ -46,9 +46,21 @@ cp .env.example .env
 npx expo start
 ```
 
-Login against the API: `od@demo.olive.local` / `demo`. Continue Alex visit `00000000-0000-4000-8000-000000000005`.
+App boot calls `POST /v1/auth/login` with `od@demo.olive.local` / `demo` and pins Core walkthrough visit `00000000-0000-4000-8000-000000000005` (Alex Rivera) on Today.
 
 Magic-link inbox uses `GET /v1/inbox/:token`. Secure thread uses `GET/POST /v1/patients/:id/chat` when live. Notify SMS vendor remains stubbed on both sides.
+
+### Core walkthrough (seeded)
+
+Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from stubbed SMS / BAA transcription / OD / PMS / chat polish / PHIPA / MFA.
+
+1. Boot → demo login (`od@demo.olive.local` / `demo`)
+2. Today → **Continue Alex Rivera** → visit `…0005`
+3. Consent → **Start recording** (gate fail-closed) → Live
+4. Live polls `GET /v1/visits/:id/transcript` (mocks attach segments; live POSTs stub audio + `POST /v1/dev/process-jobs`)
+5. **End visit** → Note (AI-draft badge) → **Sign note**
+6. If BE has no follow-up yet, FE `POST /v1/visits/:id/follow-ups` then Swipe **Send** (secure + notify stub)
+7. **Finish day** uses the loaded day date (today on live seed; `2026-09-19` on mocks)
 
 ### 3. Wed dry-run checklist
 
@@ -115,17 +127,19 @@ Magic-link inbox uses `GET /v1/inbox/:token`. Secure thread uses `GET/POST /v1/p
 
 Snapshot of PR #1 contracts: [`contracts/`](contracts/) (Backend remains SoT — do not edit `apps/api/`).
 
-## Contract gaps (mocks only where BE still lags)
+## Contract mismatches (not demo-blockers)
 
-| Gap | Blocks demo? |
+| Mismatch | FE handling |
 | --- | --- |
-| Notify SMS vendor stubbed on BE (`notifySms.stub`) | No — CASL/STOP still fail-closed on notify |
-| Transcription vendor stubbed (`job.vendor: stub`) | No — live capture stays simulated |
-| Day-feed extras (`time`, `reason`, `recording`) not on OpenAPI DayPatients | No — FE view model; live maps nested `patient` |
-| No `GET /v1/follow-ups` or `GET /v1/chats` | No — HTTP composes from day visits / patients+chat |
-| `Note.aiAssisted` not on contract | No — OLI-5 badge derives from body / recording declined |
-| Note-edit / sign learning events (only follow-up edits are contracted) | No — local heuristic |
-| SDM / verbal_attested depth, MFA, post-sign correction trail, admin audit UI | OK partial for demo week |
+| Day-feed date: OpenAPI examples use `2026-09-19`; BE seed `startedAt` is **today** | FE tries today then `2026-09-19`, and always overlays visit `…0005` |
+| BE does not auto-create a follow-up on visit end (`happy-path` POSTs one) | After Sign, FE creates a draft if the list is empty |
+| No `GET /v1/follow-ups` or `GET /v1/chats` | Compose from day visits / patients+chat |
+| Day-feed extras (`time`, `reason`, `recording`) | FE view model only |
+| `Note.aiAssisted` missing on contract | OLI-5 badge derives from body / declined recording |
+| `Clinic.email` on BE seed, not on OpenAPI Clinic | Optional extra; ignored |
+| Consent evidence extras (`grantedAt`, actor) vs slim OpenAPI Consent | Optional FE fields |
+| Jordan Hale STOP patient | Mock-only extra (BE seed is Alex + Sam) |
+| Notify SMS vendor / BAA transcription / OD 501 / PMS / chat polish / PHIPA / MFA | Stubbed on BE — do not block FE |
 
 ## Deferred
 

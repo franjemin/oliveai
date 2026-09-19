@@ -286,15 +286,24 @@ function ensureNote(visit: Visit, aiAssisted: boolean): Note {
 function ensureFollowUp(visit: Visit): FollowUp {
   const existing = state.followUps.find((f) => f.visitId === visit.id);
   if (existing) return existing;
+  return createFollowUp(visit.id, followUpForPatient(visit.patientId));
+}
+
+export function createFollowUp(
+  visitId: string,
+  body: string,
+  messageClass: FollowUp["messageClass"] = "clinical_transactional",
+): FollowUp {
+  const visit = getVisit(visitId);
   const note = state.notes.find((n) => n.visitId === visit.id);
   const fu: FollowUp = {
     id: nid("fu"),
     visitId: visit.id,
     patientId: visit.patientId,
     noteId: note?.id ?? null,
-    messageClass: "clinical_transactional",
+    messageClass,
     channel: "secure",
-    body: followUpForPatient(visit.patientId),
+    body,
     secureMessageId: null,
     notifySmsId: null,
     magicLinkToken: null,

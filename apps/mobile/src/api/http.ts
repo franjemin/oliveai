@@ -8,6 +8,7 @@ import {
   unwrapPatient,
   unwrapPatients,
 } from "./map";
+import { clinicDayDates } from "./walkthrough";
 
 const base = process.env.EXPO_PUBLIC_API_BASE ?? "http://localhost:3000";
 
@@ -99,9 +100,14 @@ export const httpApi: OliveApi = {
     return unwrapFollowUps(raw);
   },
   async listPendingFollowUps() {
-    const feed = await httpApi.dayPatients(DEMO.date);
-    const visitIds = [...new Set(feed.patients.map((row) => row.visitId).filter((id): id is string => Boolean(id)))];
-    const batches = await Promise.all(visitIds.map((id) => httpApi.listFollowUps(id).catch(() => [])));
+    const visitIds = new Set<string>([DEMO.visitAlexId]);
+    for (const date of clinicDayDates()) {
+      const feed = await httpApi.dayPatients(date).catch(() => ({ date, patients: [] }));
+      for (const row of feed.patients) {
+        if (row.visitId) visitIds.add(row.visitId);
+      }
+    }
+    const batches = await Promise.all([...visitIds].map((id) => httpApi.listFollowUps(id).catch(() => [])));
     return batches.flat().filter(isPendingFollowUp);
   },
   sendFollowUp: (id) => req(`/v1/follow-ups/${id}/send`, { method: "POST" }),
@@ -139,6 +145,14 @@ export const httpApi: OliveApi = {
     /* SMS vendor is stubbed on BE — no last-notify route. Use send envelope notifySms. */
     return null;
   },
+  postVisitAudio: (visitId, bytesBase64) =>
+    req(`/v1/visits/${visitId}/audio`, { method: "POST", body: JSON.stringify({ bytesBase64 }) }),
+  processJobs: () => req("/v1/dev/process-jobs", { method: "POST" }),
+  createFollowUp: (visitId, body, messageClass) =>
+    req(`/v1/visits/${visitId}/follow-ups`, {
+      method: "POST",
+      body: JSON.stringify({ body, messageClass }),
+    }),
   async getInbox(inboxToken) {
     const payload = await req<{
       channelOfRecord?: "secure";
