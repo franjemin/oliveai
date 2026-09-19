@@ -1,11 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import type { AppContext } from "../context.js";
-import { notes } from "../db/schema.js";
+import { noteEdits, notes } from "../db/schema.js";
 import { audit } from "../lib/audit.js";
 import { conflict, forbidden, notFound } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
 import { longRetentionUntil } from "../lib/retention.js";
 import { getVisit } from "./consent.js";
+import { applyStyle, getStyleProfile, recordStyleFromEdit } from "./style.js";
 
 export async function getOrCreateNote(ctx: AppContext, clinicId: string, visitId: string) {
   const existing = await ctx.db
@@ -40,11 +41,30 @@ export async function patchNote(
   if (note.status === "signed") {
     throw forbidden("note_signed_immutable", "Cannot edit a signed note");
   }
+  const style = await getStyleProfile(ctx.db, input.clinicId, input.actorId);
+  const body = applyStyle(input.body, style);
   const [updated] = await ctx.db
     .update(notes)
-    .set({ body: input.body, updatedAt: new Date() })
+    .set({ body, updatedAt: new Date() })
     .where(eq(notes.id, note.id))
     .returning();
+  if (note.body !== body) {
+    await ctx.db.insert(noteEdits).values({
+      id: newId(),
+      clinicId: input.clinicId,
+      noteId: note.id,
+      before: note.body,
+      after: body,
+      createdBy: input.actorId,
+      createdAt: new Date(),
+    });
+    await recordStyleFromEdit(ctx.db, {
+      clinicId: input.clinicId,
+      clinicianId: input.actorId,
+      before: note.body,
+      after: body,
+    });
+  }
   await audit(ctx.db, {
     clinicId: input.clinicId,
     actorId: input.actorId,

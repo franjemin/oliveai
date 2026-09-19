@@ -18,7 +18,7 @@ Status: **covered** | **partial** | **gap** | **deferred**
 | **OLIVE-SEC-010** | OLI-13 | `audit_events` on PHI touch | **partial** | Write-side audit on ingest/generate/sign/send/delete/consent. **No admin audit query API; no WORM.** |
 | **OLIVE-SEC-012** | OLI-15 | `POST /v1/follow-ups/:id/send` | **covered** | Body = secure in-app. CASL on **notify SMS only** (no PHI in SMS). Stub vendor. |
 | **OLIVE-SEC-013** | OLI-16 | `clinics.sms_identity`; `messaging_opt_outs` | **covered** | Clinic identity + STOP on notify SMS only. |
-| **OLIVE-SEC-015** | OLI-19 | `flags.phiTrainingAllowed=false` | **covered** | Training off; express disclosure required to grant `training`. |
+| **OLIVE-SEC-015** | OLI-19 | `flags.phiTrainingAllowed=false` | **covered** | Training off. Per-clinician **style heuristic** from edits only (not global PHI training). |
 | **OLIVE-SEC-017** | OLI-20 | `clinics.phipa_agreement_*` + [`docs/data-map.md`](data-map.md) | **partial** | Nullable PHIPA fields (non-blocking). Thin data-map stub only — not Legal contract prose. |
 | **OLIVE-SEC-007** | (clinic delete) | `DELETE /v1/visits/:id/audio`; `POST /v1/clinic/audio/delete` | **partial** | Clinic-initiated / EoC audio delete only (admin for clinic-wide). **Litigation hold / longer-retain override / backup purge job = gap deferred.** Backup copies: operator must purge within the org backup window (placeholder — not automated). |
 

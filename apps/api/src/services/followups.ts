@@ -7,6 +7,7 @@ import { newId } from "../lib/ids.js";
 import { notifySmsCopy } from "../vendors/messaging.js";
 import { activeMessagingConsent, hasStopOptOut } from "./consent.js";
 import { getVisit } from "./consent.js";
+import { applyStyle, getStyleProfile, recordStyleFromEdit } from "./style.js";
 
 export async function listFollowUps(ctx: AppContext, clinicId: string, visitId: string) {
   return ctx.db
@@ -31,6 +32,9 @@ export async function createFollowUp(
     .from(notes)
     .where(and(eq(notes.clinicId, input.clinicId), eq(notes.visitId, input.visitId)));
 
+  const style = await getStyleProfile(ctx.db, input.clinicId, input.actorId);
+  const body = applyStyle(input.body, style);
+
   const [row] = await ctx.db
     .insert(followUps)
     .values({
@@ -41,7 +45,7 @@ export async function createFollowUp(
       noteId: note?.id ?? null,
       messageClass: input.messageClass ?? "clinical_transactional",
       channel: "secure",
-      body: input.body,
+      body,
       status: "draft",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -115,6 +119,12 @@ export async function recordFollowUpEdit(
     })
     .returning();
   await ctx.db.update(followUps).set({ body: input.after, updatedAt: new Date() }).where(eq(followUps.id, fu.id));
+  await recordStyleFromEdit(ctx.db, {
+    clinicId: input.clinicId,
+    clinicianId: input.actorId,
+    before: input.before,
+    after: input.after,
+  });
   await audit(ctx.db, {
     clinicId: input.clinicId,
     actorId: input.actorId,

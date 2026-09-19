@@ -9,6 +9,7 @@ import { listChat, patientProfile, postChat, getPatient } from "../services/chat
 import { getVisit, listVisitConsents, recordConsent, recordingGate } from "../services/consent.js";
 import { dayPatients, dayPatientsErrorShape, finishDay } from "../services/days.js";
 import { resolveFlags } from "../services/flags.js";
+import { getStyleProfile } from "../services/style.js";
 import {
   createFollowUp,
   listFollowUps,
@@ -108,6 +109,7 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
         user: publicUser(user),
         clinic: publicClinic(clinic),
         flags: resolveFlags(ctx),
+        style: await getStyleProfile(ctx.db, actor.clinicId, actor.userId),
         actor,
       };
     }),

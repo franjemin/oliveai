@@ -189,6 +189,28 @@ CREATE TABLE "follow_ups" (
   "updated_at" timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE "note_edits" (
+  "id" uuid PRIMARY KEY,
+  "clinic_id" uuid NOT NULL REFERENCES "clinics"("id"),
+  "note_id" uuid NOT NULL REFERENCES "notes"("id"),
+  "before" text NOT NULL,
+  "after" text NOT NULL,
+  "created_by" uuid,
+  "created_at" timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "clinician_style_profiles" (
+  "id" uuid PRIMARY KEY,
+  "clinic_id" uuid NOT NULL REFERENCES "clinics"("id"),
+  "clinician_id" uuid NOT NULL REFERENCES "users"("id"),
+  "prefer_shorter" boolean NOT NULL DEFAULT false,
+  "greeting" text,
+  "edit_count" integer NOT NULL DEFAULT 0,
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  "created_at" timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX "clinician_style_clinic_user" ON "clinician_style_profiles" ("clinic_id", "clinician_id");
+
 CREATE TABLE "follow_up_edits" (
   "id" uuid PRIMARY KEY,
   "clinic_id" uuid NOT NULL REFERENCES "clinics"("id"),

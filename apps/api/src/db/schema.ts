@@ -190,6 +190,23 @@ export const followUps = pgTable("follow_ups", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const noteEdits = pgTable("note_edits", {
+  ...clinicScoped,
+  noteId: uuid("note_id").notNull(),
+  before: text("before").notNull(),
+  after: text("after").notNull(),
+  createdBy: uuid("created_by"),
+});
+
+export const clinicianStyleProfiles = pgTable("clinician_style_profiles", {
+  ...clinicScoped,
+  clinicianId: uuid("clinician_id").notNull(),
+  preferShorter: boolean("prefer_shorter").notNull().default(false),
+  greeting: text("greeting"),
+  editCount: integer("edit_count").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const followUpEdits = pgTable("follow_up_edits", {
   ...clinicScoped,
   followUpId: uuid("follow_up_id").notNull(),
@@ -269,6 +286,8 @@ export const schema = {
   transcriptSegments,
   notes,
   followUps,
+  noteEdits,
+  clinicianStyleProfiles,
   followUpEdits,
   dayCloses,
   chatThreads,

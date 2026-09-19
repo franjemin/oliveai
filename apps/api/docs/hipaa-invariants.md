@@ -43,6 +43,7 @@ Demo: notify SMS is a stub. Patient inbox: `GET /v1/inbox/:token`.
 
 - `phiTrainingAllowed` defaults **false**.
 - Contract-only is not enough. Granting `training` consent requires a disclosure/script id (express).
+- Follow-up/note `{before,after}` edits feed a **per clinician + clinic** style heuristic for the next draft (demo simplicity cuts). Not a global PHI model.
 - Aftercare / Claims Guard flags exist and default false — no product features in this scaffold.
 
 ## 7. Every row is clinic-scoped
