@@ -9,7 +9,7 @@ import { api } from "@/src/api";
 import type { TranscriptSegment } from "@/src/api/types";
 import { TranscriptSheet } from "@/src/components/TranscriptSheet";
 import { Waveform } from "@/src/components/Waveform";
-import { Body, Button, Caption, Display, Mono, Screen } from "@/src/components/ui";
+import { Body, Button, Caption, Display, Screen } from "@/src/components/ui";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, space } from "@/src/theme/tokens";
 
@@ -21,6 +21,7 @@ export default function LiveScreen() {
   const [capturing, setCapturing] = useState(false);
   const [gateError, setGateError] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [segments, setSegments] = useState<TranscriptSegment[]>([]);
   const patient = olive.day.patients.find((p) => p.visitId === id);
 
@@ -44,10 +45,10 @@ export default function LiveScreen() {
   }, [id]);
 
   useEffect(() => {
-    if (!capturing) return;
+    if (!capturing || paused) return;
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(t);
-  }, [capturing]);
+  }, [capturing, paused]);
 
   useEffect(() => {
     if (!id || !capturing) return;
@@ -81,19 +82,22 @@ export default function LiveScreen() {
         </Pressable>
         <Caption style={{ textAlign: "center" }}>{patient?.displayName ?? "Visit"}</Caption>
         <Caption style={{ textAlign: "center", marginTop: 4 }}>
-          {capturing ? "Listening" : "Mic closed"}
+          {gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}
         </Caption>
         <View style={styles.center}>
           <Display style={styles.timer}>{clock}</Display>
-          <Waveform active={capturing} />
+          <Waveform active={capturing && !paused} />
           {gateError ? (
             <Body style={{ color: color.refuse, textAlign: "center", marginTop: 16 }}>{gateError}</Body>
-          ) : (
-            <Mono style={{ marginTop: 18 }}>audio-disclosure-v1</Mono>
-          )}
+          ) : null}
         </View>
         <View style={styles.bottom}>
-          <Button label="End visit" onPress={end} />
+          <Button
+            label={paused ? "Resume" : "Pause"}
+            disabled={!capturing}
+            onPress={() => setPaused((p) => !p)}
+          />
+          <Button label="End visit" variant="secondary" onPress={end} />
           <Pressable onPress={() => setSheet(true)} style={styles.link}>
             <Body style={{ color: color.olive, fontWeight: "600" }}>View transcript</Body>
           </Pressable>

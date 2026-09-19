@@ -8,8 +8,11 @@ import type {
   ConsentParty,
   DayFeed,
   FeatureFlags,
+  ChatThread,
   FollowUp,
+  MagicInbox,
   Note,
+  NotifyStub,
   Patient,
   RecordingGate,
   TranscriptResponse,
@@ -41,6 +44,10 @@ type OliveContextValue = {
   skipFollowUp: (id: string) => Promise<FollowUp>;
   finishDay: () => Promise<FollowUp[]>;
   getPatient: (id: string) => Promise<Patient>;
+  getChat: (patientId: string) => Promise<{ thread: ChatThread | null; messages: ChatThread["messages"] }>;
+  listThreads: () => Promise<ChatThread[]>;
+  lastNotify: (followUpId: string) => Promise<NotifyStub | null>;
+  getInbox: (token: string) => Promise<MagicInbox>;
 };
 
 const OliveContext = createContext<OliveContextValue | null>(null);
@@ -153,6 +160,10 @@ export function OliveProvider({ children }: { children: ReactNode }) {
         return res.queued;
       },
       getPatient: (id) => api.getPatient(id),
+      getChat: (patientId) => api.getChat(patientId),
+      listThreads: () => api.listThreads(),
+      lastNotify: (followUpId) => api.lastNotify(followUpId),
+      getInbox: (token) => api.getInbox(token),
     }),
     [boot, day, refreshDay],
   );

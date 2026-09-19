@@ -46,6 +46,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="visit/[id]" />
           <Stack.Screen name="swipe" />
+          <Stack.Screen name="thread/[patientId]" />
+          <Stack.Screen name="inbox/[token]" />
         </Stack>
       </PhoneShell>
     </OliveProvider>

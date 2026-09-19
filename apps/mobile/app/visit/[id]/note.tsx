@@ -17,6 +17,7 @@ export default function NoteScreen() {
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(false);
   const patient = olive.day.patients.find((p) => p.visitId === id);
   const declined = patient?.recording === "declined";
 
@@ -56,6 +57,7 @@ export default function NoteScreen() {
       const n = await olive.signNote(id);
       setNote(n);
       setBody(n.body);
+      setConfirm(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Sign failed.");
     } finally {
@@ -84,7 +86,8 @@ export default function NoteScreen() {
             </Caption>
           ) : (
             <Caption style={{ marginTop: 8 }}>
-              You are responsible for the accuracy of this record. Sign only after review.
+              You are responsible for the accuracy of this record. Sign only after review. Audio stays with the
+              clinic record — retention is clinic-controlled.
             </Caption>
           )}
           <TextInput
@@ -100,19 +103,26 @@ export default function NoteScreen() {
           ) : null}
           {error ? <Body style={{ color: color.refuse, marginTop: 10 }}>{error}</Body> : null}
         </ScrollView>
-        <View style={styles.actions}>
-          <Button
-            label={signed ? "Signed" : "Sign note"}
-            disabled={!canSign || busy}
-            onPress={sign}
-          />
-          <Button
-            label="Review follow-up SMS"
-            variant="secondary"
-            disabled={!signed}
-            onPress={() => router.push("/swipe")}
-          />
-        </View>
+        {confirm ? (
+          <View style={styles.confirm}>
+            <Title>Sign this note?</Title>
+            <Body style={{ marginTop: 8 }}>
+              You are signing Olive’s draft as the clinic record. No Open Dental write-back in this demo.
+            </Body>
+            <View style={{ marginTop: 16, gap: 10 }}>
+              <Button label="Sign note" disabled={busy} onPress={sign} />
+              <Button label="Cancel" variant="secondary" onPress={() => setConfirm(false)} />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.actions}>
+            {signed ? (
+              <Button label="Review follow-ups" onPress={() => router.push("/swipe")} />
+            ) : (
+              <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
+            )}
+          </View>
+        )}
       </SafeAreaView>
     </Screen>
   );
@@ -135,4 +145,12 @@ const styles = StyleSheet.create({
   },
   locked: { backgroundColor: color.mistWash },
   actions: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: 10 },
+  confirm: {
+    paddingHorizontal: space.lg,
+    paddingBottom: space.md,
+    paddingTop: space.sm,
+    borderTopWidth: 1,
+    borderTopColor: color.line,
+    backgroundColor: color.paper,
+  },
 });

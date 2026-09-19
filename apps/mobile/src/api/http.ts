@@ -1,4 +1,4 @@
-import { ApiError, type OliveApi } from "./types";
+import { ApiError, type ChatThread, type OliveApi } from "./types";
 
 const base = process.env.EXPO_PUBLIC_API_BASE ?? "http://localhost:3000";
 
@@ -59,4 +59,18 @@ export const httpApi: OliveApi = {
   sendFollowUp: (id) => req(`/v1/follow-ups/${id}/send`, { method: "POST" }),
   skipFollowUp: (id, reason) =>
     req(`/v1/follow-ups/${id}/skip`, { method: "POST", body: JSON.stringify({ reason }) }),
+  getChat: (patientId) => req(`/v1/patients/${patientId}/chat`),
+  async listThreads() {
+    const rows = await req<ChatThread[]>("/v1/chats").catch(() => []);
+    return rows;
+  },
+  async lastNotify() {
+    return null;
+  },
+  async getInbox() {
+    throw new ApiError({
+      error: "not_implemented",
+      message: "Magic-link inbox is a demo mock until Backend exposes it.",
+    });
+  },
 };

@@ -1,99 +1,126 @@
 # Olive mobile (v1 Core)
 
-Expo + Expo Router + TypeScript app for the chairside Core loop. **This package owns `apps/mobile/` only.** Backend lives at repo root on [`cursor/olive-v1-core-backend-a0fd`](https://github.com/franjemin/oliveai/pull/1) — do not edit `apps/api/` (it does not exist on that PR).
+Expo + Expo Router + TypeScript under **`apps/mobile/` only**. Do not edit `apps/api/`.
 
-Demo-thin for the clinic week of **Sep 22**. Progressive disclosure: landings have one clear action; power (full diarized transcript) is on demand.
+**PR:** https://github.com/franjemin/oliveai/pull/2  
+**Branch:** `cursor/olive-v1-core-mobile-56b9`  
+**Base:** `main` (does not rewrite Backend PR #1)
 
-Hi-fi PNGs / brand kit (`/workspace/olive-v1/hifi`, `/workspace/olive-brand/locked`) were not mounted in the scaffold environment. Tokens follow the locked brief: **solid olive waveform bars** (no chartreuse gradient), **softened mist washes**.
+Copy in this app is **draft pending counsel**. Hi-fi / brand folders were not mounted here; tokens follow the locked brief (solid olive bars, softened mist).
 
-## Run
+## Ready-to-run packet (Tech Lead)
+
+### 1. Identity
+
+| | |
+| --- | --- |
+| PR | https://github.com/franjemin/oliveai/pull/2 |
+| Branch | `cursor/olive-v1-core-mobile-56b9` |
+| Demo login | `od@demo.olive.local` / `demo` |
+| Seeded visit | `00000000-0000-4000-8000-000000000005` (Alex Rivera, in progress) |
+| Clinic | Harbourfront Dental |
+
+### 2. Local run (mocks — default)
 
 ```bash
 cd apps/mobile
 npm install
 npx expo start
-```
-
-Web (useful on CI / desktop):
-
-```bash
+# web
 npx expo start --web
 ```
 
-iOS / Android: scan the QR code with Expo Go, or `npm run ios` / `npm run android`.
+### 2b. Point at Backend PR #1 API
 
-Default login is implicit: **Dr. Maya Chen · Harbourfront Dental** (`od@demo.olive.local` / `demo` when swapping to the live API).
+Backend SoT on `cursor/olive-v1-core-backend-a0fd`: `contracts/openapi.yaml`, `contracts/api.md`, API under `apps/api/`.
+
+```bash
+# from oliveai after checking out / running Backend PR #1
+# apps/api typically: docker compose up, migrate, seed, start (see that PR)
+
+cd apps/mobile
+cp .env.example .env
+# .env
+# EXPO_PUBLIC_USE_MOCKS=false
+# EXPO_PUBLIC_API_BASE=http://localhost:3000
+npx expo start
+```
+
+Login against the API: `od@demo.olive.local` / `demo`. Continue Alex visit `00000000-0000-4000-8000-000000000005`.
+
+Magic-link patient inbox is **mock-only** (no Backend route yet). Secure thread uses `GET/POST /v1/patients/:id/chat` when live.
+
+### 3. Wed dry-run checklist
+
+| # | Step | Status |
+| --- | --- | --- |
+| 1 | Core loop on demo login | **wired** (mocks; API swap via env) |
+| 2 | Zero “audio deleted within 24h” / hard-delete claims in UI/README | **wired** (clinic-controlled retention) |
+| 3 | No PHIPA chips / “record of truth” on primary surfaces | **wired** |
+| 4 | Today → Consent Agree/Deny + recording-gate | **wired** (CTA: Start recording / Refuse) |
+| 5 | Live Pause/End + 03b transcript sheet | **wired** (capture simulated after gate) |
+| 6 | Note Sign + post-Sign follow-ups bridge | **wired** |
+| 7 | Swipe **Send** stub / Skip / CASL fail-closed | **wired** (Send = secure message; notify SMS **stub**) |
+| 8 | Product-approved packet: clinic-controlled retention; Bluedot primary copy | **wired** |
+
+**Send stub meaning:** card preview is **secure message content**. Primary CTA is **Send** (not “Send SMS”). Microcopy: “Patient gets a text to open it securely.” CASL/STOP fail-closed runs on the **notify** send. After Send: secure thread + patient magic-link inbox.
+
+### 4. Dry-run ETA
+
+**Mon dry-runable on mocks now.** API-backed walk depends on Backend PR #1 being up locally; no FE contract gap blocks Live / Sign / Swipe **on mocks**. Live API: magic-link inbox is missing on Backend (demo uses mock inbox); notify SMS vendor is stubbed on both sides.
+
+## Product locks
+
+- **Retention:** no 24h audio delete. Audio is kept with the clinic record (clinic-controlled). Encryption/audit unchanged.
+- **Messaging:** swipe card ≠ SMS body of record. Notify text is a short stub with clinic identity + STOP. Secure thread is the record.
 
 ## Screens
 
 | Route | What |
 | --- | --- |
-| Today | Day roster, start/continue visit, Finish day → swipe |
-| Consent | Always shown per visit. Refuse is first-class. Versioned disclosure `audio-disclosure-v1` is visible and stored. |
-| Live | Timer + End visit + View transcript. **Not** the full feed. |
-| Transcript sheet (03b) | Full diarized clinician/patient feed. Audio TTL copy is audio-only. |
-| Note / Sign | Persistent **AI-assisted draft** badge. Sign enabled only when `status=draft`. Signed notes are read-only. |
-| Swipe | Send SMS / Skip. Clinic SMS identity + STOP/consent fail-closed copy. |
-| Follow-ups tab | Same queue as Finish day. |
-| Chats / Patients | Tab shells only. |
+| Today | Day roster, start/continue, Finish day |
+| Consent | Per-visit. **Start recording** + Refuse. Disclosure id stored (not a Today chip). |
+| Live | Timer, **Pause**, **End visit**, View transcript (not the full feed) |
+| Transcript sheet (03b) | Diarized feed. Clinic-controlled audio retention copy. |
+| Note / Sign | AI-assisted draft badge; Sign only if `draft`; confirm; then **Review follow-ups** |
+| Swipe | Secure-message card · **Send** / Skip · CASL on notify |
+| Follow-ups | Same queue |
+| Chats | Secure threads after Send (not full chat chrome) |
+| Patients | Tab shell |
+| `/thread/:patientId` | Clinic secure thread |
+| `/inbox/:token` | Patient magic-link inbox (mock) |
 
-## Core loop (mocks)
+## Wave A P0s
 
-1. Today → Alex Rivera (in chair) → Consent.
-2. **Accept** → recording-gate must return `allowed` or the mic stays closed → Live.
-3. **View transcript** opens the 03b sheet. **End visit** → Note.
-4. Review / edit draft → **Sign** (disabled after signed).
-5. **Finish day** or Note → Swipe. Alex sends. Sam fails CASL (no messaging consent). Jordan fails STOP.
-6. Reset demo from Today.
+- **OLI-9** — consent + Refuse; versioned disclosure; recording-gate fail-closed before mic.
+- **OLI-5** — AI draft badge; Sign only when `draft`; signed notes immutable.
+- **OLI-16** — notify stub identifies clinic + STOP; CASL/STOP fail-closed on notify send (not on the secure-message card).
 
-**Refuse** on Consent: gate stays closed, no transcript, visit continues as a **manual draft**. Care is not blocked.
-
-## Wave A P0s (baked into UX)
-
-- **OLI-9 Consent** — per-visit sheet, Refuse first-class, versioned disclosure id stored, `GET /v1/visits/:id/recording-gate` called, **fail-closed before mic**.
-- **OLI-5 Draft/Sign** — `AI-assisted draft` badge while unsigned; Sign only if `status=draft`; signed notes cannot be patched (`note_signed_immutable`).
-- **OLI-16 SMS identity** — preview shows `Sent on behalf of {Clinic}. Reply STOP to opt out.`; mock send returns `stop_fail_closed` / `missing_messaging_consent`.
-
-## Mock map → API
-
-Mocks implement the locked `/v1` shapes from Backend `docs/api.md`. Demo IDs match seed:
+## Mock map
 
 | Resource | ID |
 | --- | --- |
 | Clinic | `00000000-0000-4000-8000-000000000001` |
-| OD · Dr. Maya Chen | `00000000-0000-4000-8000-000000000002` |
-| Alex Rivera (messaging consent) | `00000000-0000-4000-8000-000000000003` |
-| Sam Park (no messaging consent) | `00000000-0000-4000-8000-000000000004` |
-| Alex visit (in progress) | `00000000-0000-4000-8000-000000000005` |
-| Jordan Hale (STOP on file, mock-only extra) | `00000000-0000-4000-8000-000000000006` |
+| OD | `00000000-0000-4000-8000-000000000002` |
+| Alex (messaging consent) | `00000000-0000-4000-8000-000000000003` |
+| Sam (no messaging consent) | `00000000-0000-4000-8000-000000000004` |
+| Alex visit | `00000000-0000-4000-8000-000000000005` |
+| Jordan (STOP, mock extra) | `00000000-0000-4000-8000-000000000006` |
 
-| Client method | API |
+`POST /v1/follow-ups/:id/send` is the send stub. FE treats `followUp.body` as **secure message** and attaches a notify stub + inbox token in mocks.
+
+## Contract gaps (do not block Live / Sign / Swipe on mocks)
+
+| Gap | Blocks demo? |
 | --- | --- |
-| `recordingGate` | `GET /v1/visits/:id/recording-gate` |
-| `recordVisitConsent` | `POST /v1/visits/:id/consent` |
-| `endVisit` | `POST /v1/visits/:id/end` (`audio.delete_after = ended_at + 24h`) |
-| `getTranscript` | `GET /v1/visits/:id/transcript` |
-| `getNote` / `patchNote` / `signNote` | `GET/PATCH /v1/visits/:id/note`, `POST …/note/sign` |
-| `sendFollowUp` / `skipFollowUp` | `POST /v1/follow-ups/:id/send` · `/skip` |
-| `finishDay` | `POST /v1/days/finish` |
-| `dayPatients` | `GET /v1/days/:date/patients` |
+| Magic-link inbox not in OpenAPI | No — mock `/inbox/:token` |
+| Notify SMS vendor stubbed on BE | No — FE stubs notify text |
+| Day-feed row extras (`time`, `reason`, `recording`) not fully locked | No |
+| Backend `docs` may still mention audio `delete_after` 24h | No — FE copy follows product lock |
+| SDM / verbal_attested depth, MFA, post-sign correction trail, admin audit UI | OK partial for demo week |
 
-Day-row extras (`time`, `reason`, `recording`) are FE conveniences until the day-feed payload is fully locked.
+## Deferred
 
-## API swap
+Patients chrome · Aftercare / Claims · OD/PMS · MFA/settings · real mic · Quebec Law 25 · full chat product.
 
-```bash
-# apps/mobile/.env
-EXPO_PUBLIC_USE_MOCKS=false
-EXPO_PUBLIC_API_BASE=http://localhost:3000
-```
-
-See `.env.example`. HTTP client is `src/api/http.ts`. Keep mocks on for the Sep 22 walkthrough.
-
-## Deferred (not in this PR)
-
-Chats / Patients beyond tab shells · Aftercare / Claims Guard · OD / PMS chrome · MFA / settings jungles (Wave B) · real microphone capture (gate is enforced; capture is simulated until a BAA vendor) · Quebec Law 25.
-
-## Workspace
-
-Root `pnpm-workspace.yaml` includes `apps/*`. Backend PR #1 keeps the API at repository root with npm — this file does not rewrite that package.
+`npm run test:invariants` — gate / sign / CASL notify rejects.

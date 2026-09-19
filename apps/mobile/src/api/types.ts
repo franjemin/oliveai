@@ -130,7 +130,9 @@ export type FollowUp = {
   patientId: string;
   noteId: string | null;
   messageClass: MessageClass;
+  /** Notify channel for the magic-link text — not the secure-message body. */
   channel: "sms";
+  /** Secure-message content (body of record). Never treat this as an SMS. */
   body: string;
   status: FollowUpStatus;
   skipReason: string | null;
@@ -138,6 +140,38 @@ export type FollowUp = {
   sentAt: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  threadId: string;
+  patientId: string;
+  authorType: "staff" | "patient" | "system";
+  body: string;
+  createdAt: string;
+};
+
+export type ChatThread = {
+  id: string;
+  patientId: string;
+  visitId: string | null;
+  messages: ChatMessage[];
+};
+
+export type NotifyStub = {
+  followUpId: string;
+  to: string;
+  body: string;
+  clinicIdentity: string;
+  inboxToken: string;
+};
+
+export type MagicInbox = {
+  token: string;
+  patientId: string;
+  patientName: string;
+  clinicName: string;
+  messages: ChatMessage[];
 };
 
 export type TranscriptSegment = {
@@ -221,6 +255,10 @@ export interface OliveApi {
   listPendingFollowUps(): Promise<FollowUp[]>;
   sendFollowUp(id: string): Promise<FollowUp>;
   skipFollowUp(id: string, reason?: string): Promise<FollowUp>;
+  getChat(patientId: string): Promise<{ thread: ChatThread | null; messages: ChatMessage[] }>;
+  listThreads(): Promise<ChatThread[]>;
+  lastNotify(followUpId: string): Promise<NotifyStub | null>;
+  getInbox(token: string): Promise<MagicInbox>;
 }
 
 export const DEMO = {

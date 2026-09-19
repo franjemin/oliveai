@@ -1,4 +1,18 @@
-import { ApiError, DEMO, type Consent, type DayPatient, type FollowUp, type Note, type TranscriptSegment, type Visit } from "../types";
+import { notifyStubBody } from "../../copy/messaging";
+import {
+  ApiError,
+  DEMO,
+  type ChatMessage,
+  type ChatThread,
+  type Consent,
+  type DayPatient,
+  type FollowUp,
+  type MagicInbox,
+  type Note,
+  type NotifyStub,
+  type TranscriptSegment,
+  type Visit,
+} from "../types";
 import { DISCLOSURE_SCRIPT_ID } from "./seed";
 import {
   TODAY,
@@ -37,6 +51,9 @@ export type MockState = {
   segmentsByVisit: Record<string, TranscriptSegment[]>;
   stoppedPatientIds: Set<string>;
   dayFinished: boolean;
+  threads: ChatThread[];
+  notifies: NotifyStub[];
+  inboxTokens: Record<string, string>;
 };
 
 export function createInitialState(): MockState {
@@ -50,6 +67,9 @@ export function createInitialState(): MockState {
     segmentsByVisit: {},
     stoppedPatientIds: new Set([DEMO.patientJordanId]),
     dayFinished: false,
+    threads: [],
+    notifies: [],
+    inboxTokens: {},
   };
 }
 
@@ -379,7 +399,7 @@ export function sendFollowUp(id: string): FollowUp {
   if (!clinic.smsIdentity) {
     throw new ApiError({
       error: "missing_clinic_identity",
-      message: "Clinic identity is required on every SMS",
+      message: "Clinic identity is required on the notify text",
     });
   }
   if (state.stoppedPatientIds.has(fu.patientId)) {
@@ -416,7 +436,67 @@ export function sendFollowUp(id: string): FollowUp {
     updatedAt: nowIso(),
   };
   state.followUps = state.followUps.map((f) => (f.id === id ? updated : f));
+  postSecureMessage(updated);
   return updated;
+}
+
+function postSecureMessage(fu: FollowUp) {
+  const now = nowIso();
+  let thread = state.threads.find((t) => t.patientId === fu.patientId);
+  if (!thread) {
+    thread = { id: nid("thread"), patientId: fu.patientId, visitId: fu.visitId, messages: [] };
+    state.threads = [...state.threads, thread];
+  }
+  const message: ChatMessage = {
+    id: nid("msg"),
+    threadId: thread.id,
+    patientId: fu.patientId,
+    authorType: "staff",
+    body: fu.body,
+    createdAt: now,
+  };
+  thread.messages = [...thread.messages, message];
+  const token = state.inboxTokens[fu.patientId] ?? nid("inbox");
+  state.inboxTokens[fu.patientId] = token;
+  const patient = getPatient(fu.patientId);
+  state.notifies = [
+    ...state.notifies.filter((n) => n.followUpId !== fu.id),
+    {
+      followUpId: fu.id,
+      to: patient.phone ?? "",
+      body: notifyStubBody(clinic.smsIdentity, `olive://inbox/${token}`),
+      clinicIdentity: clinic.smsIdentity,
+      inboxToken: token,
+    },
+  ];
+}
+
+export function getChat(patientId: string) {
+  getPatient(patientId);
+  const thread = state.threads.find((t) => t.patientId === patientId) ?? null;
+  return { thread, messages: thread?.messages ?? [] };
+}
+
+export function listThreads() {
+  return state.threads;
+}
+
+export function lastNotify(followUpId: string) {
+  return state.notifies.find((n) => n.followUpId === followUpId) ?? null;
+}
+
+export function getInbox(token: string): MagicInbox {
+  const patientId = Object.entries(state.inboxTokens).find(([, t]) => t === token)?.[0];
+  if (!patientId) throw new ApiError({ error: "not_found", message: "inbox" });
+  const patient = getPatient(patientId);
+  const thread = state.threads.find((t) => t.patientId === patientId);
+  return {
+    token,
+    patientId,
+    patientName: patient.displayName,
+    clinicName: clinic.name,
+    messages: thread?.messages ?? [],
+  };
 }
 
 function fail(fu: FollowUp, lastError: string) {

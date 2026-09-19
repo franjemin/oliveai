@@ -85,8 +85,11 @@ export default function ConsentScreen() {
           )}
         </ScrollView>
         <View style={styles.actions}>
+          <Button label="Start recording" disabled={busy !== null} onPress={accept} />
+          <Caption style={{ textAlign: "center" }}>
+            By starting, you confirm they agreed to this visit’s AI scribe.
+          </Caption>
           <Button label="Refuse recording" variant="refuse" disabled={busy !== null} onPress={refuse} />
-          <Button label="Accept and start" disabled={busy !== null} onPress={accept} />
         </View>
       </SafeAreaView>
     </Screen>

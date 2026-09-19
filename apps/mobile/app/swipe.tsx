@@ -1,25 +1,28 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { type Href, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
-import type { FollowUp } from "@/src/api/types";
-import { Body, Button, Caption, Card, Mono, Pill, Screen, Title } from "@/src/components/ui";
-import { SMS_FAIL_COPY, clinicSmsFooter, composeSmsPreview } from "@/src/copy/sms";
+import type { FollowUp, NotifyStub } from "@/src/api/types";
+import { Body, Button, Caption, Card, Pill, Screen, Title } from "@/src/components/ui";
+import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY } from "@/src/copy/messaging";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, space } from "@/src/theme/tokens";
 
 export default function SwipeScreen() {
   const olive = useOlive();
   const router = useRouter();
+  const pending = olive.pendingFollowUps;
   const [queue, setQueue] = useState<FollowUp[]>([]);
   const [banner, setBanner] = useState<{ title: string; body: string; tone: "ok" | "refuse" } | null>(null);
+  const [lastNotify, setLastNotify] = useState<NotifyStub | null>(null);
+  const [lastPatientId, setLastPatientId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    setQueue(await olive.pendingFollowUps());
-  }, [olive]);
+    setQueue(await pending());
+  }, [pending]);
 
   useFocusEffect(
     useCallback(() => {
@@ -34,19 +37,23 @@ export default function SwipeScreen() {
     if (!current) return;
     setBusy(true);
     try {
-      await olive.sendFollowUp(current.id);
+      const sent = await olive.sendFollowUp(current.id);
+      const notify = await olive.lastNotify(sent.id);
+      setLastNotify(notify);
+      setLastPatientId(sent.patientId);
       setBanner({
-        title: "SMS sent",
-        body: `Labeled as ${clinicSmsFooter(olive.clinic.smsIdentity)}`,
+        title: "Secure message sent",
+        body: SECURE_SEND_MICROCOPY,
         tone: "ok",
       });
       await load();
     } catch (err) {
       const code = err instanceof ApiError ? err.error : "send_failed";
-      const copy = SMS_FAIL_COPY[code] ?? {
+      const copy = SEND_FAIL_COPY[code] ?? {
         title: "Not sent",
-        body: err instanceof Error ? err.message : "Send failed closed.",
+        body: err instanceof Error ? err.message : "Notify send failed closed.",
       };
+      setLastNotify(null);
       setBanner({ ...copy, tone: "refuse" });
       await load();
     } finally {
@@ -59,7 +66,8 @@ export default function SwipeScreen() {
     setBusy(true);
     try {
       await olive.skipFollowUp(current.id);
-      setBanner({ title: "Skipped", body: "No SMS sent.", tone: "ok" });
+      setLastNotify(null);
+      setBanner({ title: "Skipped", body: "No secure message sent.", tone: "ok" });
       await load();
     } finally {
       setBusy(false);
@@ -70,10 +78,10 @@ export default function SwipeScreen() {
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <View style={styles.pad}>
-          <Caption>SMS · clinic as sender</Caption>
+          <Caption>Follow-ups</Caption>
           <Title>Swipe</Title>
           <Caption style={{ marginTop: 6 }}>
-            {queue.length} remaining · {olive.clinic.smsIdentity}
+            {queue.length} remaining · {SECURE_SEND_MICROCOPY}
           </Caption>
 
           {banner ? (
@@ -87,6 +95,22 @@ export default function SwipeScreen() {
                 {banner.title}
               </Caption>
               <Body style={{ marginTop: 4 }}>{banner.body}</Body>
+              {lastNotify ? (
+                <View style={{ marginTop: 10, gap: 8 }}>
+                  <Pressable onPress={() => router.push(`/inbox/${lastNotify.inboxToken}` as Href)}>
+                    <Body style={{ color: color.olive, fontWeight: "600" }}>Open patient inbox</Body>
+                  </Pressable>
+                  {lastPatientId ? (
+                    <Pressable
+                      onPress={() => {
+                        if (lastPatientId) router.push(`/thread/${lastPatientId}` as Href);
+                      }}
+                    >
+                      <Body style={{ color: color.olive, fontWeight: "600" }}>View secure thread</Body>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
           ) : null}
 
@@ -94,24 +118,26 @@ export default function SwipeScreen() {
             <Card style={{ marginTop: 20, flex: 1 }}>
               <View style={styles.top}>
                 <Caption>{patient?.displayName ?? "Patient"}</Caption>
-                <Pill label="SMS" tone="olive" />
+                <Pill label="Secure message" tone="olive" />
               </View>
-              <Body style={{ marginTop: 14 }}>{composeSmsPreview(current.body, olive.clinic.smsIdentity)}</Body>
-              <Mono style={{ marginTop: 18 }}>clinical_transactional</Mono>
+              <Body style={{ marginTop: 14 }}>{current.body}</Body>
+              <Caption style={{ marginTop: 16 }}>{SECURE_SEND_MICROCOPY}</Caption>
               {current.lastError ? (
                 <Caption style={{ color: color.refuse, marginTop: 8 }}>Last error: {current.lastError}</Caption>
               ) : null}
             </Card>
           ) : (
             <Card style={{ marginTop: 20 }}>
-              <Body>Queue clear. Back to Today when you’re done.</Body>
+              <Title>All caught up</Title>
+              <Body style={{ marginTop: 8 }}>No pending follow-ups.</Body>
             </Card>
           )}
         </View>
         <View style={styles.actions}>
           {current ? (
             <>
-              <Button label="Send SMS" disabled={busy} onPress={send} />
+              <Button label="Send" disabled={busy} onPress={send} />
+              <Caption style={{ textAlign: "center" }}>{SECURE_SEND_MICROCOPY}</Caption>
               <Button label="Skip" variant="secondary" disabled={busy} onPress={skip} />
             </>
           ) : (

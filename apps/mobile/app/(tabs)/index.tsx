@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Body, Button, Caption, Card, Display, Mono, Pill, Screen } from "@/src/components/ui";
+import { Body, Button, Caption, Card, Display, Pill, Screen } from "@/src/components/ui";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, space } from "@/src/theme/tokens";
 import type { DayPatient } from "@/src/api/types";
@@ -56,8 +56,7 @@ export default function TodayScreen() {
             {olive.user.name} · {olive.day.date}
           </Body>
           <View style={styles.row}>
-            <Pill label="Mocks" tone="mist" />
-            <Mono>audio-disclosure-v1</Mono>
+            <Pill label="Demo" tone="mist" />
           </View>
 
           <View style={{ gap: 12, marginTop: 28 }}>
@@ -79,7 +78,7 @@ export default function TodayScreen() {
           </View>
 
           <View style={{ marginTop: 28, gap: 10 }}>
-            <Button label="Finish day — swipe follow-ups" onPress={finish} />
+            <Button label="Finish day" onPress={finish} />
             <Button label="Reset demo" variant="ghost" onPress={() => olive.resetDemo()} />
           </View>
         </ScrollView>

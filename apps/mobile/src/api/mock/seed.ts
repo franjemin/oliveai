@@ -231,7 +231,7 @@ export const alexSegments: TranscriptSegment[] = [
     id: "seg-5",
     seq: 5,
     speakerLabel: "speaker_clinician",
-    text: "Yes. Audio from this visit is deleted within a day. Your chart note stays with the clinic.",
+    text: "Yes. Audio from this visit stays with the clinic record. Retention is clinic-controlled.",
     startMs: 36000,
     endMs: 42000,
   },

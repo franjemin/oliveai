@@ -1,4 +1,5 @@
 import { DISCLOSURE_SCRIPT_ID } from "@/src/theme/tokens";
+import { AUDIO_RETENTION } from "@/src/copy/retention";
 
 export const AUDIO_DISCLOSURE = {
   id: DISCLOSURE_SCRIPT_ID,
@@ -11,7 +12,7 @@ export const AUDIO_DISCLOSURE = {
     },
     {
       heading: "Why",
-      body: "To draft a clinical note and optional SMS follow-up. Olive does not decide treatment.",
+      body: "To draft a clinical note and an optional secure follow-up. Olive does not decide treatment.",
     },
     {
       heading: "Who can see it",
@@ -22,8 +23,8 @@ export const AUDIO_DISCLOSURE = {
       body: "Canada-first (ca-central-1). Some vendors may process outside Canada — we will say so when that applies.",
     },
     {
-      heading: "Audio is deleted within 24 hours",
-      body: "Visit audio is hard-deleted within about 24 hours after the visit ends. Notes and transcripts are clinic records — they do not share that audio TTL.",
+      heading: AUDIO_RETENTION.heading,
+      body: AUDIO_RETENTION.body,
     },
     {
       heading: "AI limits",

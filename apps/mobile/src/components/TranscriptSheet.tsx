@@ -1,6 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import type { TranscriptSegment } from "@/src/api/types";
+import { AUDIO_RETENTION } from "@/src/copy/retention";
 import { color, radius, space } from "@/src/theme/tokens";
 import { Body, Caption, Mono, Title } from "./ui";
 
@@ -21,10 +22,7 @@ export function TranscriptSheet({
       <View style={styles.sheet}>
         <View style={styles.handle} />
         <Title>Transcript</Title>
-        <Caption style={{ marginTop: 6, marginBottom: 16 }}>
-          Visit audio is deleted within 24 hours. This transcript stays with the clinic record — it does not share
-          that audio TTL.
-        </Caption>
+        <Caption style={{ marginTop: 6, marginBottom: 16 }}>{AUDIO_RETENTION.short}</Caption>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }}>
           {declined ? (
             <Body>No transcript. Recording was declined for this visit.</Body>
