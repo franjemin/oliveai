@@ -4,7 +4,7 @@ import type { AppContext } from "../context.js";
 import { actorOf, sendError } from "../context.js";
 import { AppError, unauthorized } from "../lib/errors.js";
 import { login, publicClinic, publicUser, sessionFromToken } from "../services/auth.js";
-import { deleteVisitAudio, ingestAudio } from "../services/audio.js";
+import { deleteClinicAudio, deleteVisitAudio, ingestAudio } from "../services/audio.js";
 import { listChat, patientProfile, postChat, getPatient } from "../services/chat.js";
 import { getVisit, listVisitConsents, recordConsent, recordingGate } from "../services/consent.js";
 import { dayPatients, dayPatientsErrorShape, finishDay } from "../services/days.js";
@@ -110,6 +110,20 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
     wrap(ctx, async (request) => {
       const { clinic } = await sessionFromToken(ctx, bearer(request));
       return publicClinic(clinic);
+    }),
+  );
+
+  app.post(
+    "/v1/clinic/audio/delete",
+    wrap(ctx, async (request) => {
+      const actor = actorOf(request);
+      const body = z.object({ confirm: z.string() }).parse(request.body ?? {});
+      return deleteClinicAudio(ctx, {
+        clinicId: actor.clinicId,
+        actorId: actor.userId,
+        role: actor.role,
+        confirm: body.confirm,
+      });
     }),
   );
 

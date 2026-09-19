@@ -1,22 +1,43 @@
-# Canada privacy ticket map (Wave A in this PR)
+# Privacy / security ticket map (this PR)
 
-Wave A is implemented **inside the demo Core loop** (invariants + fields), not as new services. Wave B is stub/fields only.
+Wave A + `OLIVE-SEC-*` live **inside the demo Core loop**, not as new services. Honest status after the **audio retention reverse** (no 24h auto-delete).
 
-| Ticket | Wave | Where | Notes |
-| --- | --- | --- | --- |
-| **OLI-6** consent evidence | A | `consents` row + `GET /v1/visits/:id/consents` | Stores type, granted, `disclosure_script_id`, `granted_at`, actor, visit_id |
-| **OLI-9** refuse path | A | `GET /v1/visits/:id/recording-gate` + ingest 403 | Server-side only; FE owns sheet UX |
-| **OLI-5** sign gate + draft-only mutate | A | `PATCH /v1/visits/:id/note` | 403 `note_signed_immutable` after sign |
-| **OLI-8** immutable signed snapshot | A | `notes.snapshot` on `POST .../note/sign` | Never auto-sign |
-| **OLI-11** audio 24h / notes+transcripts long TTL | A | `audio.delete_after = ended_at+24h`; `retention_until` ~10y | Worker deletes audio object only; no cascade |
-| **OLI-15** CASL send gate | A | `POST /v1/follow-ups/:id/send` | Per `message_class`; promotional fail-closed; send is **stub** (fake vendor) |
-| **OLI-16** clinic SMS identity + STOP | A | `clinics.sms_identity`; `messaging_opt_outs` | Fail-closed on missing identity or STOP |
-| **OLI-19** training off by default | A | `flags.phiTrainingAllowed=false` | Express disclosure required to grant `training` consent |
-| **OLI-12** tenant + roles | A (no MFA) | `clinic_id` is tenant; API also returns `tenantId` | Roles: `dentist` \| `staff` \| `admin`. **MFA = Wave B — skipped** |
-| **OLI-13** AuditEvent on PHI touch | A | `audit_events` | ingest / generate / sign / send / delete / consent |
-| **Encryption baseline** | A (not deferred) | TLS + at-rest | API TLS certs or terminator. Audio: AES-256-GCM before put (never plaintext object) + MinIO SSE-S3. Postgres: `DATABASE_SSL` (on in production) + encrypted volume outside local compose. |
-| **OLI-14** KMS/CMEK + log polish | B | later | Replaces local MinIO/app keys with CMEK; no-PHI-in-logs verification polish |
-| **OLI-12 MFA** | B | — | Not in demo |
-| **OLI-20** PHIPA agreement | B | `clinics.phipa_agreement_*` nullable | Non-blocking for local/demo |
+Status: **covered** | **partial** | **gap** | **deferred**
 
-See also `apps/api/docs/hipaa-invariants.md` and `contracts/openapi.yaml`.
+## Build-now (Wed dry-run: consent gate, sign, CASL send stub must stay solid)
+
+| SEC-ID | OLI-* | Where in `apps/api` | Status | Honest notes |
+| --- | --- | --- | --- | --- |
+| **OLIVE-SEC-001** | OLI-6, OLI-9 | `services/consent.ts`; `GET /v1/visits/:id/recording-gate`; `POST .../consent` | **partial** | Server gate + visit-scoped `audio_capture` + `disclosure_script_id`. **FE owns consent sheet UX.** No SDM / multi-party / channel enums. |
+| **OLIVE-SEC-002** | OLI-6 | `consents` + `GET /v1/visits/:id/consents` | **partial** | Evidence = type, granted, script id, `granted_at`, actor, visit. **No** `verbal_attested`, dedicated refuse-outcome enum, or append-only/WORM evidence log. Deny = `granted: false` + gate `reason`. |
+| **OLIVE-SEC-004** | OLI-5 | `PATCH /v1/visits/:id/note` | **partial** | Draft-only mutate (403 after sign). No `aiAssistedDraft` field — **FE can badge from `status === "draft"`**. |
+| **OLIVE-SEC-005** | OLI-8 | `POST .../note/sign` → `notes.snapshot` | **partial** | Immutable snapshot on sign. **Post-sign correction / amendment trail = gap** (not built). |
+| **OLIVE-SEC-006** | OLI-11 | ingest + worker (no purge job) | **covered** | **Product lock: no auto-delete.** Audio default **keep** (clinic-controlled, same class as notes). `delete_after` unused. Storage cost later. |
+| **OLIVE-SEC-008** | (encryption baseline) | `lib/encryption.ts`, TLS/SSL config, MinIO SSE-S3 | **covered** | TLS in transit; AES-256-GCM audio objects; `DATABASE_SSL` in production. |
+| **OLIVE-SEC-009** | OLI-12 | `clinic_id` / `tenantId`; roles `dentist` \| `staff` \| `admin` | **partial** | Tenant + RBAC. **MFA + break-glass = Wave B / deferred.** |
+| **OLIVE-SEC-010** | OLI-13 | `audit_events` on PHI touch | **partial** | Write-side audit on ingest/generate/sign/send/delete/consent. **No admin audit query API; no WORM.** |
+| **OLIVE-SEC-012** | OLI-15 | `POST /v1/follow-ups/:id/send` | **covered** | CASL per `message_class`; promotional fail-closed. Send is **stub** (fake vendor). |
+| **OLIVE-SEC-013** | OLI-16 | `clinics.sms_identity`; `messaging_opt_outs` | **covered** | Clinic identity on SMS; STOP fail-closed. |
+| **OLIVE-SEC-015** | OLI-19 | `flags.phiTrainingAllowed=false` | **covered** | Training off; express disclosure required to grant `training`. |
+| **OLIVE-SEC-017** | OLI-20 | `clinics.phipa_agreement_*` + [`docs/data-map.md`](data-map.md) | **partial** | Nullable PHIPA fields (non-blocking). Thin data-map stub only — not Legal contract prose. |
+| **OLIVE-SEC-007** | (clinic delete) | `DELETE /v1/visits/:id/audio`; `POST /v1/clinic/audio/delete` | **partial** | Clinic-initiated / EoC audio delete only (admin for clinic-wide). **Litigation hold / longer-retain override / backup purge job = gap deferred.** Backup copies: operator must purge within the org backup window (placeholder — not automated). |
+
+## After Core loop (deferred)
+
+| SEC-ID | Status | Notes |
+| --- | --- | --- |
+| **OLIVE-SEC-003** | **deferred** | After Core loop (not in demo week). |
+| **OLIVE-SEC-007** hold / backup automation | **deferred** | See partial clinic-delete above; hold + backup-window automation later. |
+| **OLIVE-SEC-011** | **deferred** | After Core loop. |
+| **OLIVE-SEC-014** | **deferred** | After Core loop. KMS/CMEK + no-PHI-in-logs polish is also **OLI-14 / Wave B**. |
+| **OLIVE-SEC-016** | **deferred** | After Core loop. |
+
+## Wave B (do not block demo)
+
+| ID | Status |
+| --- | --- |
+| OLI-14 / SEC-014 hardening | KMS/CMEK, log polish |
+| OLI-12 MFA | Not in demo |
+| OLI-20 PHIPA go-live gate | Fields exist; do not block local |
+
+See `apps/api/docs/hipaa-invariants.md` and `contracts/openapi.yaml`.

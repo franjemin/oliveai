@@ -6,7 +6,7 @@ import { recordConsent } from "../src/services/consent.js";
 import { createFollowUp, sendFollowUp } from "../src/services/followups.js";
 import { patchNote, signNote } from "../src/services/notes.js";
 import { processQueuedJobs } from "../src/services/transcript.js";
-import { notes, transcripts } from "../src/db/schema.js";
+import { audioAssets, notes, transcripts } from "../src/db/schema.js";
 import { and, eq } from "drizzle-orm";
 import { auth, createTestKit, type TestKit } from "./helpers.js";
 
@@ -164,6 +164,45 @@ describe("Olive v1 privacy invariants", () => {
       .where(and(eq(transcripts.clinicId, DEMO.clinicId), eq(transcripts.visitId, DEMO.visitAlexId)));
     expect(noteRows).toHaveLength(1);
     expect(txRows).toHaveLength(1);
+  });
+
+  it("does not auto-TTL audio on visit end; clinic-wide delete is admin-only", async () => {
+    kit = await createTestKit();
+    await recordConsent(kit.ctx.db, {
+      clinicId: DEMO.clinicId,
+      actorId: DEMO.userId,
+      patientId: DEMO.patientAlexId,
+      visitId: DEMO.visitAlexId,
+      type: "audio_capture",
+      granted: true,
+      disclosureScriptId: DEMO.audioDisclosureScriptId,
+    });
+    await ingestAudio(kit.ctx, {
+      clinicId: DEMO.clinicId,
+      actorId: DEMO.userId,
+      visitId: DEMO.visitAlexId,
+      bytes: Buffer.from("keep-me"),
+    });
+    await kit.app.inject({
+      method: "POST",
+      url: `/v1/visits/${DEMO.visitAlexId}/end`,
+      headers: auth(kit.token),
+    });
+    const rows = await kit.ctx.db
+      .select()
+      .from(audioAssets)
+      .where(and(eq(audioAssets.clinicId, DEMO.clinicId), eq(audioAssets.visitId, DEMO.visitAlexId)));
+    expect(rows[0]?.deletedAt).toBeNull();
+    expect(rows[0]?.deleteAfter).toBeNull();
+
+    const clinicDelete = await kit.app.inject({
+      method: "POST",
+      url: "/v1/clinic/audio/delete",
+      headers: auth(kit.token),
+      payload: { confirm: "delete-clinic-audio" },
+    });
+    expect(clinicDelete.statusCode).toBe(403);
+    expect(clinicDelete.json()).toMatchObject({ error: "admin_required" });
   });
 
   it("session bootstrap exposes flags defaulting off, including training", async () => {

@@ -1,10 +1,9 @@
-import { and, eq, isNull, lte } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { AppContext } from "../context.js";
-import { audioAssets, notes, transcriptSegments, transcripts, visits } from "../db/schema.js";
+import { audioAssets, notes, transcripts, visits } from "../db/schema.js";
 import { audit } from "../lib/audit.js";
-import { forbidden, notFound } from "../lib/errors.js";
+import { forbidden, notFound, unprocessable } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
-import { audioDeleteAfter } from "../lib/retention.js";
 import { audioObjectKey, checksumOf } from "../vendors/storage.js";
 import { recordingGate } from "./consent.js";
 import { enqueueTranscription } from "./transcript.js";
@@ -36,10 +35,6 @@ export async function ingestAudio(
   const objectKey = audioObjectKey(input.clinicId, input.visitId, id);
   await ctx.storage.put(objectKey, input.bytes, input.contentType);
 
-  const deleteAfter = visit.endedAt
-    ? audioDeleteAfter(visit.endedAt, ctx.config.audioRetentionHours)
-    : null;
-
   const [asset] = await ctx.db
     .insert(audioAssets)
     .values({
@@ -50,7 +45,7 @@ export async function ingestAudio(
       contentType: input.contentType ?? "audio/webm",
       byteSize: input.bytes.length,
       checksum: checksumOf(input.bytes),
-      deleteAfter,
+      deleteAfter: null,
       createdAt: new Date(),
     })
     .returning();
@@ -61,7 +56,11 @@ export async function ingestAudio(
     action: "audio.ingest",
     resourceType: "audio_asset",
     resourceId: id,
-    metadata: { visitId: input.visitId, disclosureScriptId: gate.disclosureScriptId },
+    metadata: {
+      visitId: input.visitId,
+      disclosureScriptId: gate.disclosureScriptId,
+      retention: "keep",
+    },
   });
 
   const job = await enqueueTranscription(ctx, {
@@ -73,6 +72,34 @@ export async function ingestAudio(
   return { asset, job };
 }
 
+async function hardDeleteAssets(
+  ctx: AppContext,
+  input: { clinicId: string; actorId: string; assets: (typeof audioAssets.$inferSelect)[]; reason: string },
+) {
+  for (const asset of input.assets) {
+    await ctx.storage.delete(asset.objectKey);
+    await ctx.db
+      .update(audioAssets)
+      .set({ deletedAt: new Date() })
+      .where(eq(audioAssets.id, asset.id));
+    await audit(ctx.db, {
+      clinicId: input.clinicId,
+      actorId: input.actorId,
+      action: "audio.delete",
+      resourceType: "audio_asset",
+      resourceId: asset.id,
+      metadata: {
+        visitId: asset.visitId,
+        reason: input.reason,
+        cascadeNotes: false,
+        cascadeTranscripts: false,
+        autoPurge: false,
+      },
+    });
+  }
+}
+
+/** Clinic-initiated per-visit delete. Never auto-TTL. Does not cascade notes/transcripts. */
 export async function deleteVisitAudio(
   ctx: AppContext,
   input: { clinicId: string; actorId: string; visitId: string },
@@ -88,23 +115,8 @@ export async function deleteVisitAudio(
       ),
     );
 
-  for (const asset of assets) {
-    await ctx.storage.delete(asset.objectKey);
-    await ctx.db
-      .update(audioAssets)
-      .set({ deletedAt: new Date() })
-      .where(eq(audioAssets.id, asset.id));
-    await audit(ctx.db, {
-      clinicId: input.clinicId,
-      actorId: input.actorId,
-      action: "audio.delete",
-      resourceType: "audio_asset",
-      resourceId: asset.id,
-      metadata: { visitId: input.visitId, cascadeNotes: false, cascadeTranscripts: false },
-    });
-  }
+  await hardDeleteAssets(ctx, { ...input, assets, reason: "clinic_visit_delete" });
 
-  // Invariant: never cascade-delete notes or transcripts with audio.
   const remainingNotes = await ctx.db
     .select({ id: notes.id })
     .from(notes)
@@ -121,43 +133,24 @@ export async function deleteVisitAudio(
   };
 }
 
-export async function sweepExpiredAudio(ctx: AppContext): Promise<number> {
-  const now = new Date();
-  const expired = await ctx.db
+/** SEC-007-style clinic / end-of-contract audio delete. No notes/transcripts cascade. */
+export async function deleteClinicAudio(
+  ctx: AppContext,
+  input: { clinicId: string; actorId: string; role: string; confirm: string },
+) {
+  if (input.role !== "admin") {
+    throw forbidden("admin_required", "Clinic-wide audio delete is an admin / end-of-contract path");
+  }
+  if (input.confirm !== "delete-clinic-audio") {
+    throw unprocessable("confirm_required", 'Send { "confirm": "delete-clinic-audio" }');
+  }
+
+  const assets = await ctx.db
     .select()
     .from(audioAssets)
-    .where(and(isNull(audioAssets.deletedAt), lte(audioAssets.deleteAfter, now)));
+    .where(and(eq(audioAssets.clinicId, input.clinicId), isNull(audioAssets.deletedAt)));
 
-  for (const asset of expired) {
-    await ctx.storage.delete(asset.objectKey);
-    await ctx.db.update(audioAssets).set({ deletedAt: now }).where(eq(audioAssets.id, asset.id));
-    await audit(ctx.db, {
-      clinicId: asset.clinicId,
-      action: "audio.retention_delete",
-      resourceType: "audio_asset",
-      resourceId: asset.id,
-      metadata: {
-        visitId: asset.visitId,
-        deleteAfter: asset.deleteAfter,
-        notesUntouched: true,
-        transcriptsUntouched: true,
-      },
-    });
-  }
-  return expired.length;
-}
+  await hardDeleteAssets(ctx, { clinicId: input.clinicId, actorId: input.actorId, assets, reason: "clinic_eoc_delete" });
 
-export async function applyAudioTtlOnVisitEnd(
-  ctx: AppContext,
-  clinicId: string,
-  visitId: string,
-  endedAt: Date,
-) {
-  const deleteAfter = audioDeleteAfter(endedAt, ctx.config.audioRetentionHours);
-  await ctx.db
-    .update(audioAssets)
-    .set({ deleteAfter })
-    .where(
-      and(eq(audioAssets.clinicId, clinicId), eq(audioAssets.visitId, visitId), isNull(audioAssets.deletedAt)),
-    );
+  return { deleted: assets.length, notesUntouched: true, transcriptsUntouched: true };
 }

@@ -1,7 +1,6 @@
 import path from "node:path";
 import { loadConfig } from "./config.js";
 import { createDb, createSql } from "./db/client.js";
-import { sweepExpiredAudio } from "./services/audio.js";
 import { processQueuedJobs } from "./services/transcript.js";
 import { createLocalObjectStore } from "./vendors/storage.js";
 import { createStubTranscriptionVendor } from "./vendors/transcription.js";
@@ -49,11 +48,11 @@ async function sweepLongRetention(): Promise<number> {
   return expiredNotes.length + expiredTranscripts.length;
 }
 
-export async function runWorkerOnce(): Promise<{ transcripts: number; audioDeletes: number; longRetention: number }> {
+export async function runWorkerOnce(): Promise<{ transcripts: number; longRetention: number }> {
   const transcriptsProcessed = await processQueuedJobs(ctx);
-  const audioDeletes = await sweepExpiredAudio(ctx);
+  // Product lock: do not auto-delete audio. Retention is clinic-controlled (default keep).
   const longRetention = await sweepLongRetention();
-  return { transcripts: transcriptsProcessed, audioDeletes, longRetention };
+  return { transcripts: transcriptsProcessed, longRetention };
 }
 
 async function loop() {

@@ -39,7 +39,6 @@ export type AppConfig = {
     secretKey?: string;
     forcePathStyle: boolean;
   };
-  audioRetentionHours: number;
   noteTranscriptRetentionYears: number;
   flags: FeatureFlags;
   databaseSsl: boolean;
@@ -79,7 +78,6 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
       certPath: process.env.TLS_CERT_PATH,
       keyPath: process.env.TLS_KEY_PATH,
     },
-    audioRetentionHours: num(process.env.AUDIO_RETENTION_HOURS, 24),
     noteTranscriptRetentionYears: num(process.env.NOTE_TRANSCRIPT_RETENTION_YEARS, 10),
     flags,
     demo: {

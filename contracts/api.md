@@ -56,7 +56,8 @@ Consent body:
 
 - `POST /v1/visits` `{ patientId }`
 - `GET /v1/visits/:id`
-- `POST /v1/visits/:id/end` — sets `audio.delete_after = ended_at + 24h`
+- `POST /v1/visits/:id/end` — completes the visit. Audio is **kept** (no auto-TTL).
+- `POST /v1/clinic/audio/delete` `{ "confirm": "delete-clinic-audio" }` — admin / end-of-contract audio delete only (SEC-007). Does not cascade notes/transcripts.
 
 ### `GET /v1/visits/:id/consents`
 OLI-6 consent evidence (disclosure script id, granted_at, actor, type).

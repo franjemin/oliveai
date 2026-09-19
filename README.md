@@ -44,18 +44,21 @@ Seeded visit: `00000000-0000-4000-8000-000000000005`
 
 Contracts for FE mocks: [`contracts/openapi.yaml`](contracts/openapi.yaml). Invariants: [`apps/api/docs/hipaa-invariants.md`](apps/api/docs/hipaa-invariants.md). Full ticket notes: [`docs/privacy-tickets.md`](docs/privacy-tickets.md).
 
-### Privacy tickets (Wave A in this PR — not new services)
+**Audio retention (product lock):** default **keep**. No 24h auto-delete. Clinic-initiated delete only (`DELETE /v1/visits/:id/audio` or admin `POST /v1/clinic/audio/delete`).
 
-| ID | In demo Core |
+Privacy / SEC map (OLI-* + **OLIVE-SEC-***): [`docs/privacy-tickets.md`](docs/privacy-tickets.md). Data-map stub: [`docs/data-map.md`](docs/data-map.md).
+
+| SEC / OLI | Demo Core |
 | --- | --- |
-| OLI-6 | Consent evidence — `GET /v1/visits/:id/consents` |
-| OLI-9 | Server-side refuse — `GET /v1/visits/:id/recording-gate` (FE owns sheet UX) |
-| OLI-5 | Sign gate + draft-only `PATCH` |
-| OLI-8 | Immutable `notes.snapshot` on sign |
-| OLI-11 | Audio hard-delete `ended_at+24h`; notes/transcripts ~10y |
-| OLI-15 / OLI-16 | CASL send gate + clinic SMS identity + STOP (stub send) |
-| OLI-19 | `phiTrainingAllowed` default false |
-| OLI-12 | `tenantId` + roles `dentist` \| `staff` \| `admin` — **no MFA** |
-| OLI-13 | `audit_events` on PHI touch |
+| SEC-001/002 · OLI-6/9 | Consent gate + evidence (FE owns sheet; SDM/verbal partial) |
+| SEC-004/005 · OLI-5/8 | Draft-only mutate + immutable sign (no correction trail) |
+| SEC-006 · OLI-11 | **Keep audio** — no auto-purge |
+| SEC-007 | Clinic/EoC delete path (partial; no hold/backup job) |
+| SEC-008 | TLS + at-rest encryption baseline |
+| SEC-009 · OLI-12 | Tenant + roles — no MFA |
+| SEC-010 · OLI-13 | Audit writes — no query API/WORM |
+| SEC-012/013 · OLI-15/16 | CASL + SMS ID + STOP (stub send) |
+| SEC-015 · OLI-19 | Training flag off |
+| SEC-017 · OLI-20 | Nullable PHIPA + data-map stub |
 
-Wave B (do not block demo): OLI-14 KMS/CMEK later; OLI-12 MFA later; OLI-20 PHIPA fields nullable on clinic.
+Deferred after Core: SEC-003, 011, 014, 016 (and hold/backup automation).

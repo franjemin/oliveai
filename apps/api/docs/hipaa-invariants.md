@@ -29,14 +29,16 @@ Before SMS:
 
 Secure/in-app thread uses the same `MessagingVendor` interface.
 
-## 4. Retention split (audio ≠ notes/transcripts)
+## 4. Retention (clinic-controlled; **no audio auto-delete**)
 
-- Audio: `delete_after = visit.ended_at + 24h`. Worker hard-deletes the object, sets `deleted_at`, audits. **Does not** delete notes or transcripts.
-- Notes + transcripts: independent `retention_until` (~10y RCDSO-class, configurable). Separate sweep; never cascade with audio.
+- **Product lock:** do **not** auto-delete audio. There is no `ended_at+24h` purge job.
+- Audio default is **keep**, clinic-controlled alongside notes. Delete only via clinic-initiated visit delete or admin `POST /v1/clinic/audio/delete` (end-of-contract / SEC-007).
+- Notes + transcripts: independent ~10y `retention_until`. **Never** cascade-delete with audio.
+- Backup purge window and litigation hold are **not** automated (document placeholder / deferred).
 
 ## 5. Audit PHI access / generate / sign / send / delete
 
-`audit_events` is clinic-scoped. Covered actions include `audio.ingest`, `audio.delete`, `audio.retention_delete`, `transcript.generate`, `note.patch`, `note.sign`, `follow_up.send`, `follow_up.send_failed`, `consent.grant`, `pms.import`, `day.finish`.
+`audit_events` is clinic-scoped. Covered actions include `audio.ingest`, `audio.delete`, `transcript.generate`, `note.patch`, `note.sign`, `follow_up.send`, `follow_up.send_failed`, `consent.grant`, `pms.import`, `day.finish`. No admin audit query API / WORM in this scaffold.
 
 ## 6. No PHI training without express patient consent
 

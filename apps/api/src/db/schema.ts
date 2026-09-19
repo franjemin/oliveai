@@ -126,6 +126,7 @@ export const audioAssets = pgTable("audio_assets", {
   contentType: text("content_type").notNull().default("audio/webm"),
   byteSize: integer("byte_size").notNull().default(0),
   checksum: text("checksum"),
+  /** Unused — product lock: no auto-TTL. Clinic-controlled keep; delete only via clinic-initiated path. */
   deleteAfter: timestamp("delete_after", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });

@@ -4,7 +4,6 @@ import { visits } from "../db/schema.js";
 import { audit } from "../lib/audit.js";
 import { conflict } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
-import { applyAudioTtlOnVisitEnd } from "./audio.js";
 import { getPatient } from "./chat.js";
 import { getVisit } from "./consent.js";
 
@@ -50,14 +49,13 @@ export async function endVisit(
     .set({ status: "completed", endedAt })
     .where(and(eq(visits.id, visit.id), eq(visits.clinicId, input.clinicId)))
     .returning();
-  await applyAudioTtlOnVisitEnd(ctx, input.clinicId, visit.id, endedAt);
   await audit(ctx.db, {
     clinicId: input.clinicId,
     actorId: input.actorId,
     action: "visit.end",
     resourceType: "visit",
     resourceId: visit.id,
-    metadata: { audioDeleteAfterHours: ctx.config.audioRetentionHours },
+    metadata: { audioRetention: "keep", autoPurge: false },
   });
   return updated;
 }

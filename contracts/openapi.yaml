@@ -111,6 +111,33 @@ paths:
                 properties:
                   flags: { $ref: "#/components/schemas/FeatureFlags" }
 
+  /v1/clinic/audio/delete:
+    post:
+      tags: [Recording]
+      summary: SEC-007 clinic / end-of-contract audio delete (admin). No notes/transcripts cascade. No auto-TTL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: string, example: delete-clinic-audio }
+      responses:
+        "200":
+          description: Clinic audio deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: integer }
+                  notesUntouched: { type: boolean }
+                  transcriptsUntouched: { type: boolean }
+        "403":
+          description: admin_required
+
   /v1/clinic:
     get:
       tags: [Auth]
@@ -271,7 +298,7 @@ paths:
         - $ref: "#/components/parameters/Id"
       responses:
         "200":
-          description: Visit completed; audio delete_after = ended_at + 24h
+          description: Visit completed. Audio is kept (clinic-controlled; no auto-TTL).
           content:
             application/json:
               schema:
@@ -370,7 +397,7 @@ paths:
                 $ref: "#/components/schemas/Error"
     delete:
       tags: [Recording]
-      summary: Hard-delete audio object; does not cascade notes/transcripts
+      summary: Clinic-initiated visit audio delete (no auto-TTL). Does not cascade notes/transcripts.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -882,7 +909,7 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: Set to visit.ended_at + 24h
+          description: Unused. Audio default is keep; no 24h auto-delete.
         deletedAt: { type: string, format: date-time, nullable: true }
 
     TranscriptionJob:

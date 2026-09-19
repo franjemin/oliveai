@@ -64,7 +64,7 @@ curl -sS -X POST "$BASE/v1/follow-ups/$FU2/skip" "${auth[@]}" \
   -d '{"reason":"patient prefers phone"}' | python3 -m json.tool
 
 echo
-echo "== end visit (sets audio delete_after = ended_at + 24h)"
+echo "== end visit (audio kept — no auto-TTL)"
 curl -sS -X POST "$BASE/v1/visits/$VISIT/end" -H "authorization: Bearer $TOKEN" | python3 -m json.tool
 
 echo
