@@ -8,12 +8,10 @@ export default function PatientsShell() {
   return (
     <Screen>
       <SafeAreaView style={styles.pad} edges={["top"]}>
-        <Caption>Deferred</Caption>
+        <Caption>Clinic</Caption>
         <Title>Patients</Title>
         <View style={{ marginTop: 16 }}>
-          <Body style={{ color: color.inkMuted }}>
-            Chart chrome, memories, and PMS profiles are out of the Sep 22 demo. Today is the visit spine.
-          </Body>
+          <Body style={{ color: color.inkMuted }}>Use Today to open a visit.</Body>
         </View>
       </SafeAreaView>
     </Screen>

@@ -4,10 +4,10 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { ConsentParty } from "@/src/api/types";
-import { Body, Button, Caption, Mono, Pill, Screen, Title } from "@/src/components/ui";
+import { Body, Button, Caption, Screen, Title } from "@/src/components/ui";
 import { AUDIO_DISCLOSURE } from "@/src/copy/consent";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, radius, space } from "@/src/theme/tokens";
+import { color, space } from "@/src/theme/tokens";
 
 export default function ConsentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,6 +16,8 @@ export default function ConsentScreen() {
   const [party, setParty] = useState<ConsentParty>("patient");
   const [busy, setBusy] = useState<"accept" | "refuse" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [why, setWhy] = useState(false);
+  const [sdm, setSdm] = useState(false);
   const patient = olive.day.patients.find((p) => p.visitId === id);
 
   const accept = async () => {
@@ -50,75 +52,53 @@ export default function ConsentScreen() {
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Pressable onPress={() => router.back()} style={{ marginBottom: 8 }}>
+          <Pressable onPress={() => router.back()}>
             <Caption style={{ color: color.olive }}>← Today</Caption>
           </Pressable>
-          <Caption>Per-visit consent · {patient?.displayName ?? "Patient"}</Caption>
+          <Caption style={{ marginTop: 16 }}>{patient?.displayName ?? "Patient"}</Caption>
           <Title style={{ marginTop: 6 }}>{AUDIO_DISCLOSURE.title}</Title>
-          <Body style={{ marginTop: 10, color: color.inkMuted }}>{AUDIO_DISCLOSURE.lead}</Body>
-          <View style={styles.idRow}>
-            <Pill label="Versioned disclosure" tone="olive" />
-            <Mono>{AUDIO_DISCLOSURE.id}</Mono>
-          </View>
+          <Body style={{ marginTop: 12, color: color.inkMuted }}>{AUDIO_DISCLOSURE.lead}</Body>
 
-          <View style={{ marginTop: 22, gap: 16 }}>
-            {AUDIO_DISCLOSURE.points.map((pt) => (
-              <View key={pt.heading}>
-                <Caption style={{ color: color.oliveInk }}>{pt.heading}</Caption>
-                <Body style={{ marginTop: 4 }}>{pt.body}</Body>
-              </View>
-            ))}
-          </View>
+          <Pressable onPress={() => setWhy((v) => !v)} style={{ marginTop: 20 }}>
+            <Caption style={{ color: color.olive }}>{why ? "Hide details" : "Why we ask"}</Caption>
+          </Pressable>
+          {why ? (
+            <View style={{ marginTop: 14, gap: 14 }}>
+              {AUDIO_DISCLOSURE.points.map((pt) => (
+                <View key={pt.heading}>
+                  <Caption style={{ color: color.oliveInk }}>{pt.heading}</Caption>
+                  <Body style={{ marginTop: 4 }}>{pt.body}</Body>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
-          <Caption style={{ marginTop: 24 }}>Whose consent</Caption>
-          <View style={styles.partyRow}>
-            <PartyChip label="Patient" active={party === "patient"} onPress={() => setParty("patient")} />
-            <PartyChip label="Substitute decision-maker" active={party === "sdm"} onPress={() => setParty("sdm")} />
-          </View>
+          <Pressable onPress={() => setSdm((v) => !v)} style={{ marginTop: 18 }}>
+            <Caption style={{ color: color.inkFaint }}>{sdm ? "Consent is for the patient" : "Not the patient?"}</Caption>
+          </Pressable>
+          {sdm ? (
+            <Pressable onPress={() => setParty(party === "sdm" ? "patient" : "sdm")} style={{ marginTop: 8 }}>
+              <Caption style={{ color: color.olive }}>
+                {party === "sdm" ? "Using substitute decision-maker" : "Use substitute decision-maker"}
+              </Caption>
+            </Pressable>
+          ) : null}
 
-          {error ? (
-            <Body style={{ color: color.refuse, marginTop: 16 }}>{error}</Body>
-          ) : (
-            <Caption style={{ marginTop: 16 }}>
-              Microphone stays closed until Accept succeeds and recording-gate returns allowed.
-            </Caption>
-          )}
+          {error ? <Body style={{ color: color.refuse, marginTop: 16 }}>{error}</Body> : null}
         </ScrollView>
         <View style={styles.actions}>
           <Button label="Start recording" disabled={busy !== null} onPress={accept} />
-          <Caption style={{ textAlign: "center" }}>
-            By starting, you confirm they agreed to this visit’s AI scribe.
-          </Caption>
-          <Button label="Refuse recording" variant="refuse" disabled={busy !== null} onPress={refuse} />
+          <Pressable onPress={refuse} disabled={busy !== null} style={styles.refuse}>
+            <Caption style={{ color: color.refuse, textAlign: "center" }}>Refuse recording</Caption>
+          </Pressable>
         </View>
       </SafeAreaView>
     </Screen>
   );
 }
 
-function PartyChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.chip,
-        { backgroundColor: active ? color.okSoft : color.white, borderColor: active ? color.oliveSoft : color.line },
-      ]}
-    >
-      <Caption style={{ color: active ? color.oliveInk : color.inkMuted }}>{label}</Caption>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 24 },
-  idRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 16, flexWrap: "wrap" },
-  partyRow: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" },
-  chip: {
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  actions: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: 10 },
+  actions: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: 8 },
+  refuse: { paddingVertical: 12 },
 });

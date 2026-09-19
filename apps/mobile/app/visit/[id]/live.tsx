@@ -51,12 +51,6 @@ export default function LiveScreen() {
   }, [edge, id]);
 
   useEffect(() => {
-    if (!capturing || edge === "bad-audio") return;
-    const t = setTimeout(() => setBadAudio(true), 1600);
-    return () => clearTimeout(t);
-  }, [capturing, edge]);
-
-  useEffect(() => {
     if (!capturing || paused) return;
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(t);
@@ -89,9 +83,6 @@ export default function LiveScreen() {
     <Screen>
       <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
         <View style={styles.wash} />
-        <Pressable onPress={() => router.back()} style={{ alignSelf: "flex-start", marginBottom: 8 }}>
-          <Caption style={{ color: color.olive }}>← Back</Caption>
-        </Pressable>
         {badAudio ? (
           <View style={styles.badBanner}>
             <Caption style={{ color: color.warn }}>{EDGE.badAudio.title}</Caption>
@@ -106,15 +97,16 @@ export default function LiveScreen() {
                   setCapturing(true);
                 }}
               />
-              <Button label={EDGE.badAudio.continueAnyway} variant="ghost" onPress={() => setBadAudio(false)} />
+              <Pressable onPress={() => setBadAudio(false)} style={{ paddingVertical: 10 }}>
+                <Caption style={{ color: color.olive, textAlign: "center" }}>{EDGE.badAudio.continueAnyway}</Caption>
+              </Pressable>
             </View>
           </View>
-        ) : null}
-        <Caption style={{ textAlign: "center" }}>{patient?.displayName ?? "Visit"}</Caption>
-        <Caption style={{ textAlign: "center", marginTop: 4 }}>
-          {gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}
-        </Caption>
+        ) : (
+          <Caption style={{ textAlign: "center" }}>{patient?.displayName ?? "Visit"}</Caption>
+        )}
         <View style={styles.center}>
+          <Caption>{gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}</Caption>
           <Display style={styles.timer}>{clock}</Display>
           <Waveform active={capturing && !paused} />
           {gateError ? (
@@ -122,14 +114,12 @@ export default function LiveScreen() {
           ) : null}
         </View>
         <View style={styles.bottom}>
-          <Button
-            label={paused ? "Resume" : "Pause"}
-            disabled={!capturing}
-            onPress={() => setPaused((p) => !p)}
-          />
-          <Button label="End visit" variant="secondary" onPress={end} />
+          <Button label="End visit" disabled={!capturing && !gateError} onPress={end} />
+          <Pressable onPress={() => setPaused((p) => !p)} disabled={!capturing} style={styles.link}>
+            <Caption style={{ color: color.inkMuted }}>{paused ? "Resume" : "Pause"}</Caption>
+          </Pressable>
           <Pressable onPress={() => setSheet(true)} style={styles.link}>
-            <Body style={{ color: color.olive, fontWeight: "600" }}>View transcript</Body>
+            <Caption style={{ color: color.olive }}>View transcript</Caption>
           </Pressable>
         </View>
         <TranscriptSheet visible={sheet} onClose={() => setSheet(false)} segments={segments} />
@@ -150,14 +140,14 @@ const styles = StyleSheet.create({
     borderRadius: 160,
   },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  timer: { fontSize: 72, lineHeight: 76, marginBottom: 28, letterSpacing: -2 },
-  bottom: { paddingBottom: space.md, gap: 8 },
-  link: { alignItems: "center", paddingVertical: 12 },
+  timer: { fontSize: 72, lineHeight: 76, marginVertical: 20, letterSpacing: -2 },
+  bottom: { paddingBottom: space.md, gap: 4 },
+  link: { alignItems: "center", paddingVertical: 8 },
   badBanner: {
     backgroundColor: color.warnSoft,
     borderRadius: radius.md,
     padding: space.md,
-    marginBottom: space.md,
+    marginTop: space.md,
   },
-  badRow: { marginTop: 12, gap: 8 },
+  badRow: { marginTop: 12, gap: 4 },
 });

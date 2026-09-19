@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
 import { isAiAssistedDraft, type Note } from "@/src/api/types";
-import { Body, Button, Caption, Mono, Pill, Screen, Title } from "@/src/components/ui";
+import { Body, Button, Caption, Pill, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, radius, space } from "@/src/theme/tokens";
@@ -74,24 +74,13 @@ export default function NoteScreen() {
           <Caption style={{ color: color.olive }} onPress={() => router.back()}>
             ← Back
           </Caption>
-          <Caption>{patient?.displayName ?? "Visit"}</Caption>
+          <Caption style={{ marginTop: 16 }}>{patient?.displayName ?? "Visit"}</Caption>
           <Title style={{ marginTop: 4 }}>Note</Title>
           <View style={styles.badges}>
-            {aiDraft && !signed ? <Pill label="AI-assisted draft" tone="warn" /> : null}
             {signed ? <Pill label="Signed" tone="olive" /> : null}
-            {declined ? <Pill label="Recording declined" tone="refuse" /> : null}
-            {!aiDraft && !signed ? <Pill label="Manual draft" tone="mist" /> : null}
+            {!signed && aiDraft ? <Pill label="AI-assisted draft" tone="warn" /> : null}
+            {!signed && declined ? <Pill label="Recording declined" tone="refuse" /> : null}
           </View>
-          {signed ? (
-            <Caption style={{ marginTop: 8 }}>
-              Signed by {olive.user.name} · {note?.signedAt ? new Date(note.signedAt).toLocaleString() : ""}
-            </Caption>
-          ) : (
-            <Caption style={{ marginTop: 8 }}>
-              You are responsible for the accuracy of this record. Sign only after review. Audio stays with the
-              clinic record — retention is clinic-controlled.
-            </Caption>
-          )}
           <TextInput
             multiline
             editable={!signed}
@@ -100,9 +89,6 @@ export default function NoteScreen() {
             style={[styles.input, signed && styles.locked]}
             textAlignVertical="top"
           />
-          {signed && note?.snapshot ? (
-            <Mono style={{ marginTop: 8 }}>Immutable snapshot stored · no silent mutate</Mono>
-          ) : null}
           {error ? <Body style={{ color: color.refuse, marginTop: 10 }}>{error}</Body> : null}
         </ScrollView>
         {confirm ? (
@@ -110,10 +96,9 @@ export default function NoteScreen() {
             <Title>{EDGE.signConfirm.title}</Title>
             <Body style={{ marginTop: 8 }}>{EDGE.signConfirm.oliveTruth}</Body>
             <Caption style={{ marginTop: 8 }}>{EDGE.signConfirm.retention}</Caption>
-            <Caption style={{ marginTop: 4 }}>{EDGE.signConfirm.noOd}</Caption>
-            <View style={{ marginTop: 16, gap: 10 }}>
+            <View style={{ marginTop: 16, gap: 8 }}>
               <Button label={EDGE.signConfirm.sign} disabled={busy} onPress={sign} />
-              <Button label={EDGE.signConfirm.cancel} variant="secondary" onPress={() => setConfirm(false)} />
+              <Button label={EDGE.signConfirm.cancel} variant="ghost" onPress={() => setConfirm(false)} />
             </View>
           </View>
         ) : (
@@ -146,7 +131,7 @@ const styles = StyleSheet.create({
     color: color.ink,
   },
   locked: { backgroundColor: color.mistWash },
-  actions: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: 10 },
+  actions: { paddingHorizontal: space.lg, paddingBottom: space.md },
   confirm: {
     paddingHorizontal: space.lg,
     paddingBottom: space.md,

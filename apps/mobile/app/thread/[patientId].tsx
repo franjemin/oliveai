@@ -40,7 +40,7 @@ export default function SecureThreadScreen() {
           </View>
         </ScrollView>
         <View style={{ paddingHorizontal: space.lg, paddingBottom: space.md }}>
-          <Button label="Back" variant="secondary" onPress={() => router.back()} />
+          <Button label="Done" onPress={() => router.back()} />
         </View>
       </SafeAreaView>
     </Screen>

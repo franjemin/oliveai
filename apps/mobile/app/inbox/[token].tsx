@@ -27,17 +27,11 @@ export default function PatientInboxScreen() {
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Caption>Patient inbox · magic link</Caption>
-          <Title style={{ marginTop: 6 }}>{inbox?.clinicName ?? "Secure message"}</Title>
-          <Caption style={{ marginTop: 6 }}>
-            {inbox
-              ? inbox.patientName
-                ? `For ${inbox.patientName}`
-                : inbox.stub
-                  ? "Magic-link inbox stub"
-                  : "In-app message"
-              : "Opening secure message…"}
-          </Caption>
+          <Caption>Message</Caption>
+          <Title style={{ marginTop: 6 }}>{inbox?.clinicName ?? "Harbourfront Dental"}</Title>
+          {inbox?.patientName ? (
+            <Caption style={{ marginTop: 6 }}>For {inbox.patientName}</Caption>
+          ) : null}
           {error ? <Body style={{ color: color.refuse, marginTop: 16 }}>{error}</Body> : null}
           <View style={{ marginTop: 20, gap: 12 }}>
             {inbox?.messages.map((msg) => (
@@ -50,7 +44,7 @@ export default function PatientInboxScreen() {
           </View>
         </ScrollView>
         <View style={{ paddingHorizontal: space.lg, paddingBottom: space.md }}>
-          <Button label="Back" variant="secondary" onPress={() => router.back()} />
+          <Button label="Done" onPress={() => router.back()} />
         </View>
       </SafeAreaView>
     </Screen>

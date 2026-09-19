@@ -29,14 +29,9 @@ export default function ChatsScreen() {
         <ScrollView contentContainerStyle={styles.pad}>
           <Caption>Clinic</Caption>
           <Title>Chats</Title>
-          <Body style={{ color: color.inkMuted, marginTop: 8 }}>
-            Secure threads after Send. Broader chat chrome is still deferred.
-          </Body>
           <View style={{ marginTop: 20, gap: 12 }}>
             {threads.length === 0 ? (
-              <Card>
-                <Body>No secure threads yet. Send a follow-up from Swipe.</Body>
-              </Card>
+              <Body style={{ color: color.inkMuted }}>Nothing sent yet.</Body>
             ) : (
               threads.map((thread) => {
                 const name =

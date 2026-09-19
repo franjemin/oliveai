@@ -89,17 +89,15 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 
 ## Screens
 
-| Route | What |
-| --- | --- |
-| Today | Day roster, start/continue, Finish day |
-| Consent | Per-visit. **Start recording** + Refuse. Disclosure id stored (not a Today chip). |
-| Consent denied | `visit/[id]/denied` — **Continue without recording** (`01-consent-denied`) |
-| Live | Timer, **Pause**, **End visit**, View transcript (not the full feed) |
-| Bad audio | Top banner on Live — **Fix mic** · **Continue anyway** (`02-bad-audio`) |
-| Transcript sheet (03b) | Diarized feed. Clinic-controlled audio retention copy. |
-| Note / Sign | AI-assisted draft badge; Sign only if `draft`; confirm (`04-sign-confirm`); then **Review follow-ups** |
-| Swipe | Secure-message card (editable) · **Send** / Skip · CASL on notify |
-| Empty swipe | **All caught up** · **Back to Today** (`03-empty-swipe`) |
+| Route | Hero CTA | Happy path |
+| --- | --- | --- |
+| Today | Tap the next patient | Roster only. Finish day is ghost. Reset = long-press Today. |
+| Consent | **Start recording** | Lead + Why we ask. Refuse is a text link (OLI-9). |
+| Consent denied | **Continue without recording** | Edge only |
+| Live | **End visit** | Timer + waveform. Transcript is 03b sheet. Bad-audio only via `?edge=bad-audio`. |
+| Note | **Sign note** | One badge. Confirm is Sign / Cancel. |
+| Swipe | **Send** | Card + microcopy. Skip is a text link. |
+| Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |
 | Chats | Secure threads after Send (not full chat chrome) |
 | Patients | Tab shell |
