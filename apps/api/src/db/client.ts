@@ -5,8 +5,12 @@ import { schema } from "./schema.js";
 
 export type Db = PostgresJsDatabase<typeof schema> | PgliteDatabase<typeof schema>;
 
-export function createSql(databaseUrl: string) {
-  return postgres(databaseUrl, { max: 10, prepare: false });
+export function createSql(databaseUrl: string, ssl = false) {
+  return postgres(databaseUrl, {
+    max: 10,
+    prepare: false,
+    ssl: ssl ? { rejectUnauthorized: true } : false,
+  });
 }
 
 export function createDb(sql: ReturnType<typeof postgres>): Db {

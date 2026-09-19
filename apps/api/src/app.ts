@@ -4,8 +4,14 @@ import { ZodError } from "zod";
 import type { AppContext } from "./context.js";
 import { registerRoutes } from "./routes/index.js";
 
-export async function buildApp(ctx: AppContext) {
-  const app = Fastify({ logger: ctx.config.nodeEnv !== "test" });
+export async function buildApp(
+  ctx: AppContext,
+  serverOpts: { https?: { cert: Buffer; key: Buffer } } = {},
+) {
+  const app = Fastify({
+    logger: ctx.config.nodeEnv !== "test",
+    ...serverOpts,
+  });
   await app.register(cors, { origin: true });
 
   app.addContentTypeParser(

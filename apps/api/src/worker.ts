@@ -13,7 +13,7 @@ import { audit } from "./lib/audit.js";
 
 const once = process.argv.includes("--once");
 const config = loadConfig();
-const sql = createSql(config.databaseUrl);
+const sql = createSql(config.databaseUrl, config.databaseSsl);
 const ctx = {
   db: createDb(sql),
   config,

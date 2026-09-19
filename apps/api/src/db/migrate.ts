@@ -34,7 +34,10 @@ export async function applyMigrationsToPglite(exec: (sql: string) => Promise<unk
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const config = loadConfig();
-  const sql = postgres(config.databaseUrl, { max: 1 });
+  const sql = postgres(config.databaseUrl, {
+    max: 1,
+    ssl: config.databaseSsl ? { rejectUnauthorized: true } : false,
+  });
   try {
     await applyMigrations(sql);
     console.log("migrations applied");

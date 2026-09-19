@@ -94,7 +94,7 @@ export async function seedDemo(db: import("./client.js").Db, password = "demo"):
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const config = loadConfig();
-  const sql = createSql(config.databaseUrl);
+  const sql = createSql(config.databaseUrl, config.databaseSsl);
   const db = createDb(sql);
   try {
     await seedDemo(db, config.demo.password);

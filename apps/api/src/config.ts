@@ -42,6 +42,8 @@ export type AppConfig = {
   audioRetentionHours: number;
   noteTranscriptRetentionYears: number;
   flags: FeatureFlags;
+  databaseSsl: boolean;
+  tls: { certPath?: string; keyPath?: string };
   demo: { email: string; password: string };
 };
 
@@ -71,6 +73,11 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
       accessKey: process.env.S3_ACCESS_KEY,
       secretKey: process.env.S3_SECRET_KEY,
       forcePathStyle: bool(process.env.S3_FORCE_PATH_STYLE, true),
+    },
+    databaseSsl: bool(process.env.DATABASE_SSL, false),
+    tls: {
+      certPath: process.env.TLS_CERT_PATH,
+      keyPath: process.env.TLS_KEY_PATH,
     },
     audioRetentionHours: num(process.env.AUDIO_RETENTION_HOURS, 24),
     noteTranscriptRetentionYears: num(process.env.NOTE_TRANSCRIPT_RETENTION_YEARS, 10),

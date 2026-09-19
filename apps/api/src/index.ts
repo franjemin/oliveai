@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { loadConfig } from "./config.js";
 import { buildApp } from "./app.js";
@@ -8,7 +9,7 @@ import { createFakeMessagingVendor } from "./vendors/messaging.js";
 import { createFakePmsAdapter } from "./vendors/pms.js";
 
 const config = loadConfig();
-const sql = createSql(config.databaseUrl);
+const sql = createSql(config.databaseUrl, config.databaseSsl);
 const ctx = {
   db: createDb(sql),
   config,
@@ -18,6 +19,17 @@ const ctx = {
   pms: createFakePmsAdapter(),
 };
 
-const app = await buildApp(ctx);
+const https =
+  config.tls.certPath && config.tls.keyPath
+    ? {
+        https: {
+          cert: readFileSync(config.tls.certPath),
+          key: readFileSync(config.tls.keyPath),
+        },
+      }
+    : {};
+
+const app = await buildApp(ctx, https);
 await app.listen({ host: config.host, port: config.port });
-console.log(`Olive API listening on http://${config.host}:${config.port} (residency ${config.residencyRegion})`);
+const scheme = https.https ? "https" : "http";
+console.log(`Olive API listening on ${scheme}://${config.host}:${config.port} (residency ${config.residencyRegion})`);

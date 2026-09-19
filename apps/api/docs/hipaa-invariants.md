@@ -60,4 +60,6 @@ All operational tables include `clinic_id` (the tenant; API also returns `tenant
 
 ## 10. Encryption
 
-Audio objects are AES-256-GCM sealed (`ENCRYPTION_KEY`) before they hit the object store (local `.data/objects` or MinIO). Canada-first object-store region is config (`OBJECT_STORE_REGION`).
+**Wave A baseline:** TLS in transit when `TLS_CERT_PATH`/`TLS_KEY_PATH` are set (or a terminator). Audio objects are AES-256-GCM sealed (`ENCRYPTION_KEY`) before MinIO/local `.data/objects`. Postgres uses `DATABASE_SSL` in shared/prod and must sit on an encrypted volume outside local compose. Canada-first object-store region is config (`OBJECT_STORE_REGION`).
+
+**Wave B (OLI-14):** KMS/CMEK and no-PHI-in-logs polish — not in this demo scaffold.

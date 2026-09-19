@@ -8,6 +8,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      # Wave A at-rest: use an encrypted disk/volume in any shared or prod host.
+      # Local compose is plaintext on the developer machine.
       - olive_pg:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U olive -d olive"]

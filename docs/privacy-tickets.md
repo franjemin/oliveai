@@ -14,7 +14,8 @@ Wave A is implemented **inside the demo Core loop** (invariants + fields), not a
 | **OLI-19** training off by default | A | `flags.phiTrainingAllowed=false` | Express disclosure required to grant `training` consent |
 | **OLI-12** tenant + roles | A (no MFA) | `clinic_id` is tenant; API also returns `tenantId` | Roles: `dentist` \| `staff` \| `admin`. **MFA = Wave B — skipped** |
 | **OLI-13** AuditEvent on PHI touch | A | `audit_events` | ingest / generate / sign / send / delete / consent |
-| **OLI-14** encryption hardening | B | `src/lib/encryption.ts` AES-GCM on audio objects | Local key; full KMS/HSM later |
+| **Encryption baseline** | A | TLS + at-rest | API: `TLS_CERT_PATH`/`TLS_KEY_PATH` (or terminator). Audio objects: AES-256-GCM before MinIO/local store. Postgres: `DATABASE_SSL` + encrypted volume in non-local (documented in compose). |
+| **OLI-14** KMS/CMEK + log polish | B | later | No KMS/CMEK in demo; no-PHI-in-logs verification polish deferred |
 | **OLI-12 MFA** | B | — | Not in demo |
 | **OLI-20** PHIPA agreement | B | `clinics.phipa_agreement_*` nullable | Non-blocking for local/demo |
 
