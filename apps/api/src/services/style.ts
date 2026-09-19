@@ -73,7 +73,7 @@ export async function getStyleProfile(db: Db, clinicId: string, clinicianId: str
   };
 }
 
-/** Demo-week heuristic only — not model training. */
+/** Demo simplicity cuts: same-day heuristic only — not model training. */
 export function applyStyle(body: string, profile: StyleProfile): string {
   let out = body.trim();
   if (profile.greeting && !out.toLowerCase().startsWith(profile.greeting.toLowerCase().slice(0, 6))) {
