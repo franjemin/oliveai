@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ApiError } from "@/src/api";
 import { tokenFromInboxPath } from "@/src/api/map";
 import type { FollowUp } from "@/src/api/types";
+import { SwipeDeck } from "@/src/components/SwipeDeck";
 import { Body, Button, Caption, Card, Kicker, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY, VOICE_LEARNING_TOAST } from "@/src/copy/messaging";
@@ -38,7 +39,9 @@ export default function FollowUpsTab() {
   );
 
   const current = queue[0];
+  const next = queue[1];
   const patient = olive.day.patients.find((p) => p.patientId === current?.patientId);
+  const nextPatient = olive.day.patients.find((p) => p.patientId === next?.patientId);
   const index = Math.max(1, total - queue.length + (current ? 1 : 0));
   const progress = total === 0 ? 0 : Math.min(1, (total - queue.length) / total);
 
@@ -76,6 +79,19 @@ export default function FollowUpsTab() {
     }
   };
 
+  const skip = async () => {
+    if (!current) return;
+    setBusy(true);
+    try {
+      await olive.skipFollowUp(current.id);
+      setInboxToken(null);
+      setStatus(null);
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
@@ -85,9 +101,7 @@ export default function FollowUpsTab() {
             <View style={styles.track}>
               <View style={[styles.fill, { width: `${Math.max(8, progress * 100)}%` }]} />
             </View>
-            <Caption>
-              {current ? `${index} of ${Math.max(total, index)}` : "0 of 0"}
-            </Caption>
+            <Caption>{current ? `${index} of ${Math.max(total, index)}` : "0 of 0"}</Caption>
           </View>
 
           {status ? (
@@ -110,24 +124,41 @@ export default function FollowUpsTab() {
           ) : null}
 
           {current ? (
-            <Card style={{ marginTop: 18, flex: 1 }}>
-              <Kicker style={{ color: color.sage }}>Secure message</Kicker>
-              <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
-              <Caption style={{ marginTop: 4 }}>
-                Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
-              </Caption>
-              <View style={styles.message}>
-                <TextInput
-                  multiline
-                  value={draft}
-                  onChangeText={setDraft}
-                  onBlur={() => void saveEdit()}
-                  style={styles.edit}
-                  textAlignVertical="top"
-                />
-                <Caption style={{ color: color.sage, marginTop: 8 }}>Tap to edit</Caption>
-              </View>
-            </Card>
+            <SwipeDeck
+              disabled={busy}
+              onSend={() => void send()}
+              onSkip={() => void skip()}
+              peek={
+                next ? (
+                  <Card style={{ flex: 1 }}>
+                    <Kicker style={{ color: color.sage }}>Secure message</Kicker>
+                    <Title style={styles.cardName}>{nextPatient?.displayName ?? "Patient"}</Title>
+                    <Body numberOfLines={3} style={{ marginTop: 12, color: color.inkMuted }}>
+                      {next.body}
+                    </Body>
+                  </Card>
+                ) : undefined
+              }
+            >
+              <Card style={{ flex: 1 }}>
+                <Kicker style={{ color: color.sage }}>Secure message</Kicker>
+                <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
+                <Caption style={{ marginTop: 4 }}>
+                  Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
+                </Caption>
+                <View style={styles.message}>
+                  <TextInput
+                    multiline
+                    value={draft}
+                    onChangeText={setDraft}
+                    onBlur={() => void saveEdit()}
+                    style={styles.edit}
+                    textAlignVertical="top"
+                  />
+                  <Caption style={{ color: color.sage, marginTop: 8 }}>Tap to edit</Caption>
+                </View>
+              </Card>
+            </SwipeDeck>
           ) : (
             <View style={styles.empty}>
               <Title>{EDGE.emptySwipe.title}</Title>
@@ -145,28 +176,14 @@ export default function FollowUpsTab() {
             <>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
-                  <Button
-                    label="Skip"
-                    variant="secondary"
-                    disabled={busy}
-                    onPress={async () => {
-                      setBusy(true);
-                      try {
-                        await olive.skipFollowUp(current.id);
-                        setInboxToken(null);
-                        setStatus(null);
-                        await load();
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  />
+                  <Button label="Skip" variant="outline" disabled={busy} onPress={() => void skip()} />
                 </View>
-                <View style={{ flex: 1.15 }}>
-                  <Button label="Send" disabled={busy} onPress={() => void send()} />
+                <View style={{ flex: 1 }}>
+                  <Button label="Send" variant="outline" disabled={busy} onPress={() => void send()} />
                 </View>
               </View>
-              <Caption style={{ textAlign: "center", marginTop: 12 }}>{SECURE_SEND_MICROCOPY}</Caption>
+              <Caption style={{ textAlign: "center", marginTop: 8 }}>or tap · swipe right to send, left to skip</Caption>
+              <Caption style={{ textAlign: "center", marginTop: 6 }}>{SECURE_SEND_MICROCOPY}</Caption>
             </>
           ) : (
             <Button label={EDGE.emptySwipe.cta} onPress={() => router.replace("/")} />

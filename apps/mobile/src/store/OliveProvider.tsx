@@ -201,9 +201,26 @@ export function OliveProvider({ children }: { children: ReactNode }) {
         return visit;
       },
       getNote: (visitId) => api.getNote(visitId),
-      patchNote: (visitId, body) => api.patchNote(visitId, body),
+      patchNote: async (visitId, body) => {
+        const current = await api.getNote(visitId);
+        const next = await api.patchNote(visitId, body);
+        await api.recordLearningEvent({
+          source: "note_edit",
+          before: current.body,
+          after: next.body,
+          resourceId: next.id,
+        });
+        return next;
+      },
       signNote: async (visitId) => {
+        const current = await api.getNote(visitId);
         const signed = await api.signNote(visitId);
+        await api.recordLearningEvent({
+          source: "note_sign",
+          before: current.body,
+          after: signed.body,
+          resourceId: signed.id,
+        });
         const existing = await api.listFollowUps(visitId);
         if (existing.length === 0) {
           await api.createFollowUp(

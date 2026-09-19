@@ -102,7 +102,7 @@ export function Button({
   ...rest
 }: PressableProps & {
   label: string;
-  variant?: "primary" | "secondary" | "ghost" | "refuse" | "end";
+  variant?: "primary" | "secondary" | "ghost" | "refuse" | "end" | "outline";
   size?: "md" | "lg";
 }) {
   const palette = {
@@ -111,6 +111,7 @@ export function Button({
     ghost: { bg: "transparent", fg: color.inkMuted, border: "transparent" },
     refuse: { bg: "transparent", fg: color.inkFaint, border: "transparent" },
     end: { bg: color.charcoal, fg: color.white, border: "transparent" },
+    outline: { bg: "transparent", fg: color.charcoal, border: "rgba(44, 43, 40, 0.16)" },
   }[variant];
 
   return (
@@ -139,7 +140,11 @@ export function Button({
           style={[
             styles.btnFill,
             size === "lg" && styles.btnLg,
-            { backgroundColor: palette.bg, borderColor: palette.border },
+            {
+              backgroundColor: palette.bg,
+              borderColor: palette.border,
+              borderWidth: variant === "outline" ? 1.5 : 0,
+            },
           ]}
         >
           <Text style={[styles.btnLabel, size === "lg" && styles.btnLabelLg, { color: palette.fg }]}>{label}</Text>

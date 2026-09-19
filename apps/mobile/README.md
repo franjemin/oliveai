@@ -27,9 +27,8 @@ Copy in this app is **draft pending counsel** — do not treat UX strings as leg
 ```bash
 cd apps/mobile
 npm install
-npx expo start
-# web
-npx expo start --web
+npx expo start --web --port 8081
+# Francesca ASAP path: http://localhost:8081
 ```
 
 ### 2b. Point at Backend PR #1 API
@@ -76,6 +75,7 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 | 6 | Note Sign + post-Sign follow-ups bridge | **wired** |
 | 7 | Swipe **Send** stub / Skip / CASL fail-closed | **wired** (Send = secure message; notify SMS **stub**) |
 | 8 | Product-approved packet: clinic-controlled retention; demo simplicity cuts on primary | **wired** |
+| 9 | Follow-ups gesture: swipe R Send / L Skip + stamp | **wired** |
 | — | Edge states (consent denied, bad-audio banner, empty swipe, sign confirm) | **wired** |
 
 **Send stub meaning:** card preview is **secure message content**. Primary CTA is **Send** (not “Send SMS”). Microcopy: “We’ll text them a link to open it securely.” CASL/STOP fail-closed runs on the **notify** send. After Send: secure thread + patient magic-link inbox.
@@ -98,7 +98,7 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 | Consent denied | **Continue without recording** | Edge only |
 | Live | **Slide to end visit** | Large **Pause**. **View transcript** pill. |
 | Note | **Sign note** | Preview on land. **Edit full note**. After Sign: **Review follow-ups**. |
-| Follow-ups / Swipe | **Send** | Secure message chip. Skip + Send. Voice toast on edit. |
+| Follow-ups / Swipe | Swipe right **Send** / left **Skip** | Secure message chip. Stamp-on-card. Outline buttons are a11y only. Voice toast on edit. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |
 | Chats | Secure threads after Send (not full chat chrome) |
