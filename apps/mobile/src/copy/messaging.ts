@@ -2,6 +2,7 @@ import { clinicSmsFooter } from "./sms";
 
 /** Product lock: the card is a secure message. Notify SMS is a short stub, not the body of record. */
 export const SECURE_SEND_MICROCOPY = "We’ll text them a link to open it securely.";
+/** 05b — toast only after follow-up card edit-save. Do not claim queue rewrite / bulk regen. */
 export const VOICE_LEARNING_TOAST = "Saved — Olive will use this to sound more like you.";
 
 export function notifyStubBody(clinicName: string, inboxPath: string): string {

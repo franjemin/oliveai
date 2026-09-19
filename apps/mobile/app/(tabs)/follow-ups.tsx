@@ -45,12 +45,14 @@ export default function FollowUpsTab() {
   const index = Math.max(1, total - queue.length + (current ? 1 : 0));
   const progress = total === 0 ? 0 : Math.min(1, (total - queue.length) / total);
 
-  const saveEdit = async () => {
+  const saveEdit = async (opts?: { silent?: boolean }) => {
     if (!current || draft === current.body) return;
     const before = current.body;
     await olive.saveFollowUpEdit(current.id, before, draft);
-    setToast(VOICE_LEARNING_TOAST);
-    setTimeout(() => setToast(null), 2800);
+    if (!opts?.silent) {
+      setToast(VOICE_LEARNING_TOAST);
+      setTimeout(() => setToast(null), 2800);
+    }
     await load();
   };
 
@@ -58,7 +60,7 @@ export default function FollowUpsTab() {
     if (!current) return;
     setBusy(true);
     try {
-      if (draft !== current.body) await saveEdit();
+      if (draft !== current.body) await saveEdit({ silent: true });
       const sent = await olive.sendFollowUp(current.id);
       const notify = await olive.lastNotify(sent.id);
       setInboxToken(notify?.inboxToken ?? sent.magicLinkToken ?? tokenFromInboxPath(sent.inboxPath) ?? null);
@@ -168,8 +170,10 @@ export default function FollowUpsTab() {
         </View>
         <View style={styles.actions}>
           {toast ? (
-            <View style={styles.toast}>
-              <Caption style={{ color: color.charcoal, fontFamily: font.uiMed }}>{toast}</Caption>
+            <View style={styles.toast} accessibilityLiveRegion="polite">
+              <Caption style={{ color: color.charcoal, fontFamily: font.uiMed, textAlign: "center" }}>
+                {toast}
+              </Caption>
             </View>
           ) : null}
           {current ? (
@@ -222,15 +226,18 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   empty: { flex: 1, justifyContent: "center" },
-  actions: { paddingHorizontal: space.lg, paddingBottom: 108 },
+  actions: { paddingHorizontal: space.lg, paddingBottom: 108, position: "relative" },
   row: { flexDirection: "row", gap: 10 },
   toast: {
-    alignSelf: "center",
-    marginBottom: 12,
+    position: "absolute",
+    left: 28,
+    right: 28,
+    bottom: 168,
+    zIndex: 6,
     backgroundColor: color.white,
     borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     ...shadow.toast,
   },
 });
