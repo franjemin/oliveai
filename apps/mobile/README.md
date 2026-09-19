@@ -11,7 +11,7 @@ Copy in this app is **draft pending counsel** — do not treat UX strings as leg
 **Design freeze SoT (must-fix, all wired on Expo web):**
 1. Live End = charcoal **Slide to end visit** (not a sage Start twin) + glove-sized **Pause**. Transcript behind **View transcript** sheet only.
 2. **04b** `/visit/:id/signed` — Note signed → **Review follow-ups** / **Back to Today**.
-3. Follow-ups: gesture-first **swipe right = Send / left = Skip**. Outline buttons are a11y only. **Secure message** chip + “We’ll text them a link to open it securely.”
+3. Follow-ups: stamp-on-card Catch Up — swipe right = olive **✓ Send** pill (top-left); left = stone **Skip** (top-right). Tilt + fly-off, next card peeks (not iOS reveal). Outline Skip/Send + “or tap” a11y only.
 4. Consent: no PHIPA/CA·ON chips; **Why we ask** only; **Start recording** + “I confirmed the patient agrees.”
 5. Sign: “You’re signing this as the clinical record.” No “Olive record of truth” / no 24h wipe.
 6. Waveform = solid olive `#6B8F71` bars on soft mist — no gradient / chartreuse.
@@ -117,7 +117,7 @@ Nothing on the Wed hard-fail list is **missing**.
 
 - **Demo simplicity cuts** (Core simplicity bar): one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
 - **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
-- **Messaging (05 / 05b carve-out):** gesture-first card stack — swipe right = Send (secure + notify stub), swipe left = Skip. Peek of next card + drag hints. Outline Skip/Send are a11y (“or tap”) only — not a button-primary stack. Chip **Secure message**. Microcopy: “We’ll text them a link to open it securely.” After card edit-save only: toast “Saved — Olive will use this to sound more like you.”
+- **Messaging (05 / 05b carve-out):** stamp-on-card Catch Up (not iOS background reveal). Swipe right = olive **✓ Send** stamp top-left; left = stone **Skip** top-right. ~35% threshold, stamp opacity scales with drag, tilt + fly-off, next card peeks. Outline Skip/Send + “or tap” a11y only. Chip **Secure message**. Microcopy: “We’ll text them a link to open it securely.” 05b toast on edit-save only.
 - **Voice learning:** on follow-up edit-save **and** note edit/sign, fire `{ source, before, after, resourceId }` to mocks and the HTTP log. Follow-up also `POST /v1/follow-ups/:id/edits` `{ before, after }` (OpenAPI `FollowUpEdit`). Session `style` is a local heuristic (`editCount` / `preferShorter` / `greeting`) — not PHI training and not a batch-apply / queue rewrite.
 
 ## Screens

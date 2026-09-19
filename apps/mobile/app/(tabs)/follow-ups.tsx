@@ -12,7 +12,6 @@ import { EDGE } from "@/src/copy/edges";
 import {
   SECURE_SEND_MICROCOPY,
   SEND_FAIL_COPY,
-  SWIPE_HINT,
   SWIPE_OR_TAP,
   VOICE_LEARNING_TOAST,
 } from "@/src/copy/messaging";
@@ -138,12 +137,9 @@ export default function FollowUpsTab() {
               onSkip={() => void skip()}
               peek={
                 next ? (
-                  <Card style={{ flex: 1 }}>
+                  <Card style={styles.peekCard}>
                     <Kicker style={{ color: color.sage }}>Secure message</Kicker>
                     <Title style={styles.cardName}>{nextPatient?.displayName ?? "Patient"}</Title>
-                    <Body numberOfLines={3} style={{ marginTop: 12, color: color.inkMuted }}>
-                      {next.body}
-                    </Body>
                   </Card>
                 ) : undefined
               }
@@ -184,7 +180,7 @@ export default function FollowUpsTab() {
           ) : null}
           {current ? (
             <>
-              <Caption style={{ textAlign: "center", marginBottom: 8 }}>{SWIPE_HINT}</Caption>
+              <Caption style={{ textAlign: "center", marginBottom: 10, color: color.inkFaint }}>{SWIPE_OR_TAP}</Caption>
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
                   <Button label="Skip" variant="outline" disabled={busy} onPress={() => void skip()} />
@@ -193,8 +189,7 @@ export default function FollowUpsTab() {
                   <Button label="Send" variant="outline" disabled={busy} onPress={() => void send()} />
                 </View>
               </View>
-              <Caption style={{ textAlign: "center", marginTop: 8, color: color.inkFaint }}>{SWIPE_OR_TAP}</Caption>
-              <Caption style={{ textAlign: "center", marginTop: 8 }}>{SECURE_SEND_MICROCOPY}</Caption>
+              <Caption style={{ textAlign: "center", marginTop: 10 }}>{SECURE_SEND_MICROCOPY}</Caption>
             </>
           ) : (
             <Button label={EDGE.emptySwipe.cta} onPress={() => router.replace("/")} />
@@ -217,6 +212,7 @@ const styles = StyleSheet.create({
   },
   fill: { height: 4, backgroundColor: color.olive, borderRadius: 2 },
   banner: { marginTop: 16, borderRadius: 16, padding: 14 },
+  peekCard: { flex: 1, backgroundColor: color.paperAlt },
   cardName: { marginTop: 10, fontSize: 26, lineHeight: 30 },
   message: {
     marginTop: 16,

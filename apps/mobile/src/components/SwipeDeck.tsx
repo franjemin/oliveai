@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Animated, PanResponder, StyleSheet, Text, View } from "react-native";
 
-import { color, font, radius } from "@/src/theme/tokens";
+import { SWIPE_HINT } from "@/src/copy/messaging";
+import { color, font } from "@/src/theme/tokens";
 
 const THRESHOLD = 0.35;
 
@@ -33,29 +34,29 @@ export function SwipeDeck({
 
   const rotate = translate.interpolate({
     inputRange: [-240, 0, 240],
-    outputRange: ["-10deg", "0deg", "10deg"],
+    outputRange: ["-12deg", "0deg", "12deg"],
     extrapolate: "clamp",
   });
   const sendOpacity = translate.interpolate({
-    inputRange: [0, 140],
-    outputRange: [0, 1],
+    inputRange: [0, 40, 160],
+    outputRange: [0, 0.35, 1],
     extrapolate: "clamp",
   });
   const skipOpacity = translate.interpolate({
-    inputRange: [-140, 0],
-    outputRange: [1, 0],
+    inputRange: [-160, -40, 0],
+    outputRange: [1, 0.35, 0],
     extrapolate: "clamp",
   });
   const peekScale = translate.interpolate({
     inputRange: [-200, 0, 200],
-    outputRange: [1, 0.96, 1],
+    outputRange: [1, 0.97, 1],
     extrapolate: "clamp",
   });
 
   const pan = useMemo(
     () =>
       PanResponder.create({
-        onMoveShouldSetPanResponder: (_, g) => !disabledRef.current && Math.abs(g.dx) > 8,
+        onMoveShouldSetPanResponder: (_, g) => !disabledRef.current && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
         onPanResponderMove: (_, g) => {
           translate.setValue(g.dx);
         },
@@ -65,8 +66,8 @@ export function SwipeDeck({
           if (passed) {
             const dir = g.dx >= 0 ? 1 : -1;
             Animated.timing(translate, {
-              toValue: dir * (max + 80),
-              duration: 220,
+              toValue: dir * (max + 120),
+              duration: 240,
               useNativeDriver: true,
             }).start(() => {
               if (dir > 0) sendRef.current();
@@ -84,17 +85,19 @@ export function SwipeDeck({
   return (
     <View
       style={styles.stage}
+      accessibilityLabel={SWIPE_HINT}
       onLayout={(e) => {
         widthRef.current = e.nativeEvent.layout.width;
       }}
     >
-      <View style={styles.hintRow} pointerEvents="none">
-        <Text style={styles.hintSkip}>← Skip</Text>
-        <Text style={styles.hintSend}>Send →</Text>
-      </View>
       {peek ? (
-        <Animated.View style={[styles.peek, { transform: [{ scale: peekScale }] }]}>{peek}</Animated.View>
-      ) : null}
+        <Animated.View style={[styles.peek, { transform: [{ scale: peekScale }] }]} pointerEvents="none">
+          <Text style={styles.next}>NEXT</Text>
+          {peek}
+        </Animated.View>
+      ) : (
+        <View style={styles.peekEmpty} pointerEvents="none" />
+      )}
       <Animated.View
         {...pan.panHandlers}
         style={[
@@ -104,10 +107,11 @@ export function SwipeDeck({
           },
         ]}
       >
-        <Animated.View style={[styles.stamp, styles.stampSend, { opacity: sendOpacity }]}>
+        <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSend, { opacity: sendOpacity }]}>
+          <Text style={styles.stampSendMark}>✓</Text>
           <Text style={styles.stampSendText}>Send</Text>
         </Animated.View>
-        <Animated.View style={[styles.stamp, styles.stampSkip, { opacity: skipOpacity }]}>
+        <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSkip, { opacity: skipOpacity }]}>
           <Text style={styles.stampSkipText}>Skip</Text>
         </Animated.View>
         {children}
@@ -117,67 +121,69 @@ export function SwipeDeck({
 }
 
 const styles = StyleSheet.create({
-  stage: { flex: 1, marginTop: 10 },
-  hintRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 4,
-    marginBottom: 8,
-  },
-  hintSkip: {
-    fontFamily: font.uiMed,
-    fontSize: 12,
-    color: "rgba(44, 43, 40, 0.38)",
-  },
-  hintSend: {
-    fontFamily: font.uiMed,
-    fontSize: 12,
-    color: color.olive,
-  },
+  stage: { flex: 1, marginTop: 16, overflow: "visible" },
   peek: {
     position: "absolute",
-    left: 10,
-    right: 10,
-    top: 36,
-    bottom: 8,
-    opacity: 0.62,
+    left: 0,
+    right: 18,
+    top: 18,
+    bottom: 0,
+  },
+  peekEmpty: {
+    position: "absolute",
+    left: 0,
+    right: 18,
+    top: 18,
+    bottom: 0,
+    backgroundColor: color.paperAlt,
+    borderRadius: 28,
+  },
+  next: {
+    position: "absolute",
+    left: 16,
+    top: "42%",
+    zIndex: 1,
+    fontFamily: font.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    color: "rgba(44, 43, 40, 0.28)",
   },
   front: {
     flex: 1,
+    overflow: "visible",
   },
   stamp: {
     position: "absolute",
-    top: 18,
-    zIndex: 2,
-    borderWidth: 3,
-    borderRadius: radius.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    transform: [{ rotate: "-12deg" }],
+    top: 16,
+    zIndex: 3,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   stampSend: {
     left: 16,
-    borderColor: color.olive,
-    backgroundColor: "rgba(107, 143, 113, 0.08)",
+    backgroundColor: color.olive,
   },
   stampSkip: {
     right: 16,
-    borderColor: "rgba(44, 43, 40, 0.35)",
-    backgroundColor: "rgba(44, 43, 40, 0.04)",
-    transform: [{ rotate: "12deg" }],
+    backgroundColor: color.stage,
+  },
+  stampSendMark: {
+    color: color.white,
+    fontFamily: font.uiSemi,
+    fontSize: 13,
   },
   stampSendText: {
-    fontFamily: font.displayBold,
-    fontSize: 22,
-    color: color.olive,
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    fontFamily: font.uiSemi,
+    fontSize: 14,
+    color: color.white,
   },
   stampSkipText: {
-    fontFamily: font.displayBold,
-    fontSize: 22,
-    color: "rgba(44, 43, 40, 0.45)",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    fontFamily: font.uiSemi,
+    fontSize: 14,
+    color: color.charcoal,
   },
 });
