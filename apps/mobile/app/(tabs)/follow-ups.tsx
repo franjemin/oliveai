@@ -29,6 +29,7 @@ export default function FollowUpsTab() {
   const [inboxToken, setInboxToken] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [cardMax, setCardMax] = useState(420);
 
   const load = useCallback(async () => {
     const next = await pending();
@@ -101,7 +102,11 @@ export default function FollowUpsTab() {
 
   return (
     <Screen>
-      <SafeAreaView style={styles.safe} edges={["top"]}>
+      <SafeAreaView
+        style={styles.safe}
+        edges={["top"]}
+        onLayout={(e) => setCardMax(Math.round(e.nativeEvent.layout.height * 0.58))}
+      >
         <View style={styles.header}>
           <Title>Follow-ups</Title>
           <View style={styles.progressRow}>
@@ -146,7 +151,7 @@ export default function FollowUpsTab() {
                 ) : undefined
               }
             >
-              <Card style={styles.card}>
+              <Card style={[styles.card, { maxHeight: cardMax }]}>
                 <Kicker style={{ color: color.sage }}>Secure message</Kicker>
                 <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
                 <Caption style={{ marginTop: 4 }}>
@@ -216,21 +221,27 @@ const styles = StyleSheet.create({
   },
   fill: { height: 4, backgroundColor: color.olive, borderRadius: 2 },
   banner: { marginTop: 16, borderRadius: 16, padding: 14 },
-  deckWrap: { flex: 1, minHeight: 0, paddingHorizontal: space.lg },
+  deckWrap: {
+    flex: 1,
+    minHeight: 0,
+    justifyContent: "center",
+    paddingHorizontal: space.lg,
+    overflow: "hidden",
+  },
   peekCard: { flex: 1, backgroundColor: color.paperAlt },
-  card: { flex: 1, minHeight: 0, overflow: "hidden" },
+  card: { maxHeight: "100%", overflow: "hidden" },
   cardName: { marginTop: 10, fontSize: 26, lineHeight: 30 },
   message: {
     marginTop: 16,
     backgroundColor: color.paperAlt,
     borderRadius: radius.md,
     padding: 14,
-    flex: 1,
-    minHeight: 0,
+    minHeight: 160,
+    flexGrow: 1,
   },
   edit: {
-    flex: 1,
-    minHeight: 0,
+    minHeight: 72,
+    flexGrow: 1,
     fontSize: 16,
     lineHeight: 24,
     color: color.ink,
@@ -240,13 +251,16 @@ const styles = StyleSheet.create({
   empty: { flex: 1, minHeight: 0, justifyContent: "center", paddingHorizontal: space.lg },
   footer: {
     flexShrink: 0,
+    zIndex: 2,
+    backgroundColor: color.paper,
+    borderTopWidth: 0,
     paddingHorizontal: space.lg,
-    paddingTop: 12,
+    paddingTop: 16,
     paddingBottom: 88,
     gap: 10,
   },
-  orTap: { textAlign: "center", color: color.inkFaint },
-  microcopy: { textAlign: "center" },
+  orTap: { textAlign: "center", color: color.inkFaint, width: "100%" },
+  microcopy: { textAlign: "center", width: "100%" },
   row: { flexDirection: "row", gap: 10 },
   toast: {
     backgroundColor: color.white,

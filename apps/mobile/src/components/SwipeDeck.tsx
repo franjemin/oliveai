@@ -90,14 +90,6 @@ export function SwipeDeck({
         widthRef.current = e.nativeEvent.layout.width;
       }}
     >
-      {peek ? (
-        <Animated.View style={[styles.peek, { transform: [{ scale: peekScale }] }]} pointerEvents="none">
-          <Text style={styles.next}>NEXT</Text>
-          {peek}
-        </Animated.View>
-      ) : (
-        <View style={styles.peekEmpty} pointerEvents="none" />
-      )}
       <Animated.View
         {...pan.panHandlers}
         style={[
@@ -107,14 +99,24 @@ export function SwipeDeck({
           },
         ]}
       >
-        <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSend, { opacity: sendOpacity }]}>
-          <Text style={styles.stampSendMark}>✓</Text>
-          <Text style={styles.stampSendText}>Send</Text>
-        </Animated.View>
-        <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSkip, { opacity: skipOpacity }]}>
-          <Text style={styles.stampSkipText}>Skip</Text>
-        </Animated.View>
-        {children}
+        <View style={styles.cardSlot}>
+          {peek ? (
+            <Animated.View style={[styles.peek, { transform: [{ scale: peekScale }] }]} pointerEvents="none">
+              <Text style={styles.next}>NEXT</Text>
+              {peek}
+            </Animated.View>
+          ) : (
+            <View style={styles.peekEmpty} pointerEvents="none" />
+          )}
+          <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSend, { opacity: sendOpacity }]}>
+            <Text style={styles.stampSendMark}>✓</Text>
+            <Text style={styles.stampSendText}>Send</Text>
+          </Animated.View>
+          <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSkip, { opacity: skipOpacity }]}>
+            <Text style={styles.stampSkipText}>Skip</Text>
+          </Animated.View>
+          {children}
+        </View>
       </Animated.View>
     </View>
   );
@@ -122,6 +124,18 @@ export function SwipeDeck({
 
 const styles = StyleSheet.create({
   stage: { flex: 1, minHeight: 0, marginTop: 16, overflow: "visible" },
+  front: {
+    flex: 1,
+    minHeight: 0,
+    justifyContent: "center",
+    overflow: "visible",
+  },
+  cardSlot: {
+    alignSelf: "stretch",
+    maxHeight: "100%",
+    flexShrink: 1,
+    position: "relative",
+  },
   peek: {
     position: "absolute",
     left: 0,
@@ -147,11 +161,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.2,
     color: "rgba(44, 43, 40, 0.28)",
-  },
-  front: {
-    flex: 1,
-    minHeight: 0,
-    overflow: "visible",
   },
   stamp: {
     position: "absolute",
