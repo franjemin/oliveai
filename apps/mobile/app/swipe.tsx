@@ -4,7 +4,8 @@ import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
-import type { FollowUp, NotifyStub } from "@/src/api/types";
+import { tokenFromInboxPath } from "@/src/api/map";
+import type { FollowUp } from "@/src/api/types";
 import { Body, Button, Caption, Card, Pill, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY, VOICE_LEARNING_TOAST } from "@/src/copy/messaging";
@@ -19,7 +20,7 @@ export default function SwipeScreen() {
   const [draft, setDraft] = useState("");
   const [banner, setBanner] = useState<{ title: string; body: string; tone: "ok" | "refuse" } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [lastNotify, setLastNotify] = useState<NotifyStub | null>(null);
+  const [inboxToken, setInboxToken] = useState<string | null>(null);
   const [lastPatientId, setLastPatientId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -53,7 +54,7 @@ export default function SwipeScreen() {
       if (draft !== current.body) await saveEdit();
       const sent = await olive.sendFollowUp(current.id);
       const notify = await olive.lastNotify(sent.id);
-      setLastNotify(notify);
+      setInboxToken(notify?.inboxToken ?? sent.magicLinkToken ?? tokenFromInboxPath(sent.inboxPath) ?? null);
       setLastPatientId(sent.patientId);
       setBanner({ title: "Secure message sent", body: SECURE_SEND_MICROCOPY, tone: "ok" });
       await load();
@@ -63,7 +64,7 @@ export default function SwipeScreen() {
         title: "Not sent",
         body: err instanceof Error ? err.message : "Notify send failed closed.",
       };
-      setLastNotify(null);
+      setInboxToken(null);
       setBanner({ ...copy, tone: "refuse" });
       await load();
     } finally {
@@ -76,7 +77,7 @@ export default function SwipeScreen() {
     setBusy(true);
     try {
       await olive.skipFollowUp(current.id);
-      setLastNotify(null);
+      setInboxToken(null);
       setBanner({ title: "Skipped", body: "No secure message sent.", tone: "ok" });
       await load();
     } finally {
@@ -108,9 +109,9 @@ export default function SwipeScreen() {
                 {banner.title}
               </Caption>
               <Body style={{ marginTop: 4 }}>{banner.body}</Body>
-              {lastNotify ? (
+              {inboxToken ? (
                 <View style={{ marginTop: 10, gap: 8 }}>
-                  <Pressable onPress={() => router.push(`/inbox/${lastNotify.inboxToken}` as Href)}>
+                  <Pressable onPress={() => router.push(`/inbox/${inboxToken}` as Href)}>
                     <Body style={{ color: color.olive, fontWeight: "600" }}>Open patient inbox</Body>
                   </Pressable>
                   {lastPatientId ? (

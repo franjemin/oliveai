@@ -30,7 +30,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test:invariants": "npx --yes tsx --test src/api/mock/invariants.test.ts"
+    "test:invariants": "npx --yes tsx --test src/api/mock/invariants.test.ts src/api/map.test.ts"
   },
   "private": true
 }

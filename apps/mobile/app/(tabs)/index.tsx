@@ -64,11 +64,11 @@ export default function TodayScreen() {
               <Pressable key={row.patientId} onPress={() => open(row)} disabled={busyId === row.patientId}>
                 <Card>
                   <View style={styles.cardTop}>
-                    <Caption>{row.time}</Caption>
+                    <Caption>{row.time ?? "—"}</Caption>
                     <StatusChip row={row} />
                   </View>
                   <Body style={{ fontWeight: "600", fontSize: 18, marginTop: 4 }}>{row.displayName}</Body>
-                  <Caption style={{ marginTop: 2 }}>{row.reason}</Caption>
+                  {row.reason ? <Caption style={{ marginTop: 2 }}>{row.reason}</Caption> : null}
                   <Caption style={{ marginTop: 10, color: color.olive }}>
                     {ctaLabel(row)}
                   </Caption>

@@ -3,10 +3,12 @@ import {
   ApiError,
   DEMO,
   type ChatMessage,
-  type ChatThread,
+  type ChatThreadView,
   type Consent,
   type DayPatient,
   type FollowUp,
+  type FollowUpEdit,
+  type FollowUpSendResult,
   type MagicInbox,
   type Note,
   type NotifyStub,
@@ -51,7 +53,7 @@ export type MockState = {
   segmentsByVisit: Record<string, TranscriptSegment[]>;
   stoppedPatientIds: Set<string>;
   dayFinished: boolean;
-  threads: ChatThread[];
+  threads: ChatThreadView[];
   notifies: NotifyStub[];
   inboxTokens: Record<string, string>;
   learningEvents: Array<{
@@ -235,8 +237,8 @@ export function getTranscript(visitId: string) {
       : null,
     segments: segs,
     job: segs.length
-      ? { id: `job-${visitId}`, status: "completed" as const }
-      : { id: `job-${visitId}`, status: "queued" as const },
+      ? { id: `job-${visitId}`, visitId, status: "completed" as const, vendor: "stub" }
+      : { id: `job-${visitId}`, visitId, status: "queued" as const, vendor: "stub" },
   };
 }
 
@@ -268,7 +270,6 @@ function ensureNote(visit: Visit, aiAssisted: boolean): Note {
   const now = nowIso();
   const note: Note = {
     id: nid("note"),
-    clinicId: DEMO.clinicId,
     visitId: visit.id,
     body: noteForPatient(visit.patientId, !aiAssisted),
     status: "draft",
@@ -276,8 +277,6 @@ function ensureNote(visit: Visit, aiAssisted: boolean): Note {
     signedBy: null,
     snapshot: null,
     retentionUntil: yearsFromNow(10),
-    createdAt: now,
-    updatedAt: now,
     aiAssisted,
   };
   state.notes = [...state.notes, note];
@@ -288,22 +287,21 @@ function ensureFollowUp(visit: Visit): FollowUp {
   const existing = state.followUps.find((f) => f.visitId === visit.id);
   if (existing) return existing;
   const note = state.notes.find((n) => n.visitId === visit.id);
-  const now = nowIso();
   const fu: FollowUp = {
     id: nid("fu"),
-    clinicId: DEMO.clinicId,
     visitId: visit.id,
     patientId: visit.patientId,
     noteId: note?.id ?? null,
     messageClass: "clinical_transactional",
-    channel: "sms",
+    channel: "secure",
     body: followUpForPatient(visit.patientId),
+    secureMessageId: null,
+    notifySmsId: null,
+    magicLinkToken: null,
     status: "draft",
     skipReason: null,
     lastError: null,
     sentAt: null,
-    createdAt: now,
-    updatedAt: now,
   };
   state.followUps = [...state.followUps, fu];
   return fu;
@@ -323,7 +321,7 @@ export function patchNote(visitId: string, body: string): Note {
       message: "Cannot edit a signed note",
     });
   }
-  const updated: Note = { ...note, body, updatedAt: nowIso() };
+  const updated: Note = { ...note, body };
   state.notes = state.notes.map((n) => (n.id === note.id ? updated : n));
   recordLearningEvent({
     source: "note_edit",
@@ -352,7 +350,6 @@ export function signNote(visitId: string): Note {
     signedAt,
     signedBy: DEMO.userId,
     snapshot,
-    updatedAt: signedAt,
   };
   state.notes = state.notes.map((n) => (n.id === note.id ? signed : n));
   recordLearningEvent({
@@ -369,16 +366,24 @@ export function listFollowUps(visitId: string) {
   return state.followUps.filter((f) => f.visitId === visitId);
 }
 
+export function listVisitConsents(visitId: string) {
+  getVisit(visitId);
+  return state.consents.filter((c) => c.visitId === visitId);
+}
+
 export function listPendingFollowUps() {
   return state.followUps.filter((f) => f.status === "draft" || f.status === "queued" || f.status === "failed");
 }
 
 export function finishDay() {
-  state.followUps = state.followUps.map((f) =>
-    f.status === "draft" ? { ...f, status: "queued", updatedAt: nowIso() } : f,
-  );
+  state.followUps = state.followUps.map((f) => (f.status === "draft" ? { ...f, status: "queued" as const } : f));
   state.dayFinished = true;
-  return { date: TODAY, queued: listPendingFollowUps() };
+  const queued = listPendingFollowUps();
+  return {
+    dayClose: { date: TODAY, clinicId: DEMO.clinicId },
+    pendingCount: queued.length,
+    snapshot: { followUpIds: queued.map((f) => f.id) },
+  };
 }
 
 export function patchFollowUp(id: string, body: string): FollowUp {
@@ -387,12 +392,12 @@ export function patchFollowUp(id: string, body: string): FollowUp {
   if (fu.status === "sent" || fu.status === "skipped") {
     throw new ApiError({ error: "follow_up_frozen", message: `Cannot edit a ${fu.status} follow-up` });
   }
-  const updated: FollowUp = { ...fu, body, updatedAt: nowIso() };
+  const updated: FollowUp = { ...fu, body };
   state.followUps = state.followUps.map((f) => (f.id === id ? updated : f));
   return updated;
 }
 
-export function recordFollowUpEdit(id: string, before: string, after: string): void {
+export function recordFollowUpEdit(id: string, before: string, after: string): FollowUpEdit {
   const fu = state.followUps.find((f) => f.id === id);
   if (!fu) throw new ApiError({ error: "not_found", message: "follow-up" });
   recordLearningEvent({
@@ -401,6 +406,7 @@ export function recordFollowUpEdit(id: string, before: string, after: string): v
     after,
     resourceId: id,
   });
+  return { id: nid("edit"), followUpId: id, before, after };
 }
 
 export function recordLearningEvent(input: {
@@ -425,13 +431,12 @@ export function skipFollowUp(id: string, reason?: string): FollowUp {
     ...fu,
     status: "skipped",
     skipReason: reason ?? "skipped",
-    updatedAt: nowIso(),
   };
   state.followUps = state.followUps.map((f) => (f.id === id ? updated : f));
   return updated;
 }
 
-export function sendFollowUp(id: string): FollowUp {
+export function sendFollowUp(id: string): FollowUpSendResult {
   const fu = state.followUps.find((f) => f.id === id);
   if (!fu) throw new ApiError({ error: "not_found", message: "follow-up" });
   if (fu.status === "skipped") {
@@ -482,16 +487,24 @@ export function sendFollowUp(id: string): FollowUp {
           : "Clinical/transactional follow-ups require an active messaging consent record",
     });
   }
+  const posted = postSecureMessage(fu);
   const updated: FollowUp = {
     ...fu,
+    channel: "secure",
     status: "sent",
     sentAt: nowIso(),
     lastError: null,
-    updatedAt: nowIso(),
+    secureMessageId: posted.messageId,
+    notifySmsId: posted.notifySmsId,
+    magicLinkToken: posted.token,
   };
   state.followUps = state.followUps.map((f) => (f.id === id ? updated : f));
-  postSecureMessage(updated);
-  return updated;
+  return {
+    ...updated,
+    channelOfRecord: "secure",
+    inboxPath: `/inbox/${posted.token}`,
+    notifySms: { stub: true, vendorMessageId: posted.notifySmsId, containsPhi: false },
+  };
 }
 
 function postSecureMessage(fu: FollowUp) {
@@ -512,6 +525,7 @@ function postSecureMessage(fu: FollowUp) {
   thread.messages = [...thread.messages, message];
   const token = state.inboxTokens[fu.patientId] ?? nid("inbox");
   state.inboxTokens[fu.patientId] = token;
+  const notifySmsId = nid("sms");
   const patient = getPatient(fu.patientId);
   state.notifies = [
     ...state.notifies.filter((n) => n.followUpId !== fu.id),
@@ -523,6 +537,7 @@ function postSecureMessage(fu: FollowUp) {
       inboxToken: token,
     },
   ];
+  return { token, messageId: message.id, notifySmsId };
 }
 
 export function getChat(patientId: string) {
@@ -544,7 +559,12 @@ export function getInbox(token: string): MagicInbox {
   if (!patientId) throw new ApiError({ error: "not_found", message: "inbox" });
   const patient = getPatient(patientId);
   const thread = state.threads.find((t) => t.patientId === patientId);
+  const last = thread?.messages[thread.messages.length - 1];
   return {
+    channelOfRecord: "secure",
+    secureMessageId: last?.id,
+    body: last?.body,
+    stub: true,
     token,
     patientId,
     patientName: patient.displayName,
@@ -554,9 +574,7 @@ export function getInbox(token: string): MagicInbox {
 }
 
 function fail(fu: FollowUp, lastError: string) {
-  state.followUps = state.followUps.map((f) =>
-    f.id === fu.id ? { ...f, status: "failed", lastError, updatedAt: nowIso() } : f,
-  );
+  state.followUps = state.followUps.map((f) => (f.id === fu.id ? { ...f, status: "failed", lastError } : f));
 }
 
 export function latestAudioOutcome(visitId: string): "accepted" | "refused" | "none" {

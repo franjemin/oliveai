@@ -9,7 +9,9 @@ import type {
   DayFeed,
   FeatureFlags,
   ChatThread,
+  ChatThreadView,
   FollowUp,
+  FollowUpSendResult,
   MagicInbox,
   Note,
   NotifyStub,
@@ -19,6 +21,7 @@ import type {
   User,
   Visit,
 } from "@/src/api/types";
+import { DEMO } from "@/src/api/types";
 import { DISCLOSURE_SCRIPT_ID } from "@/src/theme/tokens";
 import { resetState } from "@/src/api/mock/store";
 
@@ -40,13 +43,13 @@ type OliveContextValue = {
   signNote: (visitId: string) => Promise<Note>;
   getTranscript: (visitId: string) => Promise<TranscriptResponse>;
   pendingFollowUps: () => Promise<FollowUp[]>;
-  sendFollowUp: (id: string) => Promise<FollowUp>;
+  sendFollowUp: (id: string) => Promise<FollowUpSendResult>;
   skipFollowUp: (id: string) => Promise<FollowUp>;
   saveFollowUpEdit: (id: string, before: string, after: string) => Promise<FollowUp>;
   finishDay: () => Promise<FollowUp[]>;
   getPatient: (id: string) => Promise<Patient>;
-  getChat: (patientId: string) => Promise<{ thread: ChatThread | null; messages: ChatThread["messages"] }>;
-  listThreads: () => Promise<ChatThread[]>;
+  getChat: (patientId: string) => Promise<{ thread: ChatThread | null; messages: ChatThreadView["messages"] }>;
+  listThreads: () => Promise<ChatThreadView[]>;
   lastNotify: (followUpId: string) => Promise<NotifyStub | null>;
   getInbox: (token: string) => Promise<MagicInbox>;
 };
@@ -60,15 +63,16 @@ export function OliveProvider({ children }: { children: ReactNode }) {
       clinicId: "00000000-0000-4000-8000-000000000001",
       email: "od@demo.olive.local",
       name: "Dr. Maya Chen",
-      role: "od" as const,
+      role: "dentist" as const,
+      tenantId: "00000000-0000-4000-8000-000000000001",
     },
     clinic: {
       id: "00000000-0000-4000-8000-000000000001",
+      tenantId: "00000000-0000-4000-8000-000000000001",
       name: "Harbourfront Dental",
       legalName: "Harbourfront Dental Inc.",
       smsIdentity: "Harbourfront Dental",
       phone: "+1-416-555-0199",
-      email: "hello@harbourfront.demo",
       residencyRegion: "ca-central-1",
       country: "CA",
       province: "ON",
@@ -87,7 +91,7 @@ export function OliveProvider({ children }: { children: ReactNode }) {
   const [day, setDay] = useState<DayFeed>({ date: "2026-09-19", patients: [] });
 
   const refreshDay = useCallback(async () => {
-    const feed = await api.dayPatients("2026-09-19");
+    const feed = await api.dayPatients(DEMO.date);
     setDay(feed);
   }, []);
 
@@ -162,8 +166,8 @@ export function OliveProvider({ children }: { children: ReactNode }) {
         return updated;
       },
       finishDay: async () => {
-        const res = await api.finishDay("2026-09-19");
-        return res.queued;
+        await api.finishDay(DEMO.date);
+        return api.listPendingFollowUps();
       },
       getPatient: (id) => api.getPatient(id),
       getChat: (patientId) => api.getChat(patientId),

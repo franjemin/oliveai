@@ -28,9 +28,15 @@ export default function PatientInboxScreen() {
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <ScrollView contentContainerStyle={styles.pad}>
           <Caption>Patient inbox · magic link</Caption>
-          <Title style={{ marginTop: 6 }}>{inbox?.clinicName ?? "Olive"}</Title>
+          <Title style={{ marginTop: 6 }}>{inbox?.clinicName ?? "Secure message"}</Title>
           <Caption style={{ marginTop: 6 }}>
-            {inbox ? `For ${inbox.patientName}` : "Opening secure message…"}
+            {inbox
+              ? inbox.patientName
+                ? `For ${inbox.patientName}`
+                : inbox.stub
+                  ? "Magic-link inbox stub"
+                  : "In-app message"
+              : "Opening secure message…"}
           </Caption>
           {error ? <Body style={{ color: color.refuse, marginTop: 16 }}>{error}</Body> : null}
           <View style={{ marginTop: 20, gap: 12 }}>

@@ -53,6 +53,9 @@ export const mockApi: OliveApi = {
   async recordVisitConsent(visitId, input: ConsentInput) {
     return store.recordVisitConsent(visitId, input);
   },
+  async listVisitConsents(visitId) {
+    return store.listVisitConsents(visitId);
+  },
   async getTranscript(visitId) {
     return store.getTranscript(visitId);
   },
@@ -81,7 +84,7 @@ export const mockApi: OliveApi = {
     return store.patchFollowUp(id, body);
   },
   async recordFollowUpEdit(id, before, after) {
-    store.recordFollowUpEdit(id, before, after);
+    return store.recordFollowUpEdit(id, before, after);
   },
   async recordLearningEvent(input) {
     store.recordLearningEvent(input);

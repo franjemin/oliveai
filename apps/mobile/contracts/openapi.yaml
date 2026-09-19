@@ -1,0 +1,1067 @@
+openapi: 3.1.0
+info:
+  title: Olive v1 Core API
+  version: 0.1.0
+  description: |
+    Canada-first dental AI scribe. Backend (`apps/api`) is source of truth.
+    Clinic PHIPA fields are nullable and do not block local scaffold.
+    Quebec Law 25 is out of v1.
+  contact:
+    name: Olive backend
+servers:
+  - url: http://localhost:3000
+    description: Local compose + apps/api
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Flags
+  - name: Patients
+  - name: Visits
+  - name: Recording
+  - name: Transcript
+  - name: Notes
+  - name: FollowUps
+  - name: Days
+  - name: PMS
+  - name: Chat
+
+paths:
+  /health:
+    get:
+      security: []
+      summary: Liveness + default flags
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, residency, flags]
+                properties:
+                  ok: { type: boolean }
+                  residency: { type: string, example: ca-central-1 }
+                  flags: { $ref: "#/components/schemas/FeatureFlags" }
+
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Demo clinic login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: od@demo.olive.local }
+                password: { type: string, example: demo }
+      responses:
+        "200":
+          description: Session issued
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, expiresAt, user, clinic, flags]
+                properties:
+                  token: { type: string }
+                  expiresAt: { type: string, format: date-time }
+                  user: { $ref: "#/components/schemas/User" }
+                  clinic: { $ref: "#/components/schemas/Clinic" }
+                  flags: { $ref: "#/components/schemas/FeatureFlags" }
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /v1/session:
+    get:
+      tags: [Auth, Flags]
+      summary: Session bootstrap (user + clinic + flags + clinician style heuristic)
+      responses:
+        "200":
+          description: Bootstrap payload
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, clinic, flags]
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+                  clinic: { $ref: "#/components/schemas/Clinic" }
+                  flags: { $ref: "#/components/schemas/FeatureFlags" }
+                  style:
+                    type: object
+                    description: Per clinician+clinic draft heuristic (demo simplicity cuts). Not PHI training.
+                    properties:
+                      preferShorter: { type: boolean }
+                      greeting: { type: string, nullable: true }
+                      editCount: { type: integer }
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /v1/feature-flags:
+    get:
+      tags: [Flags]
+      summary: Feature flags (aftercare, claimsGuard, training default false)
+      responses:
+        "200":
+          description: Flags
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [flags]
+                properties:
+                  flags: { $ref: "#/components/schemas/FeatureFlags" }
+
+  /v1/clinic/audio/delete:
+    post:
+      tags: [Recording]
+      summary: SEC-007 clinic / end-of-contract audio delete (admin). No notes/transcripts cascade. No auto-TTL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: string, example: delete-clinic-audio }
+      responses:
+        "200":
+          description: Clinic audio deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: integer }
+                  notesUntouched: { type: boolean }
+                  transcriptsUntouched: { type: boolean }
+        "403":
+          description: admin_required
+
+  /v1/clinic:
+    get:
+      tags: [Auth]
+      responses:
+        "200":
+          description: Current tenant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Clinic"
+
+  /v1/patients:
+    get:
+      tags: [Patients]
+      responses:
+        "200":
+          description: Clinic patients
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [patients]
+                properties:
+                  patients:
+                    type: array
+                    items: { $ref: "#/components/schemas/PatientProfile" }
+
+  /v1/patients/{id}:
+    get:
+      tags: [Patients]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Patient
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patient: { $ref: "#/components/schemas/PatientProfile" }
+        "404":
+          $ref: "#/components/responses/Error"
+
+  /v1/patients/{id}/profile:
+    get:
+      tags: [Patients]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile: { $ref: "#/components/schemas/PatientProfile" }
+
+  /v1/patients/{id}/chat:
+    get:
+      tags: [Chat]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Secure thread
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [thread, messages]
+                properties:
+                  thread: { $ref: "#/components/schemas/ChatThread" }
+                  messages:
+                    type: array
+                    items: { $ref: "#/components/schemas/ChatMessage" }
+    post:
+      tags: [Chat]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+                visitId: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  /v1/patients/{id}/consents:
+    post:
+      tags: [Recording]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsentInput"
+      responses:
+        "200":
+          description: Consent stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Consent"
+        "422":
+          $ref: "#/components/responses/Error"
+
+  /v1/visits:
+    post:
+      tags: [Visits]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [patientId]
+              properties:
+                patientId: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Visit created (in_progress)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Visit"
+
+  /v1/visits/{id}:
+    get:
+      tags: [Visits]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Visit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Visit"
+
+  /v1/visits/{id}/end:
+    post:
+      tags: [Visits]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Visit completed. Audio is kept (clinic-controlled; no auto-TTL).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Visit"
+
+  /v1/visits/{id}/consents:
+    get:
+      tags: [Recording]
+      summary: OLI-6 consent evidence for the visit
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Consent evidence rows
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [consents]
+                properties:
+                  consents:
+                    type: array
+                    items: { $ref: "#/components/schemas/Consent" }
+
+  /v1/visits/{id}/recording-gate:
+    get:
+      tags: [Recording]
+      summary: Visit-scoped audio_capture gate
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Gate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordingGate"
+              examples:
+                denied:
+                  value: { allowed: false, reason: missing_audio_capture_consent }
+                allowed:
+                  value: { allowed: true, disclosureScriptId: audio-disclosure-v1 }
+
+  /v1/visits/{id}/consent:
+    post:
+      tags: [Recording]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisitConsentInput"
+      responses:
+        "200":
+          description: Consent stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Consent"
+
+  /v1/visits/{id}/audio:
+    post:
+      tags: [Recording]
+      summary: Ingest audio (refuses if recording-gate denied)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bytesBase64: { type: string }
+          audio/webm:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: Asset + queued transcription job
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  asset: { $ref: "#/components/schemas/AudioAsset" }
+                  job: { $ref: "#/components/schemas/TranscriptionJob" }
+        "403":
+          description: recording_gate_denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Recording]
+      summary: Clinic-initiated visit audio delete (no auto-TTL). Does not cascade notes/transcripts.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: integer }
+                  notesPreserved: { type: integer }
+                  transcriptsPreserved: { type: integer }
+
+  /v1/visits/{id}/transcript:
+    get:
+      tags: [Transcript]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Transcript + segments + job
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transcript: { $ref: "#/components/schemas/Transcript" }
+                  segments:
+                    type: array
+                    items: { $ref: "#/components/schemas/TranscriptSegment" }
+                  job: { $ref: "#/components/schemas/TranscriptionJob" }
+
+  /v1/visits/{id}/transcript/stream:
+    get:
+      tags: [Transcript]
+      summary: SSE segments with cursor replay
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - name: cursor
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+          description: Replay segments with seq > cursor
+      responses:
+        "200":
+          description: |
+            `text/event-stream`. Events:
+            - `segment` (id = seq) `{ id, seq, speakerLabel, text, startMs, endMs }`
+            - `status` `{ jobStatus, cursor }`
+            - `done` `{ ok: true }` when job completed
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /v1/visits/{id}/note:
+    get:
+      tags: [Notes]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Draft or signed note (created on first get)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+    patch:
+      tags: [Notes]
+      summary: Draft only — 403 if signed
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+      responses:
+        "200":
+          description: Updated draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "403":
+          description: note_signed_immutable
+
+  /v1/visits/{id}/note/sign:
+    post:
+      tags: [Notes]
+      summary: Explicit sign — never auto-sign
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Immutable snapshot frozen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+
+  /v1/visits/{id}/follow-ups:
+    get:
+      tags: [FollowUps]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Follow-ups for the visit
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [followUps]
+                properties:
+                  followUps:
+                    type: array
+                    items: { $ref: "#/components/schemas/FollowUp" }
+    post:
+      tags: [FollowUps]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+                messageClass:
+                  $ref: "#/components/schemas/MessageClass"
+      responses:
+        "200":
+          description: Draft follow-up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowUp"
+
+  /v1/follow-ups/{id}:
+    patch:
+      tags: [FollowUps]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowUp"
+
+  /v1/follow-ups/{id}/skip:
+    post:
+      tags: [FollowUps]
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: Skipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowUp"
+
+  /v1/follow-ups/{id}/edits:
+    post:
+      tags: [FollowUps]
+      summary: Tone/edit event (no ML in v1)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [before, after]
+              properties:
+                before: { type: string }
+                after: { type: string }
+      responses:
+        "200":
+          description: Edit event stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowUpEdit"
+
+  /v1/follow-ups/{id}/send:
+    post:
+      tags: [FollowUps]
+      summary: Publish secure in-app message + stub no-PHI notify SMS (CASL on notify only)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Channel of record is secure; SMS is notify stub (no PHI)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FollowUp"
+                  - type: object
+                    properties:
+                      channelOfRecord: { type: string, enum: [secure] }
+                      inboxPath: { type: string }
+                      notifySms:
+                        type: object
+                        properties:
+                          stub: { type: boolean }
+                          vendorMessageId: { type: string }
+                          containsPhi: { type: boolean, enum: [false] }
+        "403":
+          description: |
+            Fail-closed on **notify SMS**: `missing_messaging_consent`, `promotional_fail_closed`,
+            `stop_fail_closed`, `unsigned_note`, `missing_clinic_identity`
+
+  /v1/inbox/{token}:
+    get:
+      tags: [FollowUps]
+      security: []
+      summary: Patient magic-link inbox stub (dry-run; native app later)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Secure message body (in-app)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channelOfRecord: { type: string, enum: [secure] }
+                  secureMessageId: { type: string }
+                  body: { type: string }
+                  stub: { type: boolean }
+
+  /v1/days/finish:
+    post:
+      tags: [Days]
+      summary: Snapshot pending follow-up queue (FE is not SoT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date]
+              properties:
+                date: { type: string, format: date, example: "2026-09-19" }
+      responses:
+        "200":
+          description: Day close
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dayClose: { type: object }
+                  pendingCount: { type: integer }
+                  snapshot: { type: object }
+
+  /v1/days/{date}/patients:
+    get:
+      tags: [Days]
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Normalized local + imported feed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DayPatients"
+              examples:
+                empty:
+                  value: { date: "2026-09-19", patients: [] }
+        "503":
+          description: Error shape (patients always [])
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, example: day_feed_unavailable }
+                  message: { type: string }
+                  date: { type: string }
+                  patients: { type: array, items: {}, maxItems: 0 }
+
+  /v1/pms/import:
+    post:
+      tags: [PMS]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source: { type: string }
+                patients:
+                  type: array
+                  items: { $ref: "#/components/schemas/ImportedPatient" }
+      responses:
+        "200":
+          description: Import job
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created: { type: integer }
+                  updated: { type: integer }
+                  job: { type: object }
+
+  /v1/pms/open-dental/writeback:
+    post:
+      tags: [PMS]
+      summary: Stub — always 501 flagged
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [visitId]
+              properties:
+                visitId: { type: string, format: uuid }
+                noteId: { type: string, format: uuid }
+      responses:
+        "501":
+          description: od_writeback_stubbed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: od_writeback_stubbed
+                message: Open Dental write-back is not implemented in v1 Core
+                details: { flagged: true, flag: odWriteback, enabled: false }
+
+  /v1/dev/process-jobs:
+    post:
+      tags: [Transcript]
+      summary: Non-production — process queued transcription jobs once
+      responses:
+        "200":
+          description: Processed count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  processed: { type: integer }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error: { type: string }
+        message: { type: string }
+        details: {}
+
+    FeatureFlags:
+      type: object
+      required: [aftercare, claimsGuard, phiTrainingAllowed, odWriteback, quebecLaw25]
+      properties:
+        aftercare: { type: boolean, default: false }
+        claimsGuard: { type: boolean, default: false }
+        phiTrainingAllowed:
+          type: boolean
+          default: false
+          description: Off. Express patient consent required to flip — contract-only is not enough.
+        odWriteback: { type: boolean, default: false }
+        quebecLaw25: { type: boolean, default: false, description: Out of v1 }
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [dentist, staff, admin] }
+        clinicId: { type: string, format: uuid }
+        tenantId: { type: string, format: uuid, description: "Same as clinicId (OLI-12). MFA is Wave B." }
+
+    Clinic:
+      type: object
+      description: PHIPA agent/ESP fields are nullable and non-blocking for local scaffold
+      properties:
+        id: { type: string, format: uuid }
+        tenantId: { type: string, format: uuid, description: Same as id }
+        name: { type: string }
+        legalName: { type: string }
+        smsIdentity: { type: string }
+        phone: { type: string }
+        residencyRegion: { type: string, example: ca-central-1 }
+        country: { type: string, example: CA }
+        province: { type: string, example: ON }
+        phipaAgreementVersion: { type: string, nullable: true }
+        phipaAgreementAckedAt: { type: string, format: date-time, nullable: true }
+        phipaAgreementAckedBy: { type: string, format: uuid, nullable: true }
+
+    PatientProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        phone: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        dateOfBirth: { type: string, nullable: true }
+        pms:
+          type: object
+          nullable: true
+          properties:
+            source: { type: string }
+            externalId: { type: string }
+
+    Visit:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clinicId: { type: string, format: uuid }
+        patientId: { type: string, format: uuid }
+        providerId: { type: string, format: uuid }
+        status: { type: string, enum: [in_progress, completed] }
+        startedAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time, nullable: true }
+
+    RecordingGate:
+      type: object
+      required: [allowed]
+      properties:
+        allowed: { type: boolean }
+        reason:
+          type: string
+          enum: [missing_audio_capture_consent, missing_disclosure_script_id]
+        disclosureScriptId: { type: string }
+
+    MessageClass:
+      type: string
+      enum: [clinical_transactional, promotional]
+
+    ConsentType:
+      type: string
+      enum: [audio_capture, messaging, training]
+
+    ConsentInput:
+      type: object
+      required: [type, granted]
+      properties:
+        type: { $ref: "#/components/schemas/ConsentType" }
+        granted: { type: boolean }
+        visitId:
+          type: string
+          format: uuid
+          description: Required for audio_capture
+        messageClass: { $ref: "#/components/schemas/MessageClass" }
+        disclosureScriptId:
+          type: string
+          description: Required when granting audio_capture or training
+
+    VisitConsentInput:
+      type: object
+      required: [granted]
+      properties:
+        type: { $ref: "#/components/schemas/ConsentType", default: audio_capture }
+        granted: { type: boolean }
+        messageClass: { $ref: "#/components/schemas/MessageClass" }
+        disclosureScriptId: { type: string }
+
+    Consent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        clinicId: { type: string, format: uuid }
+        patientId: { type: string, format: uuid }
+        visitId: { type: string, format: uuid, nullable: true }
+        type: { $ref: "#/components/schemas/ConsentType" }
+        messageClass: { $ref: "#/components/schemas/MessageClass", nullable: true }
+        granted: { type: boolean }
+        disclosureScriptId: { type: string, nullable: true }
+
+    AudioAsset:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        visitId: { type: string, format: uuid }
+        objectKey: { type: string }
+        deleteAfter:
+          type: string
+          format: date-time
+          nullable: true
+          description: Unused. Audio default is keep; no 24h auto-delete.
+        deletedAt: { type: string, format: date-time, nullable: true }
+
+    TranscriptionJob:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        visitId: { type: string, format: uuid }
+        status: { type: string, enum: [queued, processing, completed, failed] }
+        vendor: { type: string, example: stub }
+
+    Transcript:
+      type: object
+      nullable: true
+      properties:
+        id: { type: string, format: uuid }
+        visitId: { type: string, format: uuid }
+        retentionUntil: { type: string, format: date-time }
+
+    TranscriptSegment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        seq: { type: integer, description: SSE cursor }
+        speakerLabel: { type: string, example: speaker_clinician }
+        text: { type: string }
+        startMs: { type: integer }
+        endMs: { type: integer }
+
+    Note:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        visitId: { type: string, format: uuid }
+        body: { type: string }
+        status: { type: string, enum: [draft, signed] }
+        signedAt: { type: string, format: date-time, nullable: true }
+        signedBy: { type: string, format: uuid, nullable: true }
+        snapshot: { type: object, nullable: true }
+        retentionUntil: { type: string, format: date-time }
+
+    FollowUp:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        visitId: { type: string, format: uuid }
+        patientId: { type: string, format: uuid }
+        noteId: { type: string, format: uuid, nullable: true }
+        messageClass: { $ref: "#/components/schemas/MessageClass" }
+        channel: { type: string, enum: [secure], description: Channel of record is secure in-app }
+        body: { type: string, description: Secure in-app message — never the SMS body }
+        secureMessageId: { type: string, nullable: true }
+        notifySmsId: { type: string, nullable: true }
+        magicLinkToken: { type: string, nullable: true }
+        status: { type: string, enum: [draft, queued, sent, failed, skipped] }
+        skipReason: { type: string, nullable: true }
+        lastError: { type: string, nullable: true }
+        sentAt: { type: string, format: date-time, nullable: true }
+
+    FollowUpEdit:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        followUpId: { type: string, format: uuid }
+        before: { type: string }
+        after: { type: string }
+
+    DayPatients:
+      type: object
+      required: [date, patients]
+      properties:
+        date: { type: string, format: date }
+        patients:
+          type: array
+          items:
+            type: object
+            properties:
+              visitId: { type: string, format: uuid }
+              visitStatus: { type: string }
+              startedAt: { type: string, format: date-time }
+              endedAt: { type: string, format: date-time, nullable: true }
+              patient:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  displayName: { type: string }
+                  phone: { type: string, nullable: true }
+                  source: { type: string, enum: [local, imported] }
+                  pmsExternalId: { type: string, nullable: true }
+
+    ChatThread:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        patientId: { type: string, format: uuid }
+        visitId: { type: string, format: uuid, nullable: true }
+
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        threadId: { type: string, format: uuid }
+        authorType: { type: string, enum: [staff, patient, system] }
+        body: { type: string }
+
+    ImportedPatient:
+      type: object
+      required: [externalId, firstName, lastName]
+      properties:
+        externalId: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        dateOfBirth: { type: string }

@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
-import type { Note } from "@/src/api/types";
+import { isAiAssistedDraft, type Note } from "@/src/api/types";
 import { Body, Button, Caption, Mono, Pill, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
@@ -21,6 +21,7 @@ export default function NoteScreen() {
   const [confirm, setConfirm] = useState(false);
   const patient = olive.day.patients.find((p) => p.visitId === id);
   const declined = patient?.recording === "declined";
+  const aiDraft = note ? isAiAssistedDraft(note, declined) : false;
 
   useEffect(() => {
     if (!id) return;
@@ -76,10 +77,10 @@ export default function NoteScreen() {
           <Caption>{patient?.displayName ?? "Visit"}</Caption>
           <Title style={{ marginTop: 4 }}>Note</Title>
           <View style={styles.badges}>
-            {note?.aiAssisted && !signed ? <Pill label="AI-assisted draft" tone="warn" /> : null}
+            {aiDraft && !signed ? <Pill label="AI-assisted draft" tone="warn" /> : null}
             {signed ? <Pill label="Signed" tone="olive" /> : null}
             {declined ? <Pill label="Recording declined" tone="refuse" /> : null}
-            {!note?.aiAssisted && !signed ? <Pill label="Manual draft" tone="mist" /> : null}
+            {!aiDraft && !signed ? <Pill label="Manual draft" tone="mist" /> : null}
           </View>
           {signed ? (
             <Caption style={{ marginTop: 8 }}>

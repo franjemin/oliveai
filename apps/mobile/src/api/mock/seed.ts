@@ -26,11 +26,11 @@ export const flags: FeatureFlags = {
 
 export const clinic: Clinic = {
   id: DEMO.clinicId,
+  tenantId: DEMO.clinicId,
   name: "Harbourfront Dental",
   legalName: "Harbourfront Dental Inc.",
   smsIdentity: "Harbourfront Dental",
   phone: "+1-416-555-0199",
-  email: "hello@harbourfront.demo",
   residencyRegion: "ca-central-1",
   country: "CA",
   province: "ON",
@@ -42,41 +42,42 @@ export const clinic: Clinic = {
 export const user: User = {
   id: DEMO.userId,
   clinicId: DEMO.clinicId,
+  tenantId: DEMO.clinicId,
   email: "od@demo.olive.local",
   name: "Dr. Maya Chen",
-  role: "od",
+  role: "dentist",
 };
 
 export const patients: Patient[] = [
   {
     id: DEMO.patientAlexId,
-    clinicId: DEMO.clinicId,
     firstName: "Alex",
     lastName: "Rivera",
     displayName: "Alex Rivera",
     phone: "+1-416-555-0100",
     email: "alex@example.test",
     dateOfBirth: "1988-04-12",
+    pms: null,
   },
   {
     id: DEMO.patientSamId,
-    clinicId: DEMO.clinicId,
     firstName: "Sam",
     lastName: "Park",
     displayName: "Sam Park",
     phone: "+1-416-555-0101",
     email: null,
     dateOfBirth: "1979-11-02",
+    pms: null,
   },
   {
     id: DEMO.patientJordanId,
-    clinicId: DEMO.clinicId,
     firstName: "Jordan",
     lastName: "Hale",
     displayName: "Jordan Hale",
     phone: "+1-416-555-0102",
     email: null,
     dateOfBirth: "1994-07-21",
+    pms: null,
   },
 ];
 

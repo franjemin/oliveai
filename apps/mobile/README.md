@@ -48,7 +48,7 @@ npx expo start
 
 Login against the API: `od@demo.olive.local` / `demo`. Continue Alex visit `00000000-0000-4000-8000-000000000005`.
 
-Magic-link patient inbox is **mock-only** (no Backend route yet). Secure thread uses `GET/POST /v1/patients/:id/chat` when live.
+Magic-link inbox uses `GET /v1/inbox/:token`. Secure thread uses `GET/POST /v1/patients/:id/chat` when live. Notify SMS vendor remains stubbed on both sides.
 
 ### 3. Wed dry-run checklist
 
@@ -68,7 +68,7 @@ Magic-link patient inbox is **mock-only** (no Backend route yet). Secure thread 
 
 ### 4. Dry-run ETA
 
-**Mon dry-runable on mocks now.** API-backed walk depends on Backend PR #1 being up locally; no FE contract gap blocks Live / Sign / Swipe **on mocks**. Live API: magic-link inbox is missing on Backend (demo uses mock inbox); notify SMS vendor is stubbed on both sides.
+**Mon dry-runable on mocks now.** API-backed walk depends on Backend PR #1 being up locally. Client types + HTTP unwrap OpenAPI envelopes (`patients`, `followUps`, nested day feed, inbox, send). Notify SMS vendor and BAA transcription stay stubbed.
 
 ## Product locks
 
@@ -92,7 +92,7 @@ Magic-link patient inbox is **mock-only** (no Backend route yet). Secure thread 
 | Chats | Secure threads after Send (not full chat chrome) |
 | Patients | Tab shell |
 | `/thread/:patientId` | Clinic secure thread |
-| `/inbox/:token` | Patient magic-link inbox (mock) |
+| `/inbox/:token` | Patient magic-link inbox (`GET /v1/inbox/:token`) |
 
 ## Wave A P0s
 
@@ -111,16 +111,20 @@ Magic-link patient inbox is **mock-only** (no Backend route yet). Secure thread 
 | Alex visit | `00000000-0000-4000-8000-000000000005` |
 | Jordan (STOP, mock extra) | `00000000-0000-4000-8000-000000000006` |
 
-`POST /v1/follow-ups/:id/send` is the send stub. FE treats `followUp.body` as **secure message** and attaches a notify stub + inbox token in mocks.
+`POST /v1/follow-ups/:id/send` publishes the secure message (`channel: secure`) and returns `inboxPath` + `notifySms` stub. FE treats `followUp.body` as **secure message**.
 
-## Contract gaps (do not block Live / Sign / Swipe on mocks)
+Snapshot of PR #1 contracts: [`contracts/`](contracts/) (Backend remains SoT — do not edit `apps/api/`).
+
+## Contract gaps (mocks only where BE still lags)
 
 | Gap | Blocks demo? |
 | --- | --- |
-| Magic-link inbox not in OpenAPI | No — mock `/inbox/:token` |
-| Notify SMS vendor stubbed on BE | No — FE stubs notify text |
-| Day-feed row extras (`time`, `reason`, `recording`) not fully locked | No |
-| Backend `docs` may still mention audio `delete_after` 24h | No — FE copy follows product lock |
+| Notify SMS vendor stubbed on BE (`notifySms.stub`) | No — CASL/STOP still fail-closed on notify |
+| Transcription vendor stubbed (`job.vendor: stub`) | No — live capture stays simulated |
+| Day-feed extras (`time`, `reason`, `recording`) not on OpenAPI DayPatients | No — FE view model; live maps nested `patient` |
+| No `GET /v1/follow-ups` or `GET /v1/chats` | No — HTTP composes from day visits / patients+chat |
+| `Note.aiAssisted` not on contract | No — OLI-5 badge derives from body / recording declined |
+| Note-edit / sign learning events (only follow-up edits are contracted) | No — local heuristic |
 | SDM / verbal_attested depth, MFA, post-sign correction trail, admin audit UI | OK partial for demo week |
 
 ## Deferred

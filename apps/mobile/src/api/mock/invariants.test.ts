@@ -98,3 +98,27 @@ test("OLI-16 mock send returns STOP and CASL consent rejects", async () => {
     return true;
   });
 });
+
+test("send publishes channel=secure and a contract inbox payload", async () => {
+  resetState();
+  await mockApi.recordVisitConsent(DEMO.visitAlexId, {
+    type: "audio_capture",
+    granted: true,
+    visitId: DEMO.visitAlexId,
+    disclosureScriptId: "audio-disclosure-v1",
+  });
+  await mockApi.endVisit(DEMO.visitAlexId);
+  await mockApi.signNote(DEMO.visitAlexId);
+  const [fu] = await mockApi.listFollowUps(DEMO.visitAlexId);
+  const sent = await mockApi.sendFollowUp(fu.id);
+  assert.equal(sent.channel, "secure");
+  assert.equal(sent.channelOfRecord, "secure");
+  assert.equal(sent.notifySms?.containsPhi, false);
+  assert.ok(sent.magicLinkToken);
+  assert.ok(sent.inboxPath?.includes(sent.magicLinkToken ?? ""));
+  const inbox = await mockApi.getInbox(sent.magicLinkToken as string);
+  assert.equal(inbox.channelOfRecord, "secure");
+  assert.equal(inbox.body, sent.body);
+  const closed = await mockApi.finishDay(DEMO.date);
+  assert.equal(typeof closed.pendingCount, "number");
+});

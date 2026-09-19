@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { ChatThread } from "@/src/api/types";
+import type { ChatThreadView } from "@/src/api/types";
 import { Body, Caption, Card, Screen, Title } from "@/src/components/ui";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, space } from "@/src/theme/tokens";
@@ -11,7 +11,7 @@ import { color, space } from "@/src/theme/tokens";
 export default function ChatsScreen() {
   const olive = useOlive();
   const router = useRouter();
-  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [threads, setThreads] = useState<ChatThreadView[]>([]);
 
   const load = useCallback(async () => {
     setThreads(await olive.listThreads());
