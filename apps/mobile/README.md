@@ -27,6 +27,8 @@ Open: **http://localhost:8081**
 
 **Core loop:** Today **Start** → Consent **Start recording** → Live charcoal **Slide to end visit** → Note **Sign note** → 04b **Review follow-ups** → Follow-ups **Send**.
 
+**Magic-link inbox is on Backend PR #1** — `GET /v1/inbox/:token` (not missing). Send returns `inboxPath` + `magicLinkToken`; FE route is `/inbox/:token`.
+
 Long-press **Today** to reset the mock day.
 
 ## Ready-to-run packet (Tech Lead)
@@ -92,6 +94,7 @@ Nothing on the Wed hard-fail list is **missing**.
 | Day-feed date (`2026-09-19` examples vs seed **today**) | **No** | FE tries today + `2026-09-19` and overlays visit `…0005` |
 | No `GET /v1/follow-ups` | **No** | Compose pending from day visits |
 | Notify SMS vendor / BAA transcription | **No** | Stub on both sides; Send still returns secure + `inboxPath` |
+| Magic-link inbox | **No — on Backend PR #1** | `GET /v1/inbox/:token` stub. FE `/inbox/:token` + Send `inboxPath` |
 
 ### 4. Mon dry-run target
 
@@ -139,7 +142,7 @@ Nothing on the Wed hard-fail list is **missing**.
 | Alex visit | `00000000-0000-4000-8000-000000000005` |
 | Jordan (STOP, mock extra) | `00000000-0000-4000-8000-000000000006` |
 
-`POST /v1/follow-ups/:id/send` publishes the secure message (`channel: secure`) and returns `inboxPath` + `notifySms` stub. FE treats `followUp.body` as **secure message**.
+`POST /v1/follow-ups/:id/send` publishes the secure message (`channel: secure`) and returns `inboxPath` + `notifySms` stub. Patient open: **`GET /v1/inbox/:token`** on Backend PR #1 (wired, not missing). FE treats `followUp.body` as **secure message**.
 
 Snapshot of PR #1 contracts: [`contracts/`](contracts/) (Backend remains SoT — do not edit `apps/api/`).
 
