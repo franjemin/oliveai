@@ -12,80 +12,86 @@ Copy in this app is **draft pending counsel** — do not treat UX strings as leg
 
 ## Ready-to-run packet (Tech Lead)
 
-### 1. Identity
+### 1. PR + branch
 
 | | |
 | --- | --- |
 | PR | https://github.com/franjemin/oliveai/pull/2 |
 | Branch | `cursor/olive-v1-core-mobile-56b9` |
+| Base | `main` (does not rewrite Backend PR #1) |
 | Demo login | `od@demo.olive.local` / `demo` |
-| Seeded visit | `00000000-0000-4000-8000-000000000005` (Alex Rivera, in progress) |
+| Seeded visit | `00000000-0000-4000-8000-000000000005` (Alex Rivera) |
 | Clinic | Harbourfront Dental |
 
-### 2. Local run (mocks — default)
+### 2. Local run (`apps/mobile/` only)
+
+**Mocks (default — Francesca / Mon dry-run):**
 
 ```bash
 cd apps/mobile
 npm install
+# .env.example defaults:
+#   EXPO_PUBLIC_USE_MOCKS=true
+#   EXPO_PUBLIC_API_BASE=http://localhost:3000
 npx expo start --web --port 8081
-# Francesca ASAP path: http://localhost:8081
+# open http://localhost:8081
 ```
 
-### 2b. Point at Backend PR #1 API
+Boot auto-logs in as `od@demo.olive.local` / `demo` and pins visit `00000000-0000-4000-8000-000000000005` on Today.
 
-Backend SoT on `cursor/olive-v1-core-backend-a0fd`: `contracts/openapi.yaml`, `contracts/api.md`, API under `apps/api/`.
+**Point at Backend PR #1 API:**
 
 ```bash
-# from oliveai after checking out / running Backend PR #1
-# apps/api typically: docker compose up, migrate, seed, start (see that PR)
+# Terminal A — run Backend PR #1 first (see that PR; do not edit apps/api/ from this branch)
+# typical: checkout cursor/olive-v1-core-backend-a0fd → docker compose / migrate / seed / start on :3000
 
 cd apps/mobile
 cp .env.example .env
-# .env
-# EXPO_PUBLIC_USE_MOCKS=false
-# EXPO_PUBLIC_API_BASE=http://localhost:3000
-npx expo start
 ```
 
-App boot calls `POST /v1/auth/login` with `od@demo.olive.local` / `demo` and pins Core walkthrough visit `00000000-0000-4000-8000-000000000005` (Alex Rivera) on Today.
+`.env`:
 
-Magic-link inbox uses `GET /v1/inbox/:token`. Secure thread uses `GET/POST /v1/patients/:id/chat` when live. Notify SMS vendor remains stubbed on both sides.
+```
+EXPO_PUBLIC_USE_MOCKS=false
+EXPO_PUBLIC_API_BASE=http://localhost:3000
+```
 
-### Core walkthrough (seeded)
+```bash
+npx expo start --web --port 8081
+# still http://localhost:8081
+# login still od@demo.olive.local / demo ; visit still …0005
+```
 
-Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from stubbed SMS / BAA transcription / OD / PMS / chat polish / PHIPA / MFA.
+App boot: `POST /v1/auth/login` → day feed → overlay visit `…0005`. Magic-link inbox: `GET /v1/inbox/:token`. Notify SMS vendor stays stubbed on both sides.
 
-1. Boot → demo login (`od@demo.olive.local` / `demo`)
-2. Today → tap Alex → visit `…0005`
-3. Consent → **Start recording** (agree microcopy; Refuse first-class) → Live
-4. Live polls `GET /v1/visits/:id/transcript` (mocks attach segments; live POSTs stub audio + `POST /v1/dev/process-jobs`)
-5. **Slide to end visit** → Note preview → **Sign note** → **Review follow-ups**
-6. If BE has no follow-up yet, FE `POST /v1/visits/:id/follow-ups` then Swipe **Send** (secure + notify stub)
-7. **Finish day** uses the loaded day date (today on live seed; `2026-09-19` on mocks)
+### 3. Wed dry-run checklist (`wired` / `mock` / `missing`)
 
-### 3. Wed dry-run checklist
+| Step | Status |
+| --- | --- |
+| Today (NEXT UP → Start → visit `…0005`) | **wired** |
+| Consent Agree (**Start recording**) / Deny (**Not recording this visit**) + recording-gate | **wired** |
+| Live Pause / End (**Slide to end visit**) | **wired** (mic capture is **mock**) |
+| Note Sign (draft-only; signed immutable) | **wired** |
+| post-Sign follow-ups bridge (04b → Review follow-ups) | **wired** |
+| Swipe Send stub / Skip / CASL fail-closed | **wired** (notify SMS body is **mock**/stub) |
+| Edge states (consent denied, bad-audio, empty swipe) | **wired** |
+| Bluedot P0 on primary (one hero CTA, no PHIPA chips, no “record of truth”, clinic-controlled retention / no 24h wipe) | **wired** |
 
-| # | Step | Status |
-| --- | --- | --- |
-| 1 | Core loop on demo login | **wired** (mocks; API swap via env) |
-| 2 | Retention copy | **wired** (clinic-controlled; no 24h wipe on Consent / Note / Live) |
-| 3 | No PHIPA chips / “record of truth” on primary surfaces | **wired** |
-| 4 | Today → Consent **Start recording** + Refuse + recording-gate | **wired** |
-| 5 | Live Pause/End + 03b transcript sheet | **wired** (capture simulated after gate) |
-| 6 | Note Sign + post-Sign follow-ups bridge | **wired** |
-| 7 | Swipe **Send** stub / Skip / CASL fail-closed | **wired** (Send = secure message; notify SMS **stub**) |
-| 8 | Product-approved packet: clinic-controlled retention; demo simplicity cuts on primary | **wired** |
-| 9 | Follow-ups gesture: swipe R Send / L Skip + stamp | **wired** |
-| — | Edge states (consent denied, bad-audio banner, empty swipe, sign confirm) | **wired** |
+Nothing on this spine is **missing**. Real microphone, live SMS vendor, OD write-back, MFA, SDM/verbal_attested depth remain **mock** / out of demo week.
 
-**Send stub meaning:** card preview is **secure message content**. Primary CTA is **Send** (not “Send SMS”). Microcopy: “We’ll text them a link to open it securely.” CASL/STOP fail-closed runs on the **notify** send. After Send: secure thread + patient magic-link inbox.
+**Send stub:** card = secure message. CTA **Send** (not Send SMS). Microcopy: “We’ll text them a link to open it securely.” CASL/STOP fail-closed runs on the **notify** send.
 
 ### 4. Dry-run ETA
 
-**Mon dry-runable on mocks now.** API-backed walk depends on Backend PR #1 being up locally. Client types + HTTP unwrap OpenAPI envelopes (`patients`, `followUps`, nested day feed, inbox, send). Notify SMS vendor and BAA transcription stay stubbed.
+**Dry-runable on mocks now (0 hours).** Expo web Core loop was walked on this branch.
 
-## Product locks
+- **Mon clinic dry-run:** use mocks + `http://localhost:8081`. Not slipping.
+- **API-backed walk:** hours after Backend PR #1 is up locally — not a FE blocker; no contract gap blocks Live / Sign / Swipe (FE POSTs a follow-up after Sign if BE has none).
+- **Wed demo:** on track on the mock path. SMS vendor / real mic stay **mock**.
 
+## Product locks (Bluedot P0)
+
+- **Bluedot P0:** one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
 - **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
 - **Messaging:** swipe card ≠ SMS body of record. Notify text is a short stub with clinic identity + STOP. Secure thread is the record.
 
