@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: color.ink,
     fontFamily: font.ui,
+    borderWidth: 0,
   },
   actions: { paddingHorizontal: space.lg, paddingBottom: 8 },
   signedCenter: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 12 },

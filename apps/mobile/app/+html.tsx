@@ -32,4 +32,7 @@ body {
   margin: 0;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
+textarea, input {
+  outline: none;
+}
 `;

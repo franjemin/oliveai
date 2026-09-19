@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: color.ink,
     fontFamily: font.ui,
+    borderWidth: 0,
   },
   empty: { flex: 1, justifyContent: "center" },
   actions: { paddingHorizontal: space.lg, paddingBottom: 108 },

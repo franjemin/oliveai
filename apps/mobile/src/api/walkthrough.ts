@@ -34,7 +34,7 @@ export function seededVisitRow(visit: Visit, patient?: Patient | null): DayPatie
     startedAt: visit.startedAt,
     endedAt: visit.endedAt,
     time: formatDayTime(visit.startedAt),
-    reason: "Seeded Core walkthrough",
+    reason: "Perio maintenance · 45 min",
     recording: visit.status === "in_progress" ? "pending_consent" : "captured",
   };
 }
