@@ -1,27 +1,32 @@
 import { type Href, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
 import type { FollowUp, NotifyStub } from "@/src/api/types";
 import { Body, Button, Caption, Card, Pill, Screen, Title } from "@/src/components/ui";
-import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY } from "@/src/copy/messaging";
+import { EDGE } from "@/src/copy/edges";
+import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY, VOICE_LEARNING_TOAST } from "@/src/copy/messaging";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, space } from "@/src/theme/tokens";
+import { color, radius, space } from "@/src/theme/tokens";
 
 export default function SwipeScreen() {
   const olive = useOlive();
   const router = useRouter();
   const pending = olive.pendingFollowUps;
   const [queue, setQueue] = useState<FollowUp[]>([]);
+  const [draft, setDraft] = useState("");
   const [banner, setBanner] = useState<{ title: string; body: string; tone: "ok" | "refuse" } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const [lastNotify, setLastNotify] = useState<NotifyStub | null>(null);
   const [lastPatientId, setLastPatientId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    setQueue(await pending());
+    const next = await pending();
+    setQueue(next);
+    setDraft(next[0]?.body ?? "");
   }, [pending]);
 
   useFocusEffect(
@@ -33,19 +38,24 @@ export default function SwipeScreen() {
   const current = queue[0];
   const patient = olive.day.patients.find((p) => p.patientId === current?.patientId);
 
+  const saveEdit = async () => {
+    if (!current || draft === current.body) return;
+    const before = current.body;
+    await olive.saveFollowUpEdit(current.id, before, draft);
+    setToast(VOICE_LEARNING_TOAST);
+    await load();
+  };
+
   const send = async () => {
     if (!current) return;
     setBusy(true);
     try {
+      if (draft !== current.body) await saveEdit();
       const sent = await olive.sendFollowUp(current.id);
       const notify = await olive.lastNotify(sent.id);
       setLastNotify(notify);
       setLastPatientId(sent.patientId);
-      setBanner({
-        title: "Secure message sent",
-        body: SECURE_SEND_MICROCOPY,
-        tone: "ok",
-      });
+      setBanner({ title: "Secure message sent", body: SECURE_SEND_MICROCOPY, tone: "ok" });
       await load();
     } catch (err) {
       const code = err instanceof ApiError ? err.error : "send_failed";
@@ -80,9 +90,12 @@ export default function SwipeScreen() {
         <View style={styles.pad}>
           <Caption>Follow-ups</Caption>
           <Title>Swipe</Title>
-          <Caption style={{ marginTop: 6 }}>
-            {queue.length} remaining · {SECURE_SEND_MICROCOPY}
-          </Caption>
+
+          {toast ? (
+            <View style={styles.toast}>
+              <Body>{toast}</Body>
+            </View>
+          ) : null}
 
           {banner ? (
             <View
@@ -120,28 +133,34 @@ export default function SwipeScreen() {
                 <Caption>{patient?.displayName ?? "Patient"}</Caption>
                 <Pill label="Secure message" tone="olive" />
               </View>
-              <Body style={{ marginTop: 14 }}>{current.body}</Body>
-              <Caption style={{ marginTop: 16 }}>{SECURE_SEND_MICROCOPY}</Caption>
+              <TextInput
+                multiline
+                value={draft}
+                onChangeText={setDraft}
+                onBlur={() => void saveEdit()}
+                style={styles.edit}
+                textAlignVertical="top"
+              />
+              <Caption style={{ marginTop: 12 }}>{SECURE_SEND_MICROCOPY}</Caption>
               {current.lastError ? (
                 <Caption style={{ color: color.refuse, marginTop: 8 }}>Last error: {current.lastError}</Caption>
               ) : null}
             </Card>
           ) : (
-            <Card style={{ marginTop: 20 }}>
-              <Title>All caught up</Title>
-              <Body style={{ marginTop: 8 }}>No pending follow-ups.</Body>
-            </Card>
+            <View style={styles.empty}>
+              <Title>{EDGE.emptySwipe.title}</Title>
+              <Body style={{ marginTop: 8, color: color.inkMuted }}>{EDGE.emptySwipe.body}</Body>
+            </View>
           )}
         </View>
         <View style={styles.actions}>
           {current ? (
             <>
               <Button label="Send" disabled={busy} onPress={send} />
-              <Caption style={{ textAlign: "center" }}>{SECURE_SEND_MICROCOPY}</Caption>
               <Button label="Skip" variant="secondary" disabled={busy} onPress={skip} />
             </>
           ) : (
-            <Button label="Back to Today" onPress={() => router.replace("/")} />
+            <Button label={EDGE.emptySwipe.cta} onPress={() => router.replace("/")} />
           )}
         </View>
       </SafeAreaView>
@@ -153,5 +172,19 @@ const styles = StyleSheet.create({
   pad: { flex: 1, paddingHorizontal: space.lg, paddingTop: space.md },
   top: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   banner: { marginTop: 16, borderRadius: 16, padding: 14 },
+  toast: {
+    marginTop: 16,
+    backgroundColor: color.okSoft,
+    borderRadius: radius.md,
+    padding: space.md,
+  },
+  edit: {
+    marginTop: 12,
+    minHeight: 160,
+    fontSize: 16,
+    lineHeight: 23,
+    color: color.ink,
+  },
+  empty: { flex: 1, justifyContent: "center" },
   actions: { paddingHorizontal: space.lg, paddingBottom: space.md, gap: 10 },
 });

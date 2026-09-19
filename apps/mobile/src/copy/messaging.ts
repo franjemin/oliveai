@@ -1,7 +1,8 @@
 import { clinicSmsFooter } from "./sms";
 
 /** Product lock: the card is a secure message. Notify SMS is a short stub, not the body of record. */
-export const SECURE_SEND_MICROCOPY = "Patient gets a text to open it securely.";
+export const SECURE_SEND_MICROCOPY = "We’ll text them a link to open it securely.";
+export const VOICE_LEARNING_TOAST = "Saved — Olive will use this to sound more like you.";
 
 export function notifyStubBody(clinicName: string, inboxPath: string): string {
   return `${clinicName}: you have a secure message from your clinic. Open: ${inboxPath}\n${clinicSmsFooter(clinicName)}`;

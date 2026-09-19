@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ApiError } from "@/src/api";
 import type { Note } from "@/src/api/types";
 import { Body, Button, Caption, Mono, Pill, Screen, Title } from "@/src/components/ui";
+import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, radius, space } from "@/src/theme/tokens";
 
@@ -105,13 +106,13 @@ export default function NoteScreen() {
         </ScrollView>
         {confirm ? (
           <View style={styles.confirm}>
-            <Title>Sign this note?</Title>
-            <Body style={{ marginTop: 8 }}>
-              You are signing Olive’s draft as the clinic record. No Open Dental write-back in this demo.
-            </Body>
+            <Title>{EDGE.signConfirm.title}</Title>
+            <Body style={{ marginTop: 8 }}>{EDGE.signConfirm.oliveTruth}</Body>
+            <Caption style={{ marginTop: 8 }}>{EDGE.signConfirm.retention}</Caption>
+            <Caption style={{ marginTop: 4 }}>{EDGE.signConfirm.noOd}</Caption>
             <View style={{ marginTop: 16, gap: 10 }}>
-              <Button label="Sign note" disabled={busy} onPress={sign} />
-              <Button label="Cancel" variant="secondary" onPress={() => setConfirm(false)} />
+              <Button label={EDGE.signConfirm.sign} disabled={busy} onPress={sign} />
+              <Button label={EDGE.signConfirm.cancel} variant="secondary" onPress={() => setConfirm(false)} />
             </View>
           </View>
         ) : (

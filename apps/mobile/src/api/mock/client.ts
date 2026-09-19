@@ -77,6 +77,15 @@ export const mockApi: OliveApi = {
   async skipFollowUp(id, reason) {
     return store.skipFollowUp(id, reason);
   },
+  async patchFollowUp(id, body) {
+    return store.patchFollowUp(id, body);
+  },
+  async recordFollowUpEdit(id, before, after) {
+    store.recordFollowUpEdit(id, before, after);
+  },
+  async recordLearningEvent(input) {
+    store.recordLearningEvent(input);
+  },
   async getChat(patientId) {
     return store.getChat(patientId);
   },

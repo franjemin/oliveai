@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -38,7 +38,7 @@ export default function ConsentScreen() {
     setError(null);
     try {
       await olive.refuseConsent(id, party);
-      router.replace(`/visit/${id}/note`);
+      router.replace(`/visit/${id}/denied` as Href);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not record refuse.");
     } finally {

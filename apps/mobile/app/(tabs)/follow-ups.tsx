@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { FollowUp } from "@/src/api/types";
 import { Body, Button, Caption, Card, Pill, Screen, Title } from "@/src/components/ui";
+import { EDGE } from "@/src/copy/edges";
 import { SECURE_SEND_MICROCOPY } from "@/src/copy/messaging";
 import { useOlive } from "@/src/store/OliveProvider";
 import { color, space } from "@/src/theme/tokens";
@@ -35,8 +36,8 @@ export default function FollowUpsTab() {
           <View style={{ marginTop: 20, gap: 12 }}>
             {items.length === 0 ? (
               <Card>
-                <Title>All caught up</Title>
-                <Body style={{ marginTop: 8 }}>No pending follow-ups. Finish a signed visit from Today.</Body>
+                <Title>{EDGE.emptySwipe.title}</Title>
+                <Body style={{ marginTop: 8 }}>{EDGE.emptySwipe.body}</Body>
               </Card>
             ) : (
               items.map((fu) => (

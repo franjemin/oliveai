@@ -42,6 +42,7 @@ type OliveContextValue = {
   pendingFollowUps: () => Promise<FollowUp[]>;
   sendFollowUp: (id: string) => Promise<FollowUp>;
   skipFollowUp: (id: string) => Promise<FollowUp>;
+  saveFollowUpEdit: (id: string, before: string, after: string) => Promise<FollowUp>;
   finishDay: () => Promise<FollowUp[]>;
   getPatient: (id: string) => Promise<Patient>;
   getChat: (patientId: string) => Promise<{ thread: ChatThread | null; messages: ChatThread["messages"] }>;
@@ -155,6 +156,11 @@ export function OliveProvider({ children }: { children: ReactNode }) {
       pendingFollowUps: () => api.listPendingFollowUps(),
       sendFollowUp: (id) => api.sendFollowUp(id),
       skipFollowUp: (id) => api.skipFollowUp(id),
+      saveFollowUpEdit: async (id, before, after) => {
+        const updated = await api.patchFollowUp(id, after);
+        await api.recordFollowUpEdit(id, before, after);
+        return updated;
+      },
       finishDay: async () => {
         const res = await api.finishDay("2026-09-19");
         return res.queued;

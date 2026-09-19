@@ -59,6 +59,13 @@ export const httpApi: OliveApi = {
   sendFollowUp: (id) => req(`/v1/follow-ups/${id}/send`, { method: "POST" }),
   skipFollowUp: (id, reason) =>
     req(`/v1/follow-ups/${id}/skip`, { method: "POST", body: JSON.stringify({ reason }) }),
+  patchFollowUp: (id, body) =>
+    req(`/v1/follow-ups/${id}`, { method: "PATCH", body: JSON.stringify({ body }) }),
+  recordFollowUpEdit: (id, before, after) =>
+    req(`/v1/follow-ups/${id}/edits`, { method: "POST", body: JSON.stringify({ before, after }) }),
+  async recordLearningEvent() {
+    /* Heuristic voice-learning events are mock/local until a dedicated contract exists. */
+  },
   getChat: (patientId) => req(`/v1/patients/${patientId}/chat`),
   async listThreads() {
     const rows = await req<ChatThread[]>("/v1/chats").catch(() => []);

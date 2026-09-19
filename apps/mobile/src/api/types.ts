@@ -166,6 +166,13 @@ export type NotifyStub = {
   inboxToken: string;
 };
 
+export type LearningEvent = {
+  source: "follow_up_edit" | "note_edit" | "note_sign";
+  before: string;
+  after: string;
+  resourceId: string;
+};
+
 export type MagicInbox = {
   token: string;
   patientId: string;
@@ -255,6 +262,9 @@ export interface OliveApi {
   listPendingFollowUps(): Promise<FollowUp[]>;
   sendFollowUp(id: string): Promise<FollowUp>;
   skipFollowUp(id: string, reason?: string): Promise<FollowUp>;
+  patchFollowUp(id: string, body: string): Promise<FollowUp>;
+  recordFollowUpEdit(id: string, before: string, after: string): Promise<void>;
+  recordLearningEvent(input: LearningEvent): Promise<void>;
   getChat(patientId: string): Promise<{ thread: ChatThread | null; messages: ChatMessage[] }>;
   listThreads(): Promise<ChatThread[]>;
   lastNotify(followUpId: string): Promise<NotifyStub | null>;

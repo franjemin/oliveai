@@ -10,8 +10,9 @@ import type { TranscriptSegment } from "@/src/api/types";
 import { TranscriptSheet } from "@/src/components/TranscriptSheet";
 import { Waveform } from "@/src/components/Waveform";
 import { Body, Button, Caption, Display, Screen } from "@/src/components/ui";
+import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, space } from "@/src/theme/tokens";
+import { color, radius, space } from "@/src/theme/tokens";
 
 export default function LiveScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,8 +23,10 @@ export default function LiveScreen() {
   const [gateError, setGateError] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [badAudio, setBadAudio] = useState(false);
   const [segments, setSegments] = useState<TranscriptSegment[]>([]);
   const patient = olive.day.patients.find((p) => p.visitId === id);
+  const edge = useLocalSearchParams<{ edge?: string }>().edge;
 
   useEffect(() => {
     if (!id) return;
@@ -31,7 +34,10 @@ export default function LiveScreen() {
     (async () => {
       try {
         await startAmbientCapture(api, id);
-        if (!cancelled) setCapturing(true);
+        if (!cancelled) {
+          setCapturing(true);
+          if (edge === "bad-audio") setBadAudio(true);
+        }
       } catch (err) {
         if (!cancelled) {
           setCapturing(false);
@@ -42,7 +48,13 @@ export default function LiveScreen() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [edge, id]);
+
+  useEffect(() => {
+    if (!capturing || edge === "bad-audio") return;
+    const t = setTimeout(() => setBadAudio(true), 1600);
+    return () => clearTimeout(t);
+  }, [capturing, edge]);
 
   useEffect(() => {
     if (!capturing || paused) return;
@@ -80,6 +92,24 @@ export default function LiveScreen() {
         <Pressable onPress={() => router.back()} style={{ alignSelf: "flex-start", marginBottom: 8 }}>
           <Caption style={{ color: color.olive }}>← Back</Caption>
         </Pressable>
+        {badAudio ? (
+          <View style={styles.badBanner}>
+            <Caption style={{ color: color.warn }}>{EDGE.badAudio.title}</Caption>
+            <Body style={{ marginTop: 4 }}>{EDGE.badAudio.body}</Body>
+            <View style={styles.badRow}>
+              <Button
+                label={EDGE.badAudio.fixMic}
+                variant="secondary"
+                onPress={() => {
+                  setBadAudio(false);
+                  setPaused(false);
+                  setCapturing(true);
+                }}
+              />
+              <Button label={EDGE.badAudio.continueAnyway} variant="ghost" onPress={() => setBadAudio(false)} />
+            </View>
+          </View>
+        ) : null}
         <Caption style={{ textAlign: "center" }}>{patient?.displayName ?? "Visit"}</Caption>
         <Caption style={{ textAlign: "center", marginTop: 4 }}>
           {gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}
@@ -123,4 +153,11 @@ const styles = StyleSheet.create({
   timer: { fontSize: 72, lineHeight: 76, marginBottom: 28, letterSpacing: -2 },
   bottom: { paddingBottom: space.md, gap: 8 },
   link: { alignItems: "center", paddingVertical: 12 },
+  badBanner: {
+    backgroundColor: color.warnSoft,
+    borderRadius: radius.md,
+    padding: space.md,
+    marginBottom: space.md,
+  },
+  badRow: { marginTop: 12, gap: 8 },
 });

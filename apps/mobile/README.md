@@ -6,7 +6,7 @@ Expo + Expo Router + TypeScript under **`apps/mobile/` only**. Do not edit `apps
 **Branch:** `cursor/olive-v1-core-mobile-56b9`  
 **Base:** `main` (does not rewrite Backend PR #1)
 
-Copy in this app is **draft pending counsel**. Hi-fi / brand folders were not mounted here; tokens follow the locked brief (solid olive bars, softened mist).
+Copy in this app is **draft pending counsel**. Edge CTAs are from `olive-v1/hifi/edges/` filenames (PNGs were not mounted). Tokens: solid olive bars, softened mist. Demo simplicity cuts on primary surfaces — no PHIPA chips / no “record of truth.”
 
 ## Ready-to-run packet (Tech Lead)
 
@@ -61,9 +61,10 @@ Magic-link patient inbox is **mock-only** (no Backend route yet). Secure thread 
 | 5 | Live Pause/End + 03b transcript sheet | **wired** (capture simulated after gate) |
 | 6 | Note Sign + post-Sign follow-ups bridge | **wired** |
 | 7 | Swipe **Send** stub / Skip / CASL fail-closed | **wired** (Send = secure message; notify SMS **stub**) |
-| 8 | Product-approved packet: clinic-controlled retention; Bluedot primary copy | **wired** |
+| 8 | Product-approved packet: clinic-controlled retention; demo simplicity cuts on primary | **wired** |
+| — | Edge states (consent denied, bad-audio banner, empty swipe, sign confirm) | **wired** |
 
-**Send stub meaning:** card preview is **secure message content**. Primary CTA is **Send** (not “Send SMS”). Microcopy: “Patient gets a text to open it securely.” CASL/STOP fail-closed runs on the **notify** send. After Send: secure thread + patient magic-link inbox.
+**Send stub meaning:** card preview is **secure message content**. Primary CTA is **Send** (not “Send SMS”). Microcopy: “We’ll text them a link to open it securely.” CASL/STOP fail-closed runs on the **notify** send. After Send: secure thread + patient magic-link inbox.
 
 ### 4. Dry-run ETA
 
@@ -80,10 +81,13 @@ Magic-link patient inbox is **mock-only** (no Backend route yet). Secure thread 
 | --- | --- |
 | Today | Day roster, start/continue, Finish day |
 | Consent | Per-visit. **Start recording** + Refuse. Disclosure id stored (not a Today chip). |
+| Consent denied | `visit/[id]/denied` — **Continue without recording** (`01-consent-denied`) |
 | Live | Timer, **Pause**, **End visit**, View transcript (not the full feed) |
+| Bad audio | Top banner on Live — **Fix mic** · **Continue anyway** (`02-bad-audio`) |
 | Transcript sheet (03b) | Diarized feed. Clinic-controlled audio retention copy. |
-| Note / Sign | AI-assisted draft badge; Sign only if `draft`; confirm; then **Review follow-ups** |
-| Swipe | Secure-message card · **Send** / Skip · CASL on notify |
+| Note / Sign | AI-assisted draft badge; Sign only if `draft`; confirm (`04-sign-confirm`); then **Review follow-ups** |
+| Swipe | Secure-message card (editable) · **Send** / Skip · CASL on notify |
+| Empty swipe | **All caught up** · **Back to Today** (`03-empty-swipe`) |
 | Follow-ups | Same queue |
 | Chats | Secure threads after Send (not full chat chrome) |
 | Patients | Tab shell |

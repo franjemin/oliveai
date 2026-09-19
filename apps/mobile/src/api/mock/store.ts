@@ -54,6 +54,13 @@ export type MockState = {
   threads: ChatThread[];
   notifies: NotifyStub[];
   inboxTokens: Record<string, string>;
+  learningEvents: Array<{
+    source: "follow_up_edit" | "note_edit" | "note_sign";
+    before: string;
+    after: string;
+    resourceId: string;
+    at: string;
+  }>;
 };
 
 export function createInitialState(): MockState {
@@ -70,6 +77,7 @@ export function createInitialState(): MockState {
     threads: [],
     notifies: [],
     inboxTokens: {},
+    learningEvents: [],
   };
 }
 
@@ -317,6 +325,12 @@ export function patchNote(visitId: string, body: string): Note {
   }
   const updated: Note = { ...note, body, updatedAt: nowIso() };
   state.notes = state.notes.map((n) => (n.id === note.id ? updated : n));
+  recordLearningEvent({
+    source: "note_edit",
+    before: note.body,
+    after: body,
+    resourceId: note.id,
+  });
   return updated;
 }
 
@@ -341,6 +355,12 @@ export function signNote(visitId: string): Note {
     updatedAt: signedAt,
   };
   state.notes = state.notes.map((n) => (n.id === note.id ? signed : n));
+  recordLearningEvent({
+    source: "note_sign",
+    before: note.body,
+    after: signed.body,
+    resourceId: note.id,
+  });
   return signed;
 }
 
@@ -359,6 +379,40 @@ export function finishDay() {
   );
   state.dayFinished = true;
   return { date: TODAY, queued: listPendingFollowUps() };
+}
+
+export function patchFollowUp(id: string, body: string): FollowUp {
+  const fu = state.followUps.find((f) => f.id === id);
+  if (!fu) throw new ApiError({ error: "not_found", message: "follow-up" });
+  if (fu.status === "sent" || fu.status === "skipped") {
+    throw new ApiError({ error: "follow_up_frozen", message: `Cannot edit a ${fu.status} follow-up` });
+  }
+  const updated: FollowUp = { ...fu, body, updatedAt: nowIso() };
+  state.followUps = state.followUps.map((f) => (f.id === id ? updated : f));
+  return updated;
+}
+
+export function recordFollowUpEdit(id: string, before: string, after: string): void {
+  const fu = state.followUps.find((f) => f.id === id);
+  if (!fu) throw new ApiError({ error: "not_found", message: "follow-up" });
+  recordLearningEvent({
+    source: "follow_up_edit",
+    before,
+    after,
+    resourceId: id,
+  });
+}
+
+export function recordLearningEvent(input: {
+  source: "follow_up_edit" | "note_edit" | "note_sign";
+  before: string;
+  after: string;
+  resourceId: string;
+}): void {
+  state.learningEvents = [
+    ...state.learningEvents,
+    { ...input, at: nowIso() },
+  ];
 }
 
 export function skipFollowUp(id: string, reason?: string): FollowUp {
