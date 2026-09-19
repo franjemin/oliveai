@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   appendLearningEvent,
+  applyStyle,
   followUpEditContractBody,
   httpLearningLog,
   learningEventPayload,
@@ -37,7 +38,18 @@ test("style heuristic is edit-count only — not a queue rewrite", () => {
   ]);
   assert.equal(style.editCount, 1);
   assert.equal(style.preferShorter, true);
-  assert.equal(style.greeting, "Hi");
+  assert.equal(style.greeting, "Hi Jordan — short note on the crown consult");
+});
+
+test("applyStyle is a draft heuristic — not PHI training", () => {
+  const long = `${"Keep flossing nightly. ".repeat(20)}Call if swelling starts.`;
+  const out = applyStyle(long, {
+    preferShorter: true,
+    greeting: "Hi Alex — quick note.",
+    editCount: 2,
+  });
+  assert.ok(out.startsWith("Hi Alex — quick note."));
+  assert.ok(out.length <= 320);
 });
 
 test("appendLearningEvent dedupes the same before/after payload", () => {

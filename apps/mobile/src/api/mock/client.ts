@@ -15,6 +15,7 @@ export const mockApi: OliveApi = {
       user: store.getUser(),
       clinic: store.getClinic(),
       flags: store.getFlags(),
+      style: store.sessionStyle(),
     } satisfies Session;
   },
   async session() {

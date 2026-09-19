@@ -17,7 +17,7 @@ import {
   type TranscriptSegment,
   type Visit,
 } from "../types";
-import { appendLearningEvent, styleHeuristicFromEvents } from "../learning";
+import { appendLearningEvent, applyStyle, styleHeuristicFromEvents } from "../learning";
 import { DISCLOSURE_SCRIPT_ID } from "./seed";
 import {
   TODAY,
@@ -293,6 +293,8 @@ export function createFollowUp(
 ): FollowUp {
   const visit = getVisit(visitId);
   const note = state.notes.find((n) => n.visitId === visit.id);
+  const style = sessionStyle();
+  const drafted = applyStyle(body, style);
   const fu: FollowUp = {
     id: nid("fu"),
     visitId: visit.id,
@@ -300,7 +302,7 @@ export function createFollowUp(
     noteId: note?.id ?? null,
     messageClass,
     channel: "secure",
-    body,
+    body: drafted,
     secureMessageId: null,
     notifySmsId: null,
     magicLinkToken: null,

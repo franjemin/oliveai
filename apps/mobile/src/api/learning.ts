@@ -49,21 +49,45 @@ export function appendLearningEvent(
   return [...log, { ...payload, at }];
 }
 
+/** Matches Backend PR #1 `clinician_style_profiles` greeting extract. */
 export function inferGreeting(text?: string | null): string | null {
   if (!text) return null;
-  const match = text.trim().match(/^(hi|hello|hey)\b/i);
-  return match ? match[1] : null;
+  const first = text.trim().split(/[.!\n]/)[0]?.trim() ?? "";
+  if (first.length > 4 && first.length < 80 && /^(hi|hello|hey|thanks|thank you)\b/i.test(first)) {
+    return first;
+  }
+  return null;
 }
 
-/** Session `style` heuristic from stored before/after events. Not a rewrite queue. */
+/** Session `style` heuristic from stored before/after events → clinician_style_profiles. */
 export function styleHeuristicFromEvents(events: LearningEvent[]): StyleHeuristic {
   const edits = events.filter((row) => row.source === "follow_up_edit" || row.source === "note_edit");
-  const last = edits[edits.length - 1];
+  let preferShorter = false;
+  let greeting: string | null = null;
+  for (const row of edits) {
+    if (row.after.trim().length < row.before.trim().length) preferShorter = true;
+    greeting = inferGreeting(row.after) ?? greeting;
+  }
   return {
     editCount: edits.length,
-    preferShorter: last ? last.after.trim().length < last.before.trim().length : undefined,
-    greeting: inferGreeting(last?.after),
+    preferShorter: edits.length ? preferShorter : undefined,
+    greeting,
   };
+}
+
+/** Demo simplicity cuts — same-day draft heuristic. Not PHI training / queue rewrite. */
+export function applyStyle(body: string, profile: StyleHeuristic): string {
+  let out = body.trim();
+  const greeting = profile.greeting;
+  if (greeting && !out.toLowerCase().startsWith(greeting.toLowerCase().slice(0, 6))) {
+    out = `${greeting} ${out}`.trim();
+  }
+  if (profile.preferShorter && out.length > 280) {
+    const cut = out.slice(0, 280);
+    const last = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("\n"));
+    out = (last > 40 ? cut.slice(0, last + 1) : cut).trim();
+  }
+  return out;
 }
 
 export class LearningLog {

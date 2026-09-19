@@ -29,6 +29,11 @@ Open: **http://localhost:8081**
 
 **Magic-link inbox is on Backend PR #1** — `GET /v1/inbox/:token` (not missing). Send returns `inboxPath` + `magicLinkToken`; FE route is `/inbox/:token`.
 
+**Product locks (PR #1 contracts, baked):**
+1. **No 24h audio delete** — audio stays with the clinic record; retention is clinic-controlled.
+2. **Send = secure message** — notify SMS is a separate stub. Send returns `secureMessageId` + `channelOfRecord: "secure"` + `inboxPath`. Open `GET /v1/inbox/:token`.
+3. **Edits → clinician style** — `POST /v1/follow-ups/:id/edits` `{ before, after }` updates `clinician_style_profiles`. Drafts may use the session `style` heuristic. `phiTrainingAllowed` is **false**.
+
 Long-press **Today** to reset the mock day.
 
 ## Ready-to-run packet (Tech Lead)

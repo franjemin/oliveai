@@ -13,6 +13,7 @@ test("Core walkthrough logs in and loads seeded visit 005", async () => {
   const session = await mockApi.login(CORE_WALKTHROUGH.loginEmail, CORE_WALKTHROUGH.loginPassword);
   assert.equal(session.user.email, CORE_WALKTHROUGH.loginEmail);
   assert.equal(session.user.role, "dentist");
+  assert.equal(session.flags.phiTrainingAllowed, false);
   const visit = await mockApi.getVisit(CORE_WALKTHROUGH.visitId);
   assert.equal(visit.id, CORE_WALKTHROUGH.visitId);
   assert.equal(visit.patientId, CORE_WALKTHROUGH.patientId);
@@ -166,6 +167,7 @@ test("send publishes channel=secure and a contract inbox payload", async () => {
   const sent = await mockApi.sendFollowUp(fu.id);
   assert.equal(sent.channel, "secure");
   assert.equal(sent.channelOfRecord, "secure");
+  assert.ok(sent.secureMessageId);
   assert.equal(sent.notifySms?.containsPhi, false);
   assert.ok(sent.magicLinkToken);
   assert.ok(sent.inboxPath?.includes(sent.magicLinkToken ?? ""));
