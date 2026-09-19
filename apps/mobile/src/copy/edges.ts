@@ -22,7 +22,7 @@ export const EDGE = {
   signConfirm: {
     title: "Sign this note?",
     oliveTruth: "You’re signing this as the clinical record.",
-    audio: "Audio stays with the clinic record.",
+    audio: "Audio stays with the clinic record. The clinic controls how long it is kept.",
     noOd: "No Open Dental write-back.",
     sign: "Sign note",
     cancel: "Cancel",

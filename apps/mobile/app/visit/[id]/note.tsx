@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
 import { isAiAssistedDraft, type Note } from "@/src/api/types";
+import { SignConfirmSheet } from "@/src/components/SignConfirmSheet";
 import { Body, Button, Caption, Pill, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { formatSoap, parseSoap, SOAP_LABELS, soapPreview, type Soap } from "@/src/copy/soap";
@@ -20,6 +21,7 @@ export default function NoteScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [confirm, setConfirm] = useState(false);
   const patient = olive.day.patients.find((p) => p.visitId === id);
   const declined = patient?.recording === "declined";
   const aiDraft = note ? isAiAssistedDraft(note, declined) : false;
@@ -62,6 +64,7 @@ export default function NoteScreen() {
       setNote(n);
       setSoap(parseSoap(n.body));
       setEditing(false);
+      setConfirm(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Sign failed.");
     } finally {
@@ -144,7 +147,7 @@ export default function NoteScreen() {
         </ScrollView>
         <View style={styles.actions}>
           <Caption style={{ textAlign: "center", marginBottom: 12 }}>{EDGE.signConfirm.oliveTruth}</Caption>
-          <Button label="Sign note" disabled={!canSign || busy} onPress={() => void sign()} />
+          <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
           <Pressable
             onPress={() => router.replace("/")}
             style={{ paddingVertical: 14 }}
@@ -152,6 +155,12 @@ export default function NoteScreen() {
             <Caption style={{ textAlign: "center", color: color.inkFaint }}>Save draft</Caption>
           </Pressable>
         </View>
+        <SignConfirmSheet
+          visible={confirm}
+          busy={busy}
+          onSign={() => void sign()}
+          onCancel={() => setConfirm(false)}
+        />
       </SafeAreaView>
     </Screen>
   );

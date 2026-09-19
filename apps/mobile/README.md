@@ -93,7 +93,7 @@ Nothing on the Wed hard-fail list is **missing**.
 | Consent | **Start recording** | Bottom sheet. **Why we ask** + agree line. Refuse = **Not recording this visit**. |
 | Consent denied | **Continue without recording** | Edge only |
 | Live | **Slide to end visit** | Large **Pause**. **View transcript** pill. |
-| Note | **Sign note** | Preview on land. **Edit full note**. After Sign: **Review follow-ups**. |
+| Note | **Sign note** | Preview on land. **Edit full note**. Confirm sheet (wipe-scrub: clinic-controlled audio, no 24h). After Sign: **Review follow-ups**. |
 | Follow-ups / Swipe | Swipe right **Send** / left **Skip** | Secure message chip. Stamp-on-card. Outline buttons are a11y only. Voice toast on edit. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |
