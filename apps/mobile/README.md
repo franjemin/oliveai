@@ -56,9 +56,9 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 
 1. Boot → demo login (`od@demo.olive.local` / `demo`)
 2. Today → tap Alex → visit `…0005`
-3. Consent → **Agree** (Refuse first-class; gate fail-closed) → Live
+3. Consent → **Start recording** (agree microcopy; Refuse first-class) → Live
 4. Live polls `GET /v1/visits/:id/transcript` (mocks attach segments; live POSTs stub audio + `POST /v1/dev/process-jobs`)
-5. **End visit** → Note (AI-draft badge) → **Sign note**
+5. **End visit** → Note preview → **Sign note** → **Review follow-ups**
 6. If BE has no follow-up yet, FE `POST /v1/visits/:id/follow-ups` then Swipe **Send** (secure + notify stub)
 7. **Finish day** uses the loaded day date (today on live seed; `2026-09-19` on mocks)
 
@@ -69,7 +69,7 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 | 1 | Core loop on demo login | **wired** (mocks; API swap via env) |
 | 2 | Retention copy | **wired** (clinic-controlled except short sign confirm: 24h audio beat) |
 | 3 | No PHIPA chips / “record of truth” on primary surfaces | **wired** |
-| 4 | Today → Consent **Agree** + first-class Refuse + recording-gate | **wired** |
+| 4 | Today → Consent **Start recording** + Refuse + recording-gate | **wired** |
 | 5 | Live Pause/End + 03b transcript sheet | **wired** (capture simulated after gate) |
 | 6 | Note Sign + post-Sign follow-ups bridge | **wired** |
 | 7 | Swipe **Send** stub / Skip / CASL fail-closed | **wired** (Send = secure message; notify SMS **stub**) |
@@ -92,10 +92,10 @@ Same spine as Backend `apps/api/scripts/happy-path.sh`. No demo-blockers from st
 | Route | Hero CTA | Happy path |
 | --- | --- | --- |
 | Today | Tap the next patient | Roster only. Finish day is ghost. Reset = long-press Today. |
-| Consent | **Agree** | Short sheet. Refuse is first-class. |
+| Consent | **Start recording** | Short sheet + agree microcopy. Refuse first-class. |
 | Consent denied | **Continue without recording** | Edge only |
-| Live | **End visit** | Timer + waveform. Transcript is 03b sheet. Bad-audio is a top banner (`?edge=bad-audio`). |
-| Note | **Sign note** | Landing preview only. Edit opens SOAP. Short confirm (Olive truth · 24h audio · no OD). |
+| Live | **End visit** (ink, not Start olive) | Bigger **Pause**. Transcript is 03b sheet. Bad-audio top banner. |
+| Note | **Sign note** | Preview on land. Edit → SOAP. After Sign: **Review follow-ups**. |
 | Swipe | **Send** | Card + microcopy. Skip is a text link. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |

@@ -29,7 +29,7 @@ export default function FollowUpsTab() {
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Caption>End of day</Caption>
+          <Caption>Today</Caption>
           <Title>Follow-ups</Title>
           <View style={{ marginTop: 20, gap: 12 }}>
             {items.length === 0 ? (
@@ -52,7 +52,7 @@ export default function FollowUpsTab() {
         </ScrollView>
         {items.length > 0 ? (
           <View style={{ paddingHorizontal: space.lg, paddingBottom: space.md }}>
-            <Button label="Review" onPress={() => router.push("/swipe")} />
+            <Button label="Review follow-ups" onPress={() => router.push("/swipe")} />
           </View>
         ) : null}
       </SafeAreaView>

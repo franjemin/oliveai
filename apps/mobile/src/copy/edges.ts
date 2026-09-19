@@ -21,10 +21,15 @@ export const EDGE = {
   },
   signConfirm: {
     title: "Sign this note?",
-    oliveTruth: "Olive drafted this. You are responsible for what you sign.",
-    audio: "Visit audio is deleted within 24 hours.",
+    oliveTruth: "Olive drafted this. You sign it.",
+    audio: "Audio is deleted in 24 hours.",
     noOd: "No Open Dental write-back.",
     sign: "Sign note",
     cancel: "Cancel",
+  },
+  postSign: {
+    title: "Signed",
+    body: "A follow-up is ready to review.",
+    cta: "Review follow-ups",
   },
 } as const;

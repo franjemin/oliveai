@@ -10,7 +10,7 @@ import { Body, Button, Caption, Card, Screen, Title } from "@/src/components/ui"
 import { EDGE } from "@/src/copy/edges";
 import { SECURE_SEND_MICROCOPY, SEND_FAIL_COPY, VOICE_LEARNING_TOAST } from "@/src/copy/messaging";
 import { useOlive } from "@/src/store/OliveProvider";
-import { color, radius, space } from "@/src/theme/tokens";
+import { color, space } from "@/src/theme/tokens";
 
 export default function SwipeScreen() {
   const olive = useOlive();
@@ -75,8 +75,8 @@ export default function SwipeScreen() {
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <View style={styles.pad}>
-          <Caption>Follow-ups</Caption>
-          <Title>Send</Title>
+          <Caption>Follow-up</Caption>
+          <Title>{current ? (patient?.displayName ?? "Patient") : EDGE.emptySwipe.title}</Title>
 
           {status ? (
             <View
@@ -99,7 +99,6 @@ export default function SwipeScreen() {
 
           {current ? (
             <Card style={{ marginTop: 20, flex: 1 }}>
-              <Caption>{patient?.displayName ?? "Patient"}</Caption>
               <TextInput
                 multiline
                 value={draft}
@@ -112,8 +111,7 @@ export default function SwipeScreen() {
             </Card>
           ) : (
             <View style={styles.empty}>
-              <Title>{EDGE.emptySwipe.title}</Title>
-              <Body style={{ marginTop: 8, color: color.inkMuted }}>{EDGE.emptySwipe.body}</Body>
+              <Body style={{ color: color.inkMuted }}>{EDGE.emptySwipe.body}</Body>
             </View>
           )}
         </View>

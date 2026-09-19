@@ -57,8 +57,9 @@ export default function ConsentScreen() {
           {error ? <Body style={{ color: color.refuse, marginTop: 16 }}>{error}</Body> : null}
         </View>
         <View style={styles.actions}>
-          <Button label="Agree" disabled={busy !== null} onPress={accept} />
-          <Button label="Refuse" variant="refuse" disabled={busy !== null} onPress={refuse} />
+          <Button label={AUDIO_DISCLOSURE.startCta} disabled={busy !== null} onPress={accept} />
+          <Caption style={{ textAlign: "center" }}>{AUDIO_DISCLOSURE.agreeMicrocopy}</Caption>
+          <Button label={AUDIO_DISCLOSURE.refuseCta} variant="refuse" disabled={busy !== null} onPress={refuse} />
         </View>
       </SafeAreaView>
     </Screen>

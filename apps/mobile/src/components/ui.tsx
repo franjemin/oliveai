@@ -87,15 +87,21 @@ export function Pill({
 export function Button({
   label,
   variant = "primary",
+  size = "md",
   disabled,
   style,
   ...rest
-}: PressableProps & { label: string; variant?: "primary" | "secondary" | "ghost" | "refuse" }) {
+}: PressableProps & {
+  label: string;
+  variant?: "primary" | "secondary" | "ghost" | "refuse" | "end";
+  size?: "md" | "lg";
+}) {
   const palette = {
     primary: { bg: color.olive, fg: color.white, border: color.olive },
     secondary: { bg: color.white, fg: color.oliveInk, border: color.line },
     ghost: { bg: "transparent", fg: color.olive, border: "transparent" },
     refuse: { bg: color.white, fg: color.refuse, border: "rgba(122, 58, 50, 0.28)" },
+    end: { bg: color.ink, fg: color.white, border: color.ink },
   }[variant];
   return (
     <Pressable
@@ -103,6 +109,7 @@ export function Button({
       disabled={disabled}
       style={(state) => [
         styles.btn,
+        size === "lg" && styles.btnLg,
         {
           backgroundColor: palette.bg,
           borderColor: palette.border,
@@ -112,7 +119,7 @@ export function Button({
       ]}
       {...rest}
     >
-      <Text style={[styles.btnLabel, { color: palette.fg }]}>{label}</Text>
+      <Text style={[styles.btnLabel, size === "lg" && styles.btnLabelLg, { color: palette.fg }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -170,10 +177,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     borderWidth: 1,
   },
+  btnLg: {
+    minHeight: 68,
+  },
   btnLabel: {
     fontSize: 16,
     fontWeight: "600",
     fontFamily: font.ui,
+  },
+  btnLabelLg: {
+    fontSize: 18,
   },
   card: {
     backgroundColor: color.card,

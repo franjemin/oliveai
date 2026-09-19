@@ -112,10 +112,14 @@ export default function LiveScreen() {
           ) : null}
         </View>
         <View style={styles.bottom}>
-          <Button label="End visit" disabled={!capturing && !gateError} onPress={end} />
-          <Pressable onPress={() => setPaused((p) => !p)} disabled={!capturing} style={styles.link}>
-            <Caption style={{ color: color.inkMuted }}>{paused ? "Resume" : "Pause"}</Caption>
-          </Pressable>
+          <Button
+            label={paused ? "Resume" : "Pause"}
+            variant="secondary"
+            size="lg"
+            disabled={!capturing}
+            onPress={() => setPaused((p) => !p)}
+          />
+          <Button label="End visit" variant="end" disabled={!capturing && !gateError} onPress={end} />
           <Pressable onPress={() => setSheet(true)} style={styles.link}>
             <Caption style={{ color: color.olive }}>View transcript</Caption>
           </Pressable>

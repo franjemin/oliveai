@@ -79,14 +79,15 @@ export default function NoteScreen() {
             ← Back
           </Caption>
           <Caption style={{ marginTop: 16 }}>{patient?.displayName ?? "Visit"}</Caption>
-          <Title style={{ marginTop: 4 }}>{soap.title || "Note"}</Title>
+          <Title style={{ marginTop: 4 }}>{signed ? EDGE.postSign.title : soap.title || "Note"}</Title>
           <View style={styles.badges}>
-            {signed ? <Pill label="Signed" tone="olive" /> : null}
-            {!signed && aiDraft ? <Pill label="AI-assisted draft" tone="warn" /> : null}
-            {!signed && declined ? <Pill label="Recording declined" tone="refuse" /> : null}
+            {!signed && aiDraft ? <Pill label="AI draft" tone="warn" /> : null}
+            {!signed && declined ? <Pill label="Not recorded" tone="refuse" /> : null}
           </View>
 
-          {editing ? (
+          {signed && !editing ? (
+            <Body style={{ marginTop: 20, color: color.inkMuted }}>{EDGE.postSign.body}</Body>
+          ) : editing ? (
             <View style={{ marginTop: 20, gap: 14 }}>
               {SOAP_LABELS.map((section) => (
                 <View key={section.key}>
@@ -123,15 +124,17 @@ export default function NoteScreen() {
         ) : (
           <View style={styles.actions}>
             {signed ? (
-              <Button label="Review follow-ups" onPress={() => router.push("/swipe")} />
+              <Button label={EDGE.postSign.cta} onPress={() => router.replace("/swipe")} />
             ) : (
               <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
             )}
-            <Button
-              label={editing ? "Done" : "Edit"}
-              variant="ghost"
-              onPress={() => setEditing((v) => !v)}
-            />
+            {signed ? null : (
+              <Button
+                label={editing ? "Done" : "Edit"}
+                variant="ghost"
+                onPress={() => setEditing((v) => !v)}
+              />
+            )}
           </View>
         )}
       </SafeAreaView>
