@@ -8,7 +8,26 @@ Expo + Expo Router + TypeScript under **`apps/mobile/` only**. Do not edit `apps
 
 Copy in this app is **draft pending counsel** — do not treat UX strings as legal-approved.
 
-**Visual pass (hi-fi 01–05b):** cream paper `#FFFEFA` / `#F7F5F0`, sage→olive CTA `#7A9E7E → #6B8F71`, charcoal `#2C2B28`. Nunito (brand) + Inter (UI). Glass cards, floating pill tabs, slide-to-end Live, Sign-first Note, Secure message Send + voice toast. No PHIPA chips. No 24h wipe copy.
+**Visual pass (hi-fi 01–05b):** cream paper `#FFFEFA` / `#F7F5F0`, sage→olive CTA `#7A9E7E → #6B8F71`, charcoal `#2C2B28`. Nunito (brand) + Inter (UI). Glass cards, floating pill tabs, slide-to-end Live, Sign-first Note, Secure message Send + voice toast. No PHIPA chips. No 24h wipe copy. Flow strip `06-flow-strip.png` was not on disk at last re-pull — do not block the localhost demo.
+
+## Francesca ASAP — localhost mocks (no API)
+
+Expo web is the fastest Core loop. Confirmed booting at **http://localhost:8081**.
+
+```bash
+cd apps/mobile
+npm install
+cp .env.example .env
+npx expo start --web --port 8081
+```
+
+Open: **http://localhost:8081**
+
+`.env.example` is `EXPO_PUBLIC_USE_MOCKS=true`. Demo login is automatic (`od@demo.olive.local` / `demo`). Seeded visit `00000000-0000-4000-8000-000000000005` is pinned on Today.
+
+**Core loop:** Today **Start** → Consent **Start recording** → Live charcoal **Slide to end visit** → Note **Sign note** → 04b **Review follow-ups** → Follow-ups **Send**.
+
+Long-press **Today** to reset the mock day.
 
 ## Ready-to-run packet (Tech Lead)
 
@@ -17,9 +36,11 @@ Copy in this app is **draft pending counsel** — do not treat UX strings as leg
 **Demo login:** `od@demo.olive.local` / `demo`  
 **Seeded visit:** `00000000-0000-4000-8000-000000000005`
 
-### 1. Exact local run — `apps/mobile/` pointed at Backend PR #1 API
+### 1. Exact local run — mocks first, then optional Backend PR #1
 
-Bring up Backend PR #1 on `:3000` first (that PR’s runbook). Do **not** edit `apps/api/` from this branch.
+**Mocks (Francesca / Mon dry-run — use this):** see commands above. URL is **http://localhost:8081**.
+
+**API-backed (optional):** bring up Backend PR #1 on `:3000` first (that PR’s runbook). Do **not** edit `apps/api/` from this branch.
 
 ```bash
 cd apps/mobile
@@ -36,12 +57,9 @@ EXPO_PUBLIC_API_BASE=http://localhost:3000
 
 ```bash
 npx expo start --web --port 8081
-# http://localhost:8081
 ```
 
-Boot: `POST /v1/auth/login` with `od@demo.olive.local` / `demo`, then pins visit `00000000-0000-4000-8000-000000000005` on Today.
-
-**Mocks-only (no API process):** omit the `.env` override (`.env.example` has `EXPO_PUBLIC_USE_MOCKS=true`) and run the same `npx expo start --web --port 8081`.
+Open **http://localhost:8081**. Boot: `POST /v1/auth/login` with `od@demo.olive.local` / `demo`, then pins visit `00000000-0000-4000-8000-000000000005` on Today.
 
 ### 2. Product-approved Wed hard pass/fail (`wired` | `mock` | `missing`)
 
