@@ -54,7 +54,7 @@ Boot: `POST /v1/auth/login` with `od@demo.olive.local` / `demo`, then pins visit
 | 5 | Live Pause/End | **wired** (ambient mic bytes **mock**) |
 | 6 | Note Sign | **wired** |
 | 7 | post-Sign follow-ups bridge → Swipe Send stub / Skip / CASL fail-closed | **wired** (notify SMS vendor **mock**) |
-| 8 | Product-approved dry-run checklist compliance: retention = clinic-controlled (no wipe claims); Bluedot primary copy (no PHIPA chips / no “record of truth” on primary) | **wired** |
+| 8 | Product-approved dry-run checklist compliance: retention = clinic-controlled (no wipe claims); demo simplicity cuts primary copy (no PHIPA chips / no “record of truth” on primary) | **wired** |
 
 Edge states (consent denied, bad-audio, empty swipe) are **wired** (supporting, not a numbered hard-fail).
 
@@ -79,9 +79,9 @@ Nothing on the Wed hard-fail list is **missing**.
 
 **Not slipping.** Mock path is dry-runable **now**. API-backed walk is hours after PR #1 is up locally — not a FE blocker.
 
-## Product locks (Bluedot P0)
+## Product locks (demo simplicity cuts)
 
-- **Bluedot P0:** one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
+- **Demo simplicity cuts** (Core simplicity bar): one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
 - **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
 - **Messaging:** swipe card ≠ SMS body of record. Notify text is a short stub with clinic identity + STOP. Secure thread is the record.
 
