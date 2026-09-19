@@ -1,6 +1,6 @@
 # Olive v1 Core API
 
-Frontend contracts for the TypeScript Fastify API at the **repository root**. Auth is `Authorization: Bearer <token>` unless noted.
+Frontend contracts for the Fastify API in `apps/api`. Machine-readable twin: [`openapi.yaml`](openapi.yaml) (backend is source of truth). Auth is `Authorization: Bearer <token>` unless noted.
 
 Error shape: `{ "error": string, "message": string, "details"?: unknown }`.
 
