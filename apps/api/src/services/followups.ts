@@ -4,6 +4,7 @@ import { clinics, followUpEdits, followUps, notes, patients } from "../db/schema
 import { audit } from "../lib/audit.js";
 import { forbidden, notFound, unprocessable } from "../lib/errors.js";
 import { newId } from "../lib/ids.js";
+import { notifySmsCopy } from "../vendors/messaging.js";
 import { activeMessagingConsent, hasStopOptOut } from "./consent.js";
 import { getVisit } from "./consent.js";
 
@@ -39,6 +40,7 @@ export async function createFollowUp(
       patientId: visit.patientId,
       noteId: note?.id ?? null,
       messageClass: input.messageClass ?? "clinical_transactional",
+      channel: "secure",
       body: input.body,
       status: "draft",
       createdAt: new Date(),
@@ -145,14 +147,14 @@ export async function sendFollowUp(
 
   const [clinic] = await ctx.db.select().from(clinics).where(eq(clinics.id, input.clinicId));
   if (!clinic?.smsIdentity) {
-    throw forbidden("missing_clinic_identity", "Clinic identity is required on every SMS");
+    throw forbidden("missing_clinic_identity", "Clinic identity is required on notify SMS");
   }
 
   const stop = await hasStopOptOut(ctx.db, input.clinicId, fu.patientId);
   if (stop) {
     await markFailed(ctx, fu.id, "stop_opt_out");
     await auditSend(ctx, input, fu, "failed", "stop_opt_out");
-    throw forbidden("stop_fail_closed", "STOP/unsubscribe honored — send fail-closed");
+    throw forbidden("stop_fail_closed", "STOP/unsubscribe honored — notify SMS fail-closed");
   }
 
   const consent = await activeMessagingConsent(ctx.db, input.clinicId, fu.patientId, fu.messageClass);
@@ -164,37 +166,70 @@ export async function sendFollowUp(
     throw forbidden(
       reason,
       fu.messageClass === "promotional"
-        ? "Promotional messaging fail-closed without per-class consent"
-        : "Clinical/transactional follow-ups require an active messaging consent record",
+        ? "Promotional notify SMS fail-closed without per-class consent"
+        : "Notify SMS requires an active messaging consent record",
     );
   }
 
   const [patient] = await ctx.db.select().from(patients).where(eq(patients.id, fu.patientId));
   if (!patient?.phone) {
-    throw unprocessable("missing_phone", "Patient phone is required for SMS");
+    throw unprocessable("missing_phone", "Patient phone is required for notify SMS");
   }
 
   try {
-    const result = await ctx.messaging.send({
+    const secure = await ctx.messaging.createSecureMessage({
+      clinicId: input.clinicId,
+      patientId: fu.patientId,
+      body: fu.body,
+    });
+    const magicLinkToken = newId();
+    const magicLink = `/v1/inbox/${magicLinkToken}`;
+    const notify = await ctx.messaging.sendNotifySms({
       to: patient.phone,
-      body: `${clinic.smsIdentity}: ${fu.body}\nReply STOP to opt out.`,
       clinicIdentity: clinic.smsIdentity,
       messageClass: fu.messageClass,
-      channel: "sms",
+      magicLink,
+      body: notifySmsCopy(clinic.smsIdentity, magicLink),
     });
     const [updated] = await ctx.db
       .update(followUps)
-      .set({ status: "sent", sentAt: new Date(), lastError: null, updatedAt: new Date() })
+      .set({
+        status: "sent",
+        channel: "secure",
+        secureMessageId: secure.secureMessageId,
+        notifySmsId: notify.vendorMessageId,
+        magicLinkToken,
+        sentAt: new Date(),
+        lastError: null,
+        updatedAt: new Date(),
+      })
       .where(eq(followUps.id, fu.id))
       .returning();
-    await auditSend(ctx, input, fu, "sent", undefined, result.vendorMessageId);
-    return updated;
+    await auditSend(ctx, input, fu, "sent", undefined, notify.vendorMessageId, secure.secureMessageId);
+    return {
+      ...updated,
+      channelOfRecord: "secure" as const,
+      notifySms: { stub: true, vendorMessageId: notify.vendorMessageId, containsPhi: false },
+      inboxPath: magicLink,
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "send_failed";
     await markFailed(ctx, fu.id, message);
     await auditSend(ctx, input, fu, "failed", message);
     throw err;
   }
+}
+
+export async function inboxByToken(ctx: AppContext, token: string) {
+  const [fu] = await ctx.db.select().from(followUps).where(eq(followUps.magicLinkToken, token));
+  if (!fu) throw notFound("inbox");
+  return {
+    channelOfRecord: "secure" as const,
+    secureMessageId: fu.secureMessageId,
+    body: fu.body,
+    clinicId: fu.clinicId,
+    stub: true,
+  };
 }
 
 async function getFollowUp(ctx: AppContext, clinicId: string, id: string) {
@@ -220,6 +255,7 @@ async function auditSend(
   outcome: "sent" | "failed",
   reason?: string,
   vendorMessageId?: string,
+  secureMessageId?: string,
 ) {
   await audit(ctx.db, {
     clinicId: input.clinicId,
@@ -227,6 +263,13 @@ async function auditSend(
     action: outcome === "sent" ? "follow_up.send" : "follow_up.send_failed",
     resourceType: "follow_up",
     resourceId: fu.id,
-    metadata: { messageClass: fu.messageClass, reason, vendorMessageId },
+    metadata: {
+      messageClass: fu.messageClass,
+      reason,
+      vendorMessageId,
+      secureMessageId,
+      channelOfRecord: "secure",
+      notifySmsNoPhi: true,
+    },
   });
 }

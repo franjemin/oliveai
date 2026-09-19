@@ -83,7 +83,11 @@ describe("README happy path", () => {
       headers: h,
     });
     expect(send.statusCode).toBe(200);
-    expect(send.json()).toMatchObject({ status: "sent" });
+    expect(send.json()).toMatchObject({
+      status: "sent",
+      channelOfRecord: "secure",
+      notifySms: { stub: true, containsPhi: false },
+    });
 
     const createdSkip = await kit.app.inject({
       method: "POST",

@@ -99,9 +99,10 @@ States: `draft | queued | sent | failed | skipped`.
 - `PATCH /v1/follow-ups/:id` `{ body }`
 - `POST /v1/follow-ups/:id/skip` `{ reason? }`
 - `POST /v1/follow-ups/:id/edits` `{ before, after }` — stores an event; no ML in v1
-- `POST /v1/follow-ups/:id/send` — MessagingVendor send gate (CASL)
+- `POST /v1/follow-ups/:id/send` — publishes **secure in-app** body; queues **no-PHI notify SMS** stub + magic link
+- `GET /v1/inbox/:token` — patient magic-link inbox stub (dry-run)
 
-Send gate: resolve `message_class` → require active per-class consent + clinic SMS identity → STOP fail-closed → never send from an unsigned linked note → audit attempt + outcome.
+`body` is never the SMS payload. Channel of record = `secure`. CASL (consent, clinic identity, STOP) applies to **notify SMS only**.
 
 ## Day ops
 

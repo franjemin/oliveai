@@ -12,7 +12,7 @@ Support for Legal / PHIPA inventory. **Not contract prose.** Canada-first reside
 | `audio_assets` | Visit audio | **Default keep** (clinic-controlled). Delete only clinic-initiated / EoC. No 24h auto-TTL. | object store `OBJECT_STORE_REGION` | AES-256-GCM + MinIO SSE-S3 |
 | `transcripts` / `transcript_segments` | Diarized text | ~10y class (`retention_until`); never cascade with audio | clinic | DB + TLS |
 | `notes` | Draft / signed snapshot | ~10y class; signed snapshot immutable | clinic | DB + TLS |
-| `follow_ups` / edits | CASL outbound drafts | Clinic-controlled | clinic | DB + TLS |
+| `follow_ups` / edits | Secure in-app message + notify SMS metadata | Clinic-controlled | clinic | DB + TLS; SMS is no-PHI notify only |
 | `audit_events` | PHI touch log | Long keep (query/WORM later) | clinic | DB + TLS |
 | `messaging_opt_outs` | STOP | Until superseded | clinic | DB + TLS |
 

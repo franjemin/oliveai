@@ -57,7 +57,7 @@ Privacy / SEC map (OLI-* + **OLIVE-SEC-***): [`docs/privacy-tickets.md`](docs/pr
 | SEC-008 | TLS + at-rest encryption baseline |
 | SEC-009 · OLI-12 | Tenant + roles — no MFA |
 | SEC-010 · OLI-13 | Audit writes — no query API/WORM |
-| SEC-012/013 · OLI-15/16 | CASL + SMS ID + STOP (stub send) |
+| SEC-012/013 · OLI-15/16 | Secure in-app body; CASL on **notify SMS only** (stub, no PHI) |
 | SEC-015 · OLI-19 | Training flag off |
 | SEC-017 · OLI-20 | Nullable PHIPA + data-map stub |
 

@@ -18,16 +18,15 @@ These rules are enforced in schema + services, not only in docs. Quebec Law 25 i
 
 ## 3. CASL-first messaging (TCPA reserved)
 
-Before SMS:
+Follow-up **body** is a **secure in-app message** (never the SMS body). On send:
 
-1. Resolve `message_class`: `clinical_transactional` | `promotional`.
-2. Require an **active per-class** messaging consent + clinic `sms_identity`.
-3. Honor STOP/unsubscribe — **fail-closed**.
-4. Promotional without consent is **fail-closed** (`promotional_fail_closed`).
-5. Clinical/transactional still requires a consent record + audit (v1 Core).
-6. Audit send attempt and outcome.
+1. `createSecureMessage` stores the clinical body in-app.
+2. `sendNotifySms` queues a **no-PHI** notify SMS (“Your dentist sent you a secure message…”) + magic link.
+3. CASL (per-class consent, clinic identity, STOP fail-closed) applies to **notify SMS only**.
+4. Never send from an unsigned linked note.
+5. Audit secure id + notify outcome.
 
-Secure/in-app thread uses the same `MessagingVendor` interface.
+Demo: notify SMS is a stub. Patient inbox: `GET /v1/inbox/:token`.
 
 ## 4. Retention (clinic-controlled; **no audio auto-delete**)
 

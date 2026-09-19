@@ -14,6 +14,7 @@ import {
   listFollowUps,
   patchFollowUp,
   recordFollowUpEdit,
+  inboxByToken,
   sendFollowUp,
   skipFollowUp,
 } from "../services/followups.js";
@@ -73,6 +74,18 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
     residency: ctx.config.residencyRegion,
     flags: resolveFlags(ctx),
   }));
+
+  app.get(
+    "/v1/inbox/:token",
+    wrap(
+      ctx,
+      async (request) => {
+        const { token } = z.object({ token: z.string().min(1) }).parse(request.params);
+        return inboxByToken(ctx, token);
+      },
+      false,
+    ),
+  );
 
   app.post(
     "/v1/auth/login",

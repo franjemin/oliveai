@@ -612,20 +612,54 @@ paths:
   /v1/follow-ups/{id}/send:
     post:
       tags: [FollowUps]
-      summary: CASL send gate (fake MessagingVendor — logs/queues, no real SMS)
+      summary: Publish secure in-app message + stub no-PHI notify SMS (CASL on notify only)
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
         "200":
-          description: Sent via fake vendor
+          description: Channel of record is secure; SMS is notify stub (no PHI)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FollowUp"
+                allOf:
+                  - $ref: "#/components/schemas/FollowUp"
+                  - type: object
+                    properties:
+                      channelOfRecord: { type: string, enum: [secure] }
+                      inboxPath: { type: string }
+                      notifySms:
+                        type: object
+                        properties:
+                          stub: { type: boolean }
+                          vendorMessageId: { type: string }
+                          containsPhi: { type: boolean, enum: [false] }
         "403":
           description: |
-            Fail-closed codes: `missing_messaging_consent`, `promotional_fail_closed`,
+            Fail-closed on **notify SMS**: `missing_messaging_consent`, `promotional_fail_closed`,
             `stop_fail_closed`, `unsigned_note`, `missing_clinic_identity`
+
+  /v1/inbox/{token}:
+    get:
+      tags: [FollowUps]
+      security: []
+      summary: Patient magic-link inbox stub (dry-run; native app later)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Secure message body (in-app)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channelOfRecord: { type: string, enum: [secure] }
+                  secureMessageId: { type: string }
+                  body: { type: string }
+                  stub: { type: boolean }
 
   /v1/days/finish:
     post:
@@ -958,7 +992,11 @@ components:
         patientId: { type: string, format: uuid }
         noteId: { type: string, format: uuid, nullable: true }
         messageClass: { $ref: "#/components/schemas/MessageClass" }
-        body: { type: string }
+        channel: { type: string, enum: [secure], description: Channel of record is secure in-app }
+        body: { type: string, description: Secure in-app message — never the SMS body }
+        secureMessageId: { type: string, nullable: true }
+        notifySmsId: { type: string, nullable: true }
+        magicLinkToken: { type: string, nullable: true }
         status: { type: string, enum: [draft, queued, sent, failed, skipped] }
         skipReason: { type: string, nullable: true }
         lastError: { type: string, nullable: true }
