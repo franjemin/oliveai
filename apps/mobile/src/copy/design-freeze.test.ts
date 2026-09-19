@@ -41,6 +41,7 @@ test("Design freeze tokens: cream / sage / olive / charcoal, radius 24–28", ()
   assert.equal(color.sage, "#7A9E7E");
   assert.equal(color.olive, "#6B8F71");
   assert.equal(color.charcoal, "#2C2B28");
+  assert.equal(color.stone, "#EDEAE3");
   assert.equal(radius.lg, 24);
   assert.equal(radius.xl, 28);
 });

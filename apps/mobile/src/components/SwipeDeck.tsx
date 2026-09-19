@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   stampSkip: {
     right: 16,
-    backgroundColor: color.stage,
+    backgroundColor: color.stone,
   },
   stampSendMark: {
     color: color.white,

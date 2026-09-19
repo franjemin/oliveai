@@ -31,6 +31,8 @@ export const color = {
   ok: "#6B8F71",
   okSoft: "#E7F0E8",
   stage: "#E8E6DF",
+  /** 05 Skip stamp / outline stone — warmer than stage gray. */
+  stone: "#EDEAE3",
   track: "#2C2B28",
 } as const;
 
