@@ -17,18 +17,13 @@ export default function TodayScreen() {
   const { saved } = useLocalSearchParams<{ saved?: string }>();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [unsignedCount, setUnsignedCount] = useState(0);
+  const unsignedCount = olive.day.patients.filter((row) => row.unsignedDraft).length;
 
   const refreshDay = olive.refreshDay;
-  const unsignedNotes = olive.unsignedNotes;
   useFocusEffect(
     useCallback(() => {
-      void (async () => {
-        await refreshDay();
-        const unsigned = await unsignedNotes();
-        setUnsignedCount(unsigned.length);
-      })();
-    }, [refreshDay, unsignedNotes]),
+      void refreshDay();
+    }, [refreshDay]),
   );
 
   useEffect(() => {

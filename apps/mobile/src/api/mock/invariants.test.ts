@@ -65,6 +65,10 @@ test("end of visit saves a draft note and does not enqueue follow-ups until sign
   const draft = await mockApi.getNote(DEMO.visitAlexId);
   assert.equal(draft.status, "draft");
   assert.equal((await mockApi.listFollowUps(DEMO.visitAlexId)).length, 0);
+  const feed = await mockApi.dayPatients(DEMO.date);
+  assert.equal(feed.followUpRelease, "after_sign");
+  const alexRow = feed.patients.find((row) => row.visitId === DEMO.visitAlexId);
+  assert.equal(alexRow?.unsignedDraft, true);
   const closed = await mockApi.finishDay(DEMO.date);
   assert.equal(closed.followUpRelease, "after_sign");
   assert.ok(closed.unsignedDrafts?.some((d) => d.visitId === DEMO.visitAlexId));
@@ -77,6 +81,8 @@ test("end of visit saves a draft note and does not enqueue follow-ups until sign
   });
   assert.equal((await mockApi.listPendingFollowUps()).length, 0);
   await mockApi.signNote(DEMO.visitAlexId);
+  const signedFeed = await mockApi.dayPatients(DEMO.date);
+  assert.equal(signedFeed.patients.find((row) => row.visitId === DEMO.visitAlexId)?.unsignedDraft, false);
   const pending = await mockApi.listPendingFollowUps();
   assert.equal(pending.length, 1);
   assert.equal(pending[0]?.visitId, DEMO.visitAlexId);

@@ -1,5 +1,5 @@
 import { followUpEditContractBody, httpLearningLog } from "./learning";
-import { DEMO, ApiError, type Consent, type FollowUp, type FollowUpEdit, type OliveApi, type Patient } from "./types";
+import { DEMO, ApiError, type Consent, type FinishDayResult, type FollowUp, type FollowUpEdit, type OliveApi, type Patient } from "./types";
 import {
   isPendingFollowUp,
   mapDayFeed,
@@ -94,10 +94,11 @@ export const httpApi: OliveApi = {
       throw err;
     }
   },
-  finishDay: (date) => req("/v1/days/finish", { method: "POST", body: JSON.stringify({ date }) }),
+  finishDay: (date) => req<FinishDayResult>("/v1/days/finish", { method: "POST", body: JSON.stringify({ date }) }),
   createVisit: (patientId) => req("/v1/visits", { method: "POST", body: JSON.stringify({ patientId }) }),
   getVisit: (id) => req(`/v1/visits/${id}`),
-  endVisit: (id) => req(`/v1/visits/${id}/end`, { method: "POST" }),
+  /** OpenAPI primary: complete without sign. `/end` is the documented alias. */
+  endVisit: (id) => req(`/v1/visits/${id}/complete`, { method: "POST" }),
   recordingGate: (visitId) => req(`/v1/visits/${visitId}/recording-gate`),
   recordVisitConsent: (visitId, input) =>
     req(`/v1/visits/${visitId}/consent`, {
