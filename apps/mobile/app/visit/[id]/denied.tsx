@@ -23,7 +23,12 @@ export default function ConsentDeniedScreen() {
         </View>
         <Button
           label={EDGE.consentDenied.cta}
-          onPress={() => router.replace({ pathname: "/", params: { saved: "draft" } })}
+          onPress={() =>
+            router.replace({
+              pathname: "/",
+              params: { saved: "draft", draftName: patient?.displayName ?? "" },
+            })
+          }
         />
       </SafeAreaView>
     </Screen>

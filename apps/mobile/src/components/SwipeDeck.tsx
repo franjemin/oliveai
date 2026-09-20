@@ -109,7 +109,7 @@ export function SwipeDeck({
             <View style={styles.peekEmpty} pointerEvents="none" />
           )}
           <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSend, { opacity: sendOpacity }]}>
-            <Text style={styles.stampSendMark}>✓</Text>
+            <Text style={styles.stampSendMark}>✈</Text>
             <Text style={styles.stampSendText}>Send</Text>
           </Animated.View>
           <Animated.View pointerEvents="none" style={[styles.stamp, styles.stampSkip, { opacity: skipOpacity }]}>

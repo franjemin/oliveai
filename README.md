@@ -12,7 +12,7 @@ cd apps/mobile && rm -rf node_modules && npm ci && npx expo start --web --port 8
 
 First run: `cp .env.example .env` if `.env` is missing. Open **http://localhost:8081** (mocks; no API process).
 
-**Core loop:** End visit → **Draft saved** → Today. **Finish day** → notes-to-sign → Follow-ups. Sign is not required to leave Live.
+**Core loop:** End visit (charcoal slide only) → charcoal **Draft saved** → Today. **Finish day** → Notes to sign → Sign → **All signed. Review follow-ups?** → Follow-ups. Sign is not required to leave Live.
 
 Magic-link inbox is **on Backend PR #1**: `GET /v1/inbox/:token` — not missing. FE route `/inbox/:token`.
 

@@ -3,21 +3,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Body, Button, Caption, Card, Display, Kicker, Screen } from "@/src/components/ui";
+import { Body, Button, Caption, Card, Display, Kicker, Pill, Screen } from "@/src/components/ui";
+import { DraftToast } from "@/src/components/DraftToast";
 import { OliveWordmark } from "@/src/components/OliveMark";
-import { EDGE } from "@/src/copy/edges";
+import { EDGE, draftsWaitingLabel, signDraftsBody } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
 import { prettyTime, shortReason, weekdayStamp } from "@/src/theme/format";
-import { color, font, radius, shadow, space } from "@/src/theme/tokens";
+import { color, font, radius, space } from "@/src/theme/tokens";
 import type { DayPatient } from "@/src/api/types";
 
 export default function TodayScreen() {
   const olive = useOlive();
   const router = useRouter();
-  const { saved } = useLocalSearchParams<{ saved?: string }>();
+  const { saved, draftName } = useLocalSearchParams<{ saved?: string; draftName?: string }>();
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const unsignedCount = olive.day.patients.filter((row) => row.unsignedDraft).length;
+  const [toastName, setToastName] = useState<string | null>(null);
+  const unsigned = olive.day.patients.filter((row) => row.unsignedDraft);
+  const unsignedCount = unsigned.length;
 
   const refreshDay = olive.refreshDay;
   useFocusEffect(
@@ -28,10 +30,10 @@ export default function TodayScreen() {
 
   useEffect(() => {
     if (saved !== "draft") return;
-    setToast(EDGE.draftSaved);
-    const t = setTimeout(() => setToast(null), 2200);
+    setToastName(typeof draftName === "string" && draftName ? draftName : "Visit");
+    const t = setTimeout(() => setToastName(null), 2800);
     return () => clearTimeout(t);
-  }, [saved]);
+  }, [draftName, saved]);
 
   const { next, later } = useMemo(() => {
     const open = olive.day.patients.filter(
@@ -40,7 +42,7 @@ export default function TodayScreen() {
     const nextUp = open[0] ?? null;
     return {
       next: nextUp,
-      later: olive.day.patients.filter((row) => row.patientId !== nextUp?.patientId),
+      later: open.filter((row) => row.patientId !== nextUp?.patientId),
     };
   }, [olive.day.patients]);
 
@@ -55,7 +57,10 @@ export default function TodayScreen() {
         return;
       }
       if (row.visitStatus === "completed" || row.recording === "captured" || row.recording === "declined") {
-        router.replace(`/visit/${visit.id}/note`);
+        router.replace({
+          pathname: "/visit/[id]/note",
+          params: { id: visit.id, from: unsignedCount > 0 ? "day" : undefined },
+        } as Href);
         return;
       }
       router.replace(`/visit/${visit.id}/consent`);
@@ -66,12 +71,8 @@ export default function TodayScreen() {
 
   const finishDay = async () => {
     const result = await olive.finishDay();
-    const first = result.unsignedDrafts?.[0];
-    if (first) {
-      router.replace({
-        pathname: "/visit/[id]/note",
-        params: { id: first.visitId, from: "day" },
-      } as Href);
+    if (result.unsignedDrafts && result.unsignedDrafts.length > 0) {
+      router.replace("/notes-to-sign");
       return;
     }
     router.replace("/follow-ups");
@@ -99,9 +100,7 @@ export default function TodayScreen() {
 
           {next ? (
             <View style={{ marginTop: 28 }}>
-              <Kicker>
-                Next up · {prettyTime(next.time)}
-              </Kicker>
+              <Kicker>Next up · {prettyTime(next.time)}</Kicker>
               <Card style={{ marginTop: 12 }}>
                 <Body style={styles.heroName}>{next.displayName}</Body>
                 <Caption style={{ marginTop: 6 }}>{next.reason ?? "Visit"}</Caption>
@@ -115,13 +114,16 @@ export default function TodayScreen() {
               </Card>
             </View>
           ) : unsignedCount > 0 ? (
-            <View style={{ marginTop: 28 }}>
-              <Kicker>{EDGE.notesToSign.kicker}</Kicker>
-              <Card style={{ marginTop: 12 }}>
-                <Body style={styles.heroName}>
-                  {unsignedCount} note{unsignedCount === 1 ? "" : "s"} ready to sign
-                </Body>
-                <Caption style={{ marginTop: 6 }}>Sign at end of day, then send follow-ups.</Caption>
+            <View style={{ marginTop: 22 }}>
+              <View style={styles.doneChip}>
+                <Caption style={{ color: color.olive, fontFamily: font.uiMed }}>
+                  {draftsWaitingLabel(unsignedCount)}
+                </Caption>
+              </View>
+              <Card style={{ marginTop: 18 }}>
+                <Kicker style={{ color: color.olive }}>{EDGE.endOfDay}</Kicker>
+                <Body style={[styles.heroName, { marginTop: 8 }]}>{EDGE.finishDay}</Body>
+                <Caption style={{ marginTop: 8 }}>{signDraftsBody(unsignedCount)}</Caption>
                 <View style={{ marginTop: 22 }}>
                   <Button label={EDGE.finishDay} onPress={() => void finishDay()} />
                 </View>
@@ -140,7 +142,7 @@ export default function TodayScreen() {
             </View>
           )}
 
-          {later.length > 0 ? (
+          {next && later.length > 0 ? (
             <View style={{ marginTop: 36 }}>
               <Kicker>Later</Kicker>
               <View style={{ marginTop: 8 }}>
@@ -160,17 +162,33 @@ export default function TodayScreen() {
             </View>
           ) : null}
 
+          {!next && unsignedCount > 0 ? (
+            <View style={{ marginTop: 36 }}>
+              <Kicker>{EDGE.unsignedDrafts}</Kicker>
+              <View style={{ marginTop: 8 }}>
+                {unsigned.map((row) => (
+                  <Pressable
+                    key={row.patientId}
+                    onPress={() => open(row)}
+                    disabled={busyId === row.patientId}
+                    style={styles.laterRow}
+                  >
+                    <Caption style={styles.laterTime}>{prettyTime(row.time)}</Caption>
+                    <Body style={styles.laterName}>{row.displayName}</Body>
+                    <Pill label={EDGE.draftPill} tone="olive" />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           {next && unsignedCount > 0 ? (
             <View style={{ marginTop: 28 }}>
               <Button label={EDGE.finishDay} variant="outline" onPress={() => void finishDay()} />
             </View>
           ) : null}
         </ScrollView>
-        {toast ? (
-          <View style={styles.toast} pointerEvents="none" accessibilityLiveRegion="polite">
-            <Caption style={{ color: color.charcoal, fontFamily: font.uiMed, textAlign: "center" }}>{toast}</Caption>
-          </View>
-        ) : null}
+        {toastName ? <DraftToast name={toastName} /> : null}
       </SafeAreaView>
     </Screen>
   );
@@ -190,6 +208,13 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     letterSpacing: -0.5,
   },
+  doneChip: {
+    alignSelf: "flex-start",
+    backgroundColor: color.okSoft,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
   laterRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -201,15 +226,4 @@ const styles = StyleSheet.create({
   laterTime: { width: 52, color: color.inkFaint },
   laterName: { flex: 1, fontFamily: font.uiMed, fontSize: 16 },
   laterReason: { color: color.inkFaint },
-  toast: {
-    position: "absolute",
-    left: space.lg,
-    right: space.lg,
-    bottom: 96,
-    backgroundColor: color.white,
-    borderRadius: radius.pill,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    ...shadow.toast,
-  },
 });

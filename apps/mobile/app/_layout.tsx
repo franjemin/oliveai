@@ -52,6 +52,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="notes-to-sign" />
           <Stack.Screen name="visit/[id]" />
           <Stack.Screen name="swipe" />
           <Stack.Screen name="thread/[patientId]" />

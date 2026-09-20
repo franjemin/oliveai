@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { type Href, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,7 +7,7 @@ import { ApiError } from "@/src/api";
 import { isAiAssistedDraft, type Note } from "@/src/api/types";
 import { SignConfirmSheet } from "@/src/components/SignConfirmSheet";
 import { Body, Button, Caption, Pill, Screen, Title } from "@/src/components/ui";
-import { EDGE } from "@/src/copy/edges";
+import { EDGE, notesProgress } from "@/src/copy/edges";
 import { formatSoap, parseSoap, SOAP_LABELS, soapPreview, type Soap } from "@/src/copy/soap";
 import { useOlive } from "@/src/store/OliveProvider";
 import { shortReason } from "@/src/theme/format";
@@ -29,6 +29,27 @@ export default function NoteScreen() {
   const patient = olive.day.patients.find((p) => p.visitId === id);
   const declined = patient?.recording === "declined";
   const aiDraft = note ? isAiAssistedDraft(note, declined) : false;
+
+  const goSigned = (visitId: string, batch: boolean, count: number) => {
+    router.replace({
+      pathname: "/visit/[id]/signed",
+      params: batch
+        ? { id: visitId, batch: "1", count: String(count) }
+        : { id: visitId },
+    } as Href);
+  };
+
+  const advanceDayStack = async (signedVisitId: string, total = stackTotal) => {
+    const rest = (await olive.unsignedNotes()).filter((row) => row.visitId !== signedVisitId);
+    if (rest[0]) {
+      router.replace({
+        pathname: "/visit/[id]/note",
+        params: { id: rest[0].visitId, from: "day" },
+      } as Href);
+      return;
+    }
+    goSigned(signedVisitId, true, Math.max(total, 1));
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -57,23 +78,11 @@ export default function NoteScreen() {
         setStackTotal(Math.max(stack.length, 1));
       }
     })();
-  }, [dayStack, id, olive, router]);
+  }, [dayStack, id, olive]);
 
   const signed = note?.status === "signed";
   const canSign = note?.status === "draft";
   const preview = useMemo(() => soapPreview(soap), [soap]);
-
-  const advanceDayStack = async (signedVisitId: string) => {
-    const rest = (await olive.unsignedNotes()).filter((row) => row.visitId !== signedVisitId);
-    if (rest[0]) {
-      router.replace({
-        pathname: "/visit/[id]/note",
-        params: { id: rest[0].visitId, from: "day" },
-      });
-      return;
-    }
-    router.replace("/follow-ups");
-  };
 
   const persistIfDirty = async (nextSoap = soap) => {
     if (!id || signed) return note;
@@ -101,10 +110,10 @@ export default function NoteScreen() {
       setEditing(false);
       setConfirm(false);
       if (dayStack) {
-        await advanceDayStack(id);
+        await advanceDayStack(id, stackTotal);
         return;
       }
-      router.replace(`/visit/${id}/signed`);
+      goSigned(id, false, 1);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Sign failed.");
     } finally {
@@ -112,23 +121,40 @@ export default function NoteScreen() {
     }
   };
 
-  const patientLine = [patient?.displayName ?? "Visit", shortReason(patient?.reason) || null].filter(Boolean).join(" · ");
+  const patientLine = [patient?.displayName ?? "Visit", shortReason(patient?.reason) || null]
+    .filter(Boolean)
+    .join(" · ");
+
+  const backToQueue = () => {
+    void persistIfDirty().then(() => router.replace("/notes-to-sign"));
+  };
 
   return (
     <Screen>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <ScrollView contentContainerStyle={styles.pad}>
           <View style={styles.noteTop}>
-            <Pressable onPress={() => router.replace("/")}>
-              <Caption style={{ color: color.inkMuted }}>← Today</Caption>
+            <Pressable onPress={() => (dayStack ? router.replace("/notes-to-sign") : router.replace("/"))}>
+              <Caption style={{ color: color.inkMuted }}>
+                {dayStack ? EDGE.notesToSign.back : EDGE.notesToSign.today}
+              </Caption>
             </Pressable>
-            {aiDraft ? <Pill label="AI-assisted draft" tone="olive" /> : null}
+            {dayStack ? (
+              <Caption style={{ color: color.inkFaint }}>{notesProgress(stackIndex, stackTotal)}</Caption>
+            ) : aiDraft ? (
+              <Pill label="AI-assisted draft" tone="olive" />
+            ) : null}
           </View>
-          <Title style={{ marginTop: 18 }}>Note</Title>
-          <Caption style={{ marginTop: 6 }}>
-            {dayStack ? `${EDGE.notesToSign.kicker} · ${stackIndex} of ${stackTotal}` : patientLine}
-          </Caption>
-          {dayStack ? <Caption style={{ marginTop: 4 }}>{patientLine}</Caption> : null}
+          <View style={styles.titleRow}>
+            <Title>Note</Title>
+            {dayStack && aiDraft ? <Pill label="AI-assisted draft" tone="olive" /> : null}
+          </View>
+          <Caption style={{ marginTop: 6 }}>{patientLine}</Caption>
+          {dayStack ? (
+            <View style={styles.queueChip}>
+              <Caption style={{ color: color.olive, fontFamily: font.uiMed }}>{EDGE.notesToSign.chip}</Caption>
+            </View>
+          ) : null}
 
           {editing ? (
             <View style={{ marginTop: 22, gap: 14 }}>
@@ -175,11 +201,17 @@ export default function NoteScreen() {
               <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
               <Pressable
                 onPress={() => {
+                  if (dayStack) {
+                    backToQueue();
+                    return;
+                  }
                   void persistIfDirty().then(() => router.replace("/"));
                 }}
                 style={{ paddingVertical: 14 }}
               >
-                <Caption style={{ textAlign: "center", color: color.inkFaint }}>Save draft</Caption>
+                <Caption style={{ textAlign: "center", color: color.inkFaint }}>
+                  {dayStack ? EDGE.notesToSign.skip : "Save draft"}
+                </Caption>
               </Pressable>
             </>
           )}
@@ -198,6 +230,21 @@ export default function NoteScreen() {
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: 24 },
   noteTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  titleRow: {
+    marginTop: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  queueChip: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    backgroundColor: color.okSoft,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
   preview: {
     marginTop: 22,
     color: color.ink,

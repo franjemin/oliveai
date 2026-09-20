@@ -51,7 +51,9 @@ type OliveContextValue = {
   skipFollowUp: (id: string) => Promise<FollowUp>;
   saveFollowUpEdit: (id: string, before: string, after: string) => Promise<FollowUp>;
   finishDay: () => Promise<FinishDayResult>;
-  unsignedNotes: () => Promise<{ visitId: string; displayName: string; note: Note }[]>;
+  unsignedNotes: () => Promise<
+    { visitId: string; displayName: string; note: Note; time?: string; reason?: string }[]
+  >;
   getPatient: (id: string) => Promise<Patient>;
   getChat: (patientId: string) => Promise<{ thread: ChatThread | null; messages: ChatThreadView["messages"] }>;
   listThreads: () => Promise<ChatThreadView[]>;
@@ -256,7 +258,13 @@ export function OliveProvider({ children }: { children: ReactNode }) {
         return result;
       },
       unsignedNotes: async () => {
-        const rows: { visitId: string; displayName: string; note: Note }[] = [];
+        const rows: {
+          visitId: string;
+          displayName: string;
+          note: Note;
+          time?: string;
+          reason?: string;
+        }[] = [];
         for (const patient of day.patients) {
           if (!patient.visitId) continue;
           if (patient.unsignedDraft === false) continue;
@@ -268,7 +276,13 @@ export function OliveProvider({ children }: { children: ReactNode }) {
           if (!looksDone) continue;
           const note = await api.getNote(patient.visitId).catch(() => null);
           if (note?.status === "draft") {
-            rows.push({ visitId: patient.visitId, displayName: patient.displayName, note });
+            rows.push({
+              visitId: patient.visitId,
+              displayName: patient.displayName,
+              note,
+              time: patient.time,
+              reason: patient.reason,
+            });
           }
         }
         return rows;

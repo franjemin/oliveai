@@ -7,14 +7,14 @@ import { ApiError } from "@/src/api";
 import { startAmbientCapture } from "@/src/api/recordingGate";
 import { api } from "@/src/api";
 import type { TranscriptSegment } from "@/src/api/types";
+import { PausePulse } from "@/src/components/PausePulse";
 import { SlideToEnd } from "@/src/components/SlideToEnd";
 import { TranscriptSheet } from "@/src/components/TranscriptSheet";
-import { Waveform } from "@/src/components/Waveform";
-import { Body, Button, Caption, Screen, Title } from "@/src/components/ui";
+import { Body, Caption, Screen, Title } from "@/src/components/ui";
 import { EDGE } from "@/src/copy/edges";
 import { useOlive } from "@/src/store/OliveProvider";
-import { shortReason } from "@/src/theme/format";
-import { color, font, radius, space } from "@/src/theme/tokens";
+import { truncate } from "@/src/theme/format";
+import { color, font, radius, shadow, space } from "@/src/theme/tokens";
 
 export default function LiveScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -75,21 +75,27 @@ export default function LiveScreen() {
     return `${m}:${s}`;
   }, [seconds]);
 
+  const snippet = useMemo(() => {
+    const patientSeg = segments.find((seg) => seg.speakerLabel === "speaker_patient");
+    const text = patientSeg?.text ?? segments[0]?.text ?? "";
+    return text ? truncate(text, 52) : capturing && !paused ? "Listening…" : "";
+  }, [capturing, paused, segments]);
+
   const end = async () => {
     if (!id) return;
     await olive.endVisit(id);
-    router.replace({ pathname: "/", params: { saved: "draft" } });
+    router.replace({
+      pathname: "/",
+      params: { saved: "draft", draftName: patient?.displayName ?? "" },
+    });
   };
 
   return (
     <Screen>
       <SafeAreaView style={styles.fill} edges={["top", "bottom"]}>
-        <View>
-          <Title>Visit</Title>
-          <Caption style={{ marginTop: 6 }}>
-            {patient?.displayName ?? "Visit"}
-            {shortReason(patient?.reason) ? ` · ${shortReason(patient?.reason)}` : ""}
-          </Caption>
+        <View style={styles.header}>
+          <Title style={styles.patientName}>{patient?.displayName ?? "Visit"}</Title>
+          <Caption style={styles.patientMeta}>{patient?.reason ?? "Visit"}</Caption>
         </View>
         {badAudio ? (
           <View style={styles.badBanner}>
@@ -112,33 +118,48 @@ export default function LiveScreen() {
         ) : null}
         <View style={styles.center}>
           <Body style={styles.timer}>{clock}</Body>
+          <PausePulse
+            paused={paused}
+            disabled={!capturing}
+            onPress={() => setPaused((p) => !p)}
+          />
           <View style={styles.listen}>
-            <View style={[styles.dot, { backgroundColor: capturing && !paused ? color.sage : color.inkFaint }]} />
-            <Caption>
-              {gateError ? "Mic closed" : paused ? "Paused" : capturing ? "Listening" : "Mic closed"}
+            <View
+              style={[
+                styles.dot,
+                { backgroundColor: capturing && !paused ? color.sage : color.inkFaint },
+              ]}
+            />
+            <Caption style={{ color: capturing && !paused ? color.olive : color.inkMuted }}>
+              {gateError
+                ? "Mic closed"
+                : paused
+                  ? EDGE.live.paused
+                  : capturing
+                    ? EDGE.live.listening
+                    : "Mic closed"}
             </Caption>
-          </View>
-          <View style={{ marginTop: 18 }}>
-            <Waveform active={capturing && !paused} />
           </View>
           {gateError ? (
             <Body style={{ color: color.refuse, textAlign: "center", marginTop: 16 }}>{gateError}</Body>
           ) : (
-            <Pressable onPress={() => setSheet(true)} style={styles.transcript}>
-              <Caption style={{ color: color.olive, fontFamily: font.uiMed }}>View transcript</Caption>
-            </Pressable>
+            <>
+              {snippet ? (
+                <View style={styles.snippet}>
+                  <Caption style={styles.snippetKicker}>{EDGE.live.patient}</Caption>
+                  <Body style={styles.snippetText}>{snippet}</Body>
+                </View>
+              ) : null}
+              <Pressable onPress={() => setSheet(true)} style={styles.transcript}>
+                <Caption style={{ color: color.olive, fontFamily: font.uiMed }}>
+                  {EDGE.live.viewFull}
+                </Caption>
+              </Pressable>
+            </>
           )}
         </View>
         <View style={styles.bottom}>
           <SlideToEnd disabled={!capturing && !gateError} onComplete={() => void end()} />
-          <View style={{ height: 12 }} />
-          <Button
-            label={paused ? "Resume" : "Pause"}
-            variant="secondary"
-            size="xl"
-            disabled={!capturing}
-            onPress={() => setPaused((p) => !p)}
-          />
         </View>
         <TranscriptSheet visible={sheet} onClose={() => setSheet(false)} segments={segments} />
       </SafeAreaView>
@@ -148,6 +169,9 @@ export default function LiveScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1, paddingHorizontal: space.lg, paddingBottom: 8 },
+  header: { alignItems: "center", paddingTop: 4 },
+  patientName: { textAlign: "center", fontSize: 28, lineHeight: 34 },
+  patientMeta: { marginTop: 6, textAlign: "center" },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   timer: {
     fontFamily: font.display,
@@ -156,16 +180,32 @@ const styles = StyleSheet.create({
     letterSpacing: -2.6,
     color: color.charcoal,
     fontWeight: "400",
+    marginBottom: 4,
   },
-  listen: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+  listen: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  transcript: {
+  snippet: {
+    alignSelf: "stretch",
     marginTop: 22,
     backgroundColor: color.white,
+    borderRadius: radius.xl,
     paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: radius.pill,
+    paddingVertical: 14,
+    ...shadow.glass,
   },
+  snippetKicker: {
+    color: color.olive,
+    fontFamily: font.uiSemi,
+    fontSize: 11,
+    letterSpacing: 1.1,
+  },
+  snippetText: {
+    marginTop: 6,
+    fontSize: 16,
+    lineHeight: 22,
+    color: color.charcoal,
+  },
+  transcript: { marginTop: 16, paddingVertical: 6 },
   bottom: { paddingBottom: 8 },
   badBanner: {
     backgroundColor: color.warnSoft,

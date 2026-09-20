@@ -16,3 +16,9 @@ export function weekdayStamp(date = new Date()): string {
   const mon = date.toLocaleDateString("en-US", { month: "short" });
   return `${dow} · ${mon} ${date.getDate()}`;
 }
+
+export function truncate(text: string, max = 110): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, Math.max(1, max - 1)).trimEnd()}…`;
+}

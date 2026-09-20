@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { AUDIO_DISCLOSURE } from "./consent";
-import { EDGE } from "./edges";
+import {
+  EDGE,
+  batchSignedLine,
+  draftSavedDetail,
+  draftsWaitingLabel,
+  notesProgress,
+  notesToSignCount,
+  signDraftsBody,
+} from "./edges";
 import { SECURE_SEND_MICROCOPY, SWIPE_HINT, VOICE_LEARNING_TOAST } from "./messaging";
 import { AUDIO_RETENTION } from "./retention";
 import { CORE_WALKTHROUGH } from "../api/walkthrough";
@@ -20,11 +28,27 @@ test("Design freeze: primary copy has no PHIPA chips, record of truth, Send SMS,
     EDGE.signConfirm.oliveTruth,
     EDGE.signConfirm.audio,
     EDGE.postSign.title,
+    EDGE.postSign.allSigned,
     EDGE.postSign.cta,
     EDGE.postSign.back,
+    EDGE.postSign.batchChip,
     EDGE.draftSaved,
+    EDGE.draftSavedHint,
     EDGE.finishDay,
-    EDGE.notesToSign.kicker,
+    EDGE.endOfDay,
+    EDGE.notesToSign.title,
+    EDGE.notesToSign.cta,
+    EDGE.notesToSign.hint,
+    EDGE.notesToSign.chip,
+    EDGE.notesToSign.skip,
+    EDGE.live.viewFull,
+    EDGE.live.pause,
+    draftsWaitingLabel(3),
+    signDraftsBody(3),
+    notesToSignCount(3),
+    notesProgress(1, 3),
+    draftSavedDetail("Maya Rivera"),
+    batchSignedLine(3),
     SECURE_SEND_MICROCOPY,
     SWIPE_HINT,
     VOICE_LEARNING_TOAST,
@@ -36,6 +60,12 @@ test("Design freeze: primary copy has no PHIPA chips, record of truth, Send SMS,
   assert.match(EDGE.signConfirm.oliveTruth, /clinical record/);
   assert.match(EDGE.draftSaved, /Draft saved/);
   assert.match(EDGE.finishDay, /Finish day/);
+  assert.match(EDGE.postSign.allSigned, /All signed/);
+  assert.match(EDGE.notesToSign.cta, /Review & sign/);
+  assert.match(EDGE.notesToSign.hint, /One note at a time/);
+  assert.match(EDGE.live.viewFull, /View full transcript/);
+  assert.match(draftSavedDetail("Maya Rivera"), /sign at end of day/);
+  assert.match(notesProgress(1, 3), /1 of 3/);
   assert.match(SECURE_SEND_MICROCOPY, /We’ll text them a link to open it securely/);
   assert.match(SWIPE_HINT, /Swipe right to send/);
   assert.doesNotMatch(primary, /PHIPA|CA·ON|record of truth|Send SMS|deleted within 24|24h wipe|audio TTL/i);
