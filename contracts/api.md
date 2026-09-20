@@ -56,7 +56,8 @@ Consent body:
 
 - `POST /v1/visits` `{ patientId }`
 - `GET /v1/visits/:id`
-- `POST /v1/visits/:id/end` — completes the visit. Audio is **kept** (no auto-TTL).
+- `POST /v1/visits/:id/complete` — completes the visit. **Does not require a signed note** (sign deferred to EOD). Audio is **kept**.
+- `POST /v1/visits/:id/end` — alias of `/complete` (same, no sign gate).
 - `POST /v1/clinic/audio/delete` `{ "confirm": "delete-clinic-audio" }` — admin / end-of-contract audio delete only (SEC-007). Does not cascade notes/transcripts.
 
 ### `GET /v1/visits/:id/consents`
@@ -88,7 +89,7 @@ Speaker labels are stable per visit (`speaker_clinician`, `speaker_patient`).
 
 - `GET /v1/visits/:id/note`
 - `PATCH /v1/visits/:id/note` `{ body }` — draft only
-- `POST /v1/visits/:id/note/sign` — freezes immutable `snapshot`; never auto-sign
+- `POST /v1/visits/:id/note/sign` — freezes immutable `snapshot`; never auto-sign. Notes may stay draft across visits until EOD.
 
 ## Follow-ups (separate from notes)
 
@@ -112,7 +113,8 @@ FE is not source of truth.
 ```json
 { "date": "2026-09-19" }
 ```
-Snapshots the pending follow-up queue for the clinic.
+Returns `{ unsignedDrafts, followUpRelease: "after_sign", pendingFollowUps… }`.  
+Surfaces **unsigned note drafts** for the clinic/date. Demo preference: **do not release/send follow-ups until the linked note is signed** (send path already 403 `unsigned_note`). Does not auto-sign.
 
 ### `GET /v1/days/:date/patients`
 Normalized local + imported feed.

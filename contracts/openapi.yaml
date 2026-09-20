@@ -298,14 +298,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/Visit"
 
-  /v1/visits/{id}/end:
+  /v1/visits/{id}/complete:
     post:
       tags: [Visits]
+      summary: Complete visit. Does not require a signed note (sign deferred to EOD).
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
         "200":
-          description: Visit completed. Audio is kept (clinic-controlled; no auto-TTL).
+          description: Visit completed even if the note is still draft. Audio kept. Alias `POST /v1/visits/{id}/end`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Visit"
+
+  /v1/visits/{id}/end:
+    post:
+      tags: [Visits]
+      summary: Alias of /complete — no sign gate
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Same as /complete. Note may remain draft.
           content:
             application/json:
               schema:
@@ -671,7 +686,7 @@ paths:
   /v1/days/finish:
     post:
       tags: [Days]
-      summary: Snapshot pending follow-up queue (FE is not SoT)
+      summary: EOD snapshot — unsigned drafts + pending follow-ups (release after sign)
       requestBody:
         required: true
         content:
@@ -683,7 +698,10 @@ paths:
                 date: { type: string, format: date, example: "2026-09-19" }
       responses:
         "200":
-          description: Day close
+          description: |
+            Surfaces unsigned note drafts for the clinic/date. Follow-up queue
+            release preference for demo = after sign (`followUpRelease: after_sign`).
+            Does not auto-sign or send.
           content:
             application/json:
               schema:
@@ -691,6 +709,17 @@ paths:
                 properties:
                   dayClose: { type: object }
                   pendingCount: { type: integer }
+                  unsignedDraftCount: { type: integer }
+                  followUpRelease: { type: string, enum: [after_sign] }
+                  unsignedDrafts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        noteId: { type: string, format: uuid }
+                        visitId: { type: string, format: uuid }
+                        status: { type: string, enum: [draft] }
+                        updatedAt: { type: string, format: date-time }
                   snapshot: { type: object }
 
   /v1/days/{date}/patients:

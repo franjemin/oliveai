@@ -1,6 +1,6 @@
-import { and, eq, gte, lt, or } from "drizzle-orm";
+import { and, eq, gte, inArray, lt, or } from "drizzle-orm";
 import type { AppContext } from "../context.js";
-import { dayCloses, followUps, patients, visits } from "../db/schema.js";
+import { dayCloses, followUps, notes, patients, visits } from "../db/schema.js";
 import { audit } from "../lib/audit.js";
 import { newId } from "../lib/ids.js";
 
@@ -25,14 +25,38 @@ export async function finishDay(
       ),
     );
 
+  const { start, end } = dayBounds(input.date);
+  const dayVisits = await ctx.db
+    .select({ id: visits.id, patientId: visits.patientId, status: visits.status })
+    .from(visits)
+    .where(and(eq(visits.clinicId, input.clinicId), gte(visits.startedAt, start), lt(visits.startedAt, end)));
+  const visitIds = dayVisits.map((v) => v.id);
+  const draftNotes =
+    visitIds.length === 0
+      ? []
+      : await ctx.db
+          .select()
+          .from(notes)
+          .where(and(eq(notes.clinicId, input.clinicId), eq(notes.status, "draft"), inArray(notes.visitId, visitIds)));
+
+  const unsignedDrafts = draftNotes.map((n) => ({
+    noteId: n.id,
+    visitId: n.visitId,
+    status: n.status,
+    updatedAt: n.updatedAt,
+  }));
+
   const snapshot = {
     date: input.date,
+    followUpRelease: "after_sign" as const,
+    unsignedDrafts,
     pendingFollowUps: pending.map((f) => ({
       id: f.id,
       visitId: f.visitId,
       patientId: f.patientId,
       status: f.status,
       messageClass: f.messageClass,
+      release: "after_sign" as const,
     })),
   };
 
@@ -55,10 +79,23 @@ export async function finishDay(
     action: "day.finish",
     resourceType: "day_close",
     resourceId: row.id,
-    metadata: { date: input.date, pendingCount: pending.length, frontendNotSoT: true },
+    metadata: {
+      date: input.date,
+      pendingCount: pending.length,
+      unsignedDraftCount: unsignedDrafts.length,
+      followUpRelease: "after_sign",
+      frontendNotSoT: true,
+    },
   });
 
-  return { dayClose: row, pendingCount: pending.length, snapshot };
+  return {
+    dayClose: row,
+    pendingCount: pending.length,
+    unsignedDraftCount: unsignedDrafts.length,
+    followUpRelease: "after_sign" as const,
+    unsignedDrafts,
+    snapshot,
+  };
 }
 
 export async function dayPatients(ctx: AppContext, clinicId: string, date: string) {
@@ -79,13 +116,28 @@ export async function dayPatients(ctx: AppContext, clinicId: string, date: strin
     .innerJoin(patients, eq(patients.id, visits.patientId))
     .where(and(eq(visits.clinicId, clinicId), gte(visits.startedAt, start), lt(visits.startedAt, end)));
 
+  const visitIds = rows.map((r) => r.visitId);
+  const draftNoteVisits =
+    visitIds.length === 0
+      ? new Set<string>()
+      : new Set(
+          (
+            await ctx.db
+              .select({ visitId: notes.visitId })
+              .from(notes)
+              .where(and(eq(notes.clinicId, clinicId), eq(notes.status, "draft"), inArray(notes.visitId, visitIds)))
+          ).map((n) => n.visitId),
+        );
+
   return {
     date,
+    followUpRelease: "after_sign" as const,
     patients: rows.map((r) => ({
       visitId: r.visitId,
       visitStatus: r.visitStatus,
       startedAt: r.startedAt,
       endedAt: r.endedAt,
+      unsignedDraft: draftNoteVisits.has(r.visitId),
       patient: {
         id: r.patientId,
         displayName: r.displayName,

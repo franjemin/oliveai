@@ -240,6 +240,40 @@ describe("Olive v1 privacy invariants", () => {
     });
   });
 
+  it("completes a visit with an unsigned draft and finish-day lists it", async () => {
+    kit = await createTestKit();
+    await kit.app.inject({
+      method: "PATCH",
+      url: `/v1/visits/${DEMO.visitAlexId}/note`,
+      headers: auth(kit.token),
+      payload: { body: "still draft at chairside" },
+    });
+    const complete = await kit.app.inject({
+      method: "POST",
+      url: `/v1/visits/${DEMO.visitAlexId}/complete`,
+      headers: auth(kit.token),
+    });
+    expect(complete.statusCode).toBe(200);
+    expect(complete.json()).toMatchObject({ status: "completed" });
+    const note = await kit.app.inject({
+      method: "GET",
+      url: `/v1/visits/${DEMO.visitAlexId}/note`,
+      headers: auth(kit.token),
+    });
+    expect(note.json()).toMatchObject({ status: "draft" });
+
+    const date = new Date().toISOString().slice(0, 10);
+    const finish = await kit.app.inject({
+      method: "POST",
+      url: "/v1/days/finish",
+      headers: auth(kit.token),
+      payload: { date },
+    });
+    expect(finish.statusCode).toBe(200);
+    expect(finish.json()).toMatchObject({ followUpRelease: "after_sign" });
+    expect((finish.json() as { unsignedDrafts: { visitId: string }[] }).unsignedDrafts.some((d) => d.visitId === DEMO.visitAlexId)).toBe(true);
+  });
+
   it("unsigned notes cannot send follow-ups", async () => {
     kit = await createTestKit();
     await kit.app.inject({

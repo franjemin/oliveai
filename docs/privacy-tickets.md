@@ -10,8 +10,8 @@ Status: **covered** | **partial** | **gap** | **deferred**
 | --- | --- | --- | --- | --- |
 | **OLIVE-SEC-001** | OLI-6, OLI-9 | `services/consent.ts`; `GET /v1/visits/:id/recording-gate`; `POST .../consent` | **partial** | Server gate + visit-scoped `audio_capture` + `disclosure_script_id`. **FE owns consent sheet UX.** No SDM / multi-party / channel enums. |
 | **OLIVE-SEC-002** | OLI-6 | `consents` + `GET /v1/visits/:id/consents` | **partial** | Evidence = type, granted, script id, `granted_at`, actor, visit. **No** `verbal_attested`, dedicated refuse-outcome enum, or append-only/WORM evidence log. Deny = `granted: false` + gate `reason`. |
-| **OLIVE-SEC-004** | OLI-5 | `PATCH /v1/visits/:id/note` | **partial** | Draft-only mutate (403 after sign). No `aiAssistedDraft` field — **FE can badge from `status === "draft"`**. |
-| **OLIVE-SEC-005** | OLI-8 | `POST .../note/sign` → `notes.snapshot` | **partial** | Immutable snapshot on sign. **Post-sign correction / amendment trail = gap** (not built). |
+| **OLIVE-SEC-004** | OLI-5 | `PATCH /v1/visits/:id/note` | **partial** | Draft-only mutate (403 after sign). Notes stay draft across visits; **sign deferred to EOD**. Visit `/complete` does not block. FE can badge from `status === "draft"`. |
+| **OLIVE-SEC-005** | OLI-8 | `POST .../note/sign` → `notes.snapshot` | **partial** | Immutable snapshot on sign. Finish-day lists unsigned drafts; follow-up send still gated. **Post-sign correction trail = gap**. |
 | **OLIVE-SEC-006** | OLI-11 | ingest + worker (no purge job) | **covered** | **Product lock: no auto-delete.** Audio default **keep** (clinic-controlled, same class as notes). `delete_after` unused. Storage cost later. |
 | **OLIVE-SEC-008** | (encryption baseline) | `lib/encryption.ts`, TLS/SSL config, MinIO SSE-S3 | **covered** | TLS in transit; AES-256-GCM audio objects; `DATABASE_SSL` in production. |
 | **OLIVE-SEC-009** | OLI-12 | `clinic_id` / `tenantId`; roles `dentist` \| `staff` \| `admin` | **partial** | Tenant + RBAC. **MFA + break-glass = Wave B / deferred.** |

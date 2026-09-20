@@ -35,7 +35,7 @@ export async function createVisit(
   return visit;
 }
 
-export async function endVisit(
+export async function completeVisit(
   ctx: AppContext,
   input: { clinicId: string; actorId: string; visitId: string },
 ) {
@@ -52,10 +52,18 @@ export async function endVisit(
   await audit(ctx.db, {
     clinicId: input.clinicId,
     actorId: input.actorId,
-    action: "visit.end",
+    action: "visit.complete",
     resourceType: "visit",
     resourceId: visit.id,
-    metadata: { audioRetention: "keep", autoPurge: false },
+    metadata: {
+      audioRetention: "keep",
+      autoPurge: false,
+      signRequired: false,
+      noteMayRemainDraft: true,
+    },
   });
   return updated;
 }
+
+/** @deprecated prefer completeVisit — same behavior, no sign gate */
+export const endVisit = completeVisit;

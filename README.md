@@ -44,6 +44,8 @@ Seeded visit: `00000000-0000-4000-8000-000000000005`
 
 Contracts for FE mocks: [`contracts/openapi.yaml`](contracts/openapi.yaml). Invariants: [`apps/api/docs/hipaa-invariants.md`](apps/api/docs/hipaa-invariants.md). Full ticket notes: [`docs/privacy-tickets.md`](docs/privacy-tickets.md).
 
+**Sign deferred to EOD:** notes may stay draft across visits. `POST /v1/visits/:id/complete` does **not** require sign. `POST /v1/days/finish` lists `unsignedDrafts`; follow-up send stays gated until sign (`followUpRelease: after_sign`).
+
 **Audio retention (product lock):** default **keep**. No 24h auto-delete. Clinic-initiated delete only (`DELETE /v1/visits/:id/audio` or admin `POST /v1/clinic/audio/delete`).
 
 Privacy / SEC map (OLI-* + **OLIVE-SEC-***): [`docs/privacy-tickets.md`](docs/privacy-tickets.md). Data-map stub: [`docs/data-map.md`](docs/data-map.md).

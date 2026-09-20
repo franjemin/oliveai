@@ -105,7 +105,7 @@ describe("README happy path", () => {
 
     const ended = await kit.app.inject({
       method: "POST",
-      url: `/v1/visits/${DEMO.visitAlexId}/end`,
+      url: `/v1/visits/${DEMO.visitAlexId}/complete`,
       headers: h,
     });
     expect(ended.json()).toMatchObject({ status: "completed" });

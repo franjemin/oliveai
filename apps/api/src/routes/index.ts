@@ -22,7 +22,7 @@ import {
 import { getOrCreateNote, patchNote, signNote } from "../services/notes.js";
 import { importPatients, stubOpenDentalWriteback } from "../services/pms.js";
 import { processQueuedJobs, segmentsAfter, visitTranscript } from "../services/transcript.js";
-import { createVisit, endVisit } from "../services/visits.js";
+import { completeVisit, createVisit } from "../services/visits.js";
 import { patients } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 
@@ -240,11 +240,20 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
   );
 
   app.post(
+    "/v1/visits/:id/complete",
+    wrap(ctx, async (request) => {
+      const actor = actorOf(request);
+      const { id } = z.object({ id: uuid }).parse(request.params);
+      return completeVisit(ctx, { clinicId: actor.clinicId, actorId: actor.userId, visitId: id });
+    }),
+  );
+
+  app.post(
     "/v1/visits/:id/end",
     wrap(ctx, async (request) => {
       const actor = actorOf(request);
       const { id } = z.object({ id: uuid }).parse(request.params);
-      return endVisit(ctx, { clinicId: actor.clinicId, actorId: actor.userId, visitId: id });
+      return completeVisit(ctx, { clinicId: actor.clinicId, actorId: actor.userId, visitId: id });
     }),
   );
 

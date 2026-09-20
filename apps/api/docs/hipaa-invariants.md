@@ -11,10 +11,12 @@ These rules are enforced in schema + services, not only in docs. Quebec Law 25 i
 
 ## 2. Draft-until-sign; no send from unsigned notes
 
-- Notes default to `draft`. There is no auto-sign / auto-finalize path.
+- Notes default to `draft` and **may stay draft across visits** (sign deferred to EOD).
+- `POST /v1/visits/:id/complete` does **not** require a signed note.
+- There is no auto-sign / auto-finalize path.
 - `PATCH` after `signed` → `note_signed_immutable`.
 - Sign writes an immutable `snapshot` JSON.
-- Follow-up send with a linked note requires `note.status === signed`.
+- Follow-up send with a linked note still requires `note.status === signed` (queue release after sign).
 
 ## 3. CASL-first messaging (TCPA reserved)
 

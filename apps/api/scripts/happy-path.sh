@@ -64,8 +64,8 @@ curl -sS -X POST "$BASE/v1/follow-ups/$FU2/skip" "${auth[@]}" \
   -d '{"reason":"patient prefers phone"}' | python3 -m json.tool
 
 echo
-echo "== end visit (audio kept — no auto-TTL)"
-curl -sS -X POST "$BASE/v1/visits/$VISIT/end" -H "authorization: Bearer $TOKEN" | python3 -m json.tool
+echo "== complete visit (no sign required; audio kept)"
+curl -sS -X POST "$BASE/v1/visits/$VISIT/complete" -H "authorization: Bearer $TOKEN" | python3 -m json.tool
 
 echo
 echo "== day finish + day patients"
