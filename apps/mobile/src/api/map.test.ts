@@ -71,6 +71,32 @@ test("Core walkthrough pins seeded visit 005 and tries today plus contract date"
   );
   assert.equal(pinned.patients[0]?.visitId, DEMO.visitAlexId);
   assert.equal(pinned.patients[0]?.displayName, "Alex Rivera");
+  const afterEnd = ensureSeededVisit(
+    {
+      date: "2026-09-22",
+      followUpRelease: "after_sign",
+      patients: [
+        {
+          patientId: DEMO.patientAlexId,
+          displayName: "Alex Rivera",
+          visitId: DEMO.visitAlexId,
+          visitStatus: "completed",
+          unsignedDraft: true,
+          recording: "captured",
+        },
+      ],
+    },
+    {
+      id: DEMO.visitAlexId,
+      clinicId: DEMO.clinicId,
+      patientId: DEMO.patientAlexId,
+      providerId: DEMO.userId,
+      status: "completed",
+      startedAt: "2026-09-22T13:00:00.000Z",
+      endedAt: "2026-09-22T13:12:00.000Z",
+    },
+  );
+  assert.equal(afterEnd.patients[0]?.unsignedDraft, true);
 });
 
 test("isAiAssistedDraft falls back to note body when the contract omits the flag", () => {

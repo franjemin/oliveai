@@ -25,7 +25,8 @@ export function clinicDayDates(now = new Date()): string[] {
   return [...new Set([utcDate(now), DEMO.date])];
 }
 
-export function seededVisitRow(visit: Visit, patient?: Patient | null): DayPatient {
+export function seededVisitRow(visit: Visit, patient?: Patient | null, prior?: DayPatient | null): DayPatient {
+  const completed = visit.status === "completed" || Boolean(visit.endedAt);
   return {
     patientId: visit.patientId,
     displayName: patient?.displayName ?? CORE_WALKTHROUGH.patientName,
@@ -34,14 +35,16 @@ export function seededVisitRow(visit: Visit, patient?: Patient | null): DayPatie
     startedAt: visit.startedAt,
     endedAt: visit.endedAt,
     time: formatDayTime(visit.startedAt),
-    reason: "Perio maintenance · 45 min",
-    recording: visit.status === "in_progress" ? "pending_consent" : "captured",
+    reason: prior?.reason ?? "Perio maintenance · 45 min",
+    recording: prior?.recording ?? (visit.status === "in_progress" ? "pending_consent" : "captured"),
+    unsignedDraft: prior?.unsignedDraft ?? (completed ? true : undefined),
   };
 }
 
 /** Pin Alex / visit …0005 at the top of Today so the Core walk never depends on day-feed date. */
 export function ensureSeededVisit(feed: DayFeed, visit: Visit, patient?: Patient | null): DayFeed {
-  const row = seededVisitRow(visit, patient);
+  const prior = feed.patients.find((p) => p.visitId === visit.id || p.patientId === visit.patientId) ?? null;
+  const row = seededVisitRow(visit, patient, prior);
   const rest = feed.patients.filter((p) => p.visitId !== visit.id && p.patientId !== visit.patientId);
   return { ...feed, patients: [row, ...rest] };
 }
