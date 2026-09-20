@@ -22,24 +22,13 @@ Tokens: cream `#FFFEFA`/`#F7F5F0`, sage `#7A9E7E`, olive `#6B8F71`, charcoal `#2
 
 Expo web is the fastest Core loop. Confirmed booting at **http://localhost:8081**.
 
-**Supported install path is `apps/mobile` with npm** — do not install from the repo root. Root `pnpm-workspace.yaml` has no root `package.json`; a root `pnpm install` / `npm install` will not put `expo-linear-gradient` on Metro’s resolve path.
-
-After every pull:
+**Known-good path** — npm inside `apps/mobile` only. Do not run `pnpm` / `npm install` at the repo root.
 
 ```bash
-cd apps/mobile
-npm install
-cp .env.example .env
-npx expo start --web --port 8081 -c
+cd apps/mobile && rm -rf node_modules && npm ci && npx expo start --web --port 8081 -c
 ```
 
-If Metro still says it cannot resolve `expo-linear-gradient`:
-
-```bash
-cd apps/mobile
-npx expo install expo-linear-gradient
-npx expo start --web --port 8081 -c
-```
+First run: `cp .env.example .env` if `.env` is missing.
 
 Open: **http://localhost:8081**
 

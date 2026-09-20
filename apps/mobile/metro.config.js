@@ -1,9 +1,16 @@
 const path = require("path");
 const { getDefaultConfig } = require("expo/metro-config");
 
-// Root pnpm-workspace.yaml has no root package.json. Metro can walk up and
-// miss apps/mobile/node_modules (expo-linear-gradient). Pin the project.
-const config = getDefaultConfig(__dirname);
-config.watchFolders = [__dirname];
-config.resolver.nodeModulesPaths = [path.resolve(__dirname, "node_modules")];
+const projectRoot = __dirname;
+const mobileModules = path.resolve(projectRoot, "node_modules");
+
+// Do not walk up to a root node_modules (pnpm-workspace / empty hoist).
+const config = getDefaultConfig(projectRoot);
+config.projectRoot = projectRoot;
+config.watchFolders = [projectRoot];
+config.resolver.disableHierarchicalLookup = true;
+config.resolver.nodeModulesPaths = [mobileModules];
+config.resolver.extraNodeModules = {
+  "expo-linear-gradient": path.resolve(mobileModules, "expo-linear-gradient"),
+};
 module.exports = config;
