@@ -12,5 +12,6 @@ config.resolver.disableHierarchicalLookup = true;
 config.resolver.nodeModulesPaths = [mobileModules];
 config.resolver.extraNodeModules = {
   "expo-linear-gradient": path.resolve(mobileModules, "expo-linear-gradient"),
+  semver: path.resolve(mobileModules, "semver"),
 };
 module.exports = config;
