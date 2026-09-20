@@ -153,25 +153,27 @@ export default function FollowUpsTab() {
                 ) : undefined
               }
             >
-              <Card style={[styles.card, cardMax != null ? { maxHeight: cardMax, height: cardMax } : null]}>
-                <Kicker style={{ color: color.sage }}>Secure message</Kicker>
-                <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
-                <Caption style={styles.visitLine}>
-                  Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
-                </Caption>
-                <View style={styles.message}>
-                  <TextInput
-                    multiline
-                    scrollEnabled
-                    value={draft}
-                    onChangeText={setDraft}
-                    onBlur={() => void saveEdit()}
-                    style={styles.edit}
-                    textAlignVertical="top"
-                  />
-                  <Caption style={styles.tapEdit}>Tap to edit</Caption>
-                </View>
-              </Card>
+              <View style={[styles.cardFrame, cardMax != null ? { maxHeight: cardMax } : null]}>
+                <Card style={styles.card}>
+                  <Kicker style={{ color: color.sage }}>Secure message</Kicker>
+                  <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
+                  <Caption style={styles.visitLine}>
+                    Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
+                  </Caption>
+                  <View style={styles.message}>
+                    <TextInput
+                      multiline
+                      scrollEnabled
+                      value={draft}
+                      onChangeText={setDraft}
+                      onBlur={() => void saveEdit()}
+                      style={styles.edit}
+                      textAlignVertical="top"
+                    />
+                    <Caption style={styles.tapEdit}>Tap to edit</Caption>
+                  </View>
+                </Card>
+              </View>
             </SwipeDeck>
           </View>
         ) : (
@@ -232,7 +234,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   peekCard: { flex: 1, backgroundColor: color.paperAlt },
-  card: { overflow: "hidden", flexShrink: 1 },
+  cardFrame: { width: "100%", flexGrow: 1, flexShrink: 1, maxHeight: "100%" },
+  card: { flex: 1, overflow: "hidden" },
   cardName: { marginTop: 10, fontSize: 26, lineHeight: 30, flexShrink: 0 },
   visitLine: { marginTop: 4, flexShrink: 0 },
   message: {

@@ -132,10 +132,12 @@ const styles = StyleSheet.create({
   },
   cardSlot: {
     alignSelf: "stretch",
+    height: "100%",
     maxHeight: "100%",
     flexShrink: 1,
     position: "relative",
     overflow: "hidden",
+    justifyContent: "center",
   },
   peek: {
     position: "absolute",
