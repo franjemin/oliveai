@@ -135,6 +135,7 @@ const styles = StyleSheet.create({
     maxHeight: "100%",
     flexShrink: 1,
     position: "relative",
+    overflow: "hidden",
   },
   peek: {
     position: "absolute",

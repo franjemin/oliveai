@@ -29,7 +29,7 @@ export default function FollowUpsTab() {
   const [inboxToken, setInboxToken] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [cardMax, setCardMax] = useState(420);
+  const [cardMax, setCardMax] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     const next = await pending();
@@ -102,11 +102,7 @@ export default function FollowUpsTab() {
 
   return (
     <Screen>
-      <SafeAreaView
-        style={styles.safe}
-        edges={["top"]}
-        onLayout={(e) => setCardMax(Math.round(e.nativeEvent.layout.height * 0.58))}
-      >
+      <SafeAreaView style={styles.safe} edges={["top"]}>
         <View style={styles.header}>
           <Title>Follow-ups</Title>
           <View style={styles.progressRow}>
@@ -137,8 +133,14 @@ export default function FollowUpsTab() {
         </View>
 
         {current ? (
-          <View style={styles.deckWrap}>
-            <SwipeDeck
+          <View
+            style={styles.deckWrap}
+            onLayout={(e) => {
+              const slot = e.nativeEvent.layout.height;
+              setCardMax(Math.max(0, Math.round(slot - 18)));
+            }}
+          >
+            <SwipeDeck>
               disabled={busy}
               onSend={() => void send()}
               onSkip={() => void skip()}
@@ -151,16 +153,16 @@ export default function FollowUpsTab() {
                 ) : undefined
               }
             >
-              <Card style={[styles.card, { maxHeight: cardMax }]}>
+              <Card style={[styles.card, cardMax != null ? { maxHeight: cardMax, height: cardMax } : null]}>
                 <Kicker style={{ color: color.sage }}>Secure message</Kicker>
                 <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
-                <Caption style={{ marginTop: 4 }}>
+                <Caption style={styles.visitLine}>
                   Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
                 </Caption>
                 <View style={styles.message}>
                   <TextInput
                     multiline
-                    scrollEnabled={false}
+                    scrollEnabled
                     value={draft}
                     onChangeText={setDraft}
                     onBlur={() => void saveEdit()}
@@ -230,24 +232,29 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   peekCard: { flex: 1, backgroundColor: color.paperAlt },
-  card: { maxHeight: "100%", overflow: "hidden" },
-  cardName: { marginTop: 10, fontSize: 26, lineHeight: 30 },
+  card: { overflow: "hidden", flexShrink: 1 },
+  cardName: { marginTop: 10, fontSize: 26, lineHeight: 30, flexShrink: 0 },
+  visitLine: { marginTop: 4, flexShrink: 0 },
   message: {
     marginTop: 16,
     backgroundColor: color.paperAlt,
     borderRadius: radius.md,
     padding: 14,
-    minHeight: 160,
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
   },
   edit: {
-    minHeight: 144,
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
     fontSize: 16,
     lineHeight: 24,
     color: color.ink,
     fontFamily: font.ui,
     borderWidth: 0,
   },
-  tapEdit: { color: color.sage, marginTop: 8 },
+  tapEdit: { color: color.sage, marginTop: 8, flexShrink: 0 },
   empty: { flex: 1, minHeight: 0, justifyContent: "center", paddingHorizontal: space.lg },
   footer: {
     flexShrink: 0,
