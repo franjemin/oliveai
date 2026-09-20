@@ -50,6 +50,7 @@ type OliveContextValue = {
   skipFollowUp: (id: string) => Promise<FollowUp>;
   saveFollowUpEdit: (id: string, before: string, after: string) => Promise<FollowUp>;
   finishDay: () => Promise<FollowUp[]>;
+  unsignedNotes: () => Promise<{ visitId: string; displayName: string; note: Note }[]>;
   getPatient: (id: string) => Promise<Patient>;
   getChat: (patientId: string) => Promise<{ thread: ChatThread | null; messages: ChatThreadView["messages"] }>;
   listThreads: () => Promise<ChatThreadView[]>;
@@ -197,6 +198,7 @@ export function OliveProvider({ children }: { children: ReactNode }) {
       gate: (visitId) => api.recordingGate(visitId),
       endVisit: async (visitId) => {
         const visit = await api.endVisit(visitId);
+        await api.getNote(visitId);
         await refreshDay();
         return visit;
       },
@@ -249,6 +251,22 @@ export function OliveProvider({ children }: { children: ReactNode }) {
       finishDay: async () => {
         await api.finishDay(day.date);
         return api.listPendingFollowUps();
+      },
+      unsignedNotes: async () => {
+        const rows: { visitId: string; displayName: string; note: Note }[] = [];
+        for (const patient of day.patients) {
+          if (!patient.visitId) continue;
+          const done =
+            patient.visitStatus === "completed" ||
+            patient.recording === "captured" ||
+            patient.recording === "declined";
+          if (!done) continue;
+          const note = await api.getNote(patient.visitId).catch(() => null);
+          if (note?.status === "draft") {
+            rows.push({ visitId: patient.visitId, displayName: patient.displayName, note });
+          }
+        }
+        return rows;
       },
       getPatient: (id) => api.getPatient(id),
       getChat: (patientId) => api.getChat(patientId),

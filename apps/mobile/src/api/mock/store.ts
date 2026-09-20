@@ -257,7 +257,6 @@ export function endVisit(visitId: string): Visit {
   const declined = audio?.granted === false;
   syncDayVisit(ended, declined ? "declined" : "captured");
   ensureNote(ended, Boolean(audio?.granted));
-  ensureFollowUp(ended);
   return ended;
 }
 
@@ -366,6 +365,8 @@ export function signNote(visitId: string): Note {
     after: signed.body,
     resourceId: note.id,
   });
+  const visit = getVisit(visitId);
+  ensureFollowUp(visit);
   return signed;
 }
 

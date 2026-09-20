@@ -34,4 +34,10 @@ export const EDGE = {
     back: "Back to Today",
     chip: "Signed",
   },
+  draftSaved: "Draft saved",
+  finishDay: "Finish day",
+  notesToSign: {
+    kicker: "Notes to sign",
+    cta: "Finish day",
+  },
 } as const;

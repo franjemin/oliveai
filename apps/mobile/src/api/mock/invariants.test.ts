@@ -53,6 +53,25 @@ test("OLI-9 accept stores disclosure id then opens the gate", async () => {
   assert.equal(capture.disclosureScriptId, "audio-disclosure-v1");
 });
 
+test("end of visit saves a draft note and does not enqueue follow-ups until sign", async () => {
+  resetState();
+  await mockApi.recordVisitConsent(DEMO.visitAlexId, {
+    type: "audio_capture",
+    granted: true,
+    visitId: DEMO.visitAlexId,
+    disclosureScriptId: "audio-disclosure-v1",
+  });
+  await mockApi.endVisit(DEMO.visitAlexId);
+  const draft = await mockApi.getNote(DEMO.visitAlexId);
+  assert.equal(draft.status, "draft");
+  assert.equal((await mockApi.listFollowUps(DEMO.visitAlexId)).length, 0);
+  assert.equal((await mockApi.listPendingFollowUps()).length, 0);
+  await mockApi.signNote(DEMO.visitAlexId);
+  const pending = await mockApi.listPendingFollowUps();
+  assert.equal(pending.length, 1);
+  assert.equal(pending[0]?.visitId, DEMO.visitAlexId);
+});
+
 test("OLI-5 signed notes are immutable and Sign is draft-only", async () => {
   resetState();
   await mockApi.recordVisitConsent(DEMO.visitAlexId, {

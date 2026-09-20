@@ -22,6 +22,9 @@ test("Design freeze: primary copy has no PHIPA chips, record of truth, Send SMS,
     EDGE.postSign.title,
     EDGE.postSign.cta,
     EDGE.postSign.back,
+    EDGE.draftSaved,
+    EDGE.finishDay,
+    EDGE.notesToSign.kicker,
     SECURE_SEND_MICROCOPY,
     SWIPE_HINT,
     VOICE_LEARNING_TOAST,
@@ -31,6 +34,8 @@ test("Design freeze: primary copy has no PHIPA chips, record of truth, Send SMS,
   assert.match(AUDIO_DISCLOSURE.startCta, /Start recording/);
   assert.match(AUDIO_DISCLOSURE.agreeMicrocopy, /I confirmed the patient agrees/);
   assert.match(EDGE.signConfirm.oliveTruth, /clinical record/);
+  assert.match(EDGE.draftSaved, /Draft saved/);
+  assert.match(EDGE.finishDay, /Finish day/);
   assert.match(SECURE_SEND_MICROCOPY, /We’ll text them a link to open it securely/);
   assert.match(SWIPE_HINT, /Swipe right to send/);
   assert.doesNotMatch(primary, /PHIPA|CA·ON|record of truth|Send SMS|deleted within 24|24h wipe|audio TTL/i);

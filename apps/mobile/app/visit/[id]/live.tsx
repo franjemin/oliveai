@@ -78,7 +78,7 @@ export default function LiveScreen() {
   const end = async () => {
     if (!id) return;
     await olive.endVisit(id);
-    router.replace(`/visit/${id}/note`);
+    router.replace({ pathname: "/", params: { saved: "draft" } });
   };
 
   return (
