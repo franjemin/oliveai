@@ -1,6 +1,6 @@
 import { type Href, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
@@ -155,21 +155,28 @@ export default function FollowUpsTab() {
             >
               <View style={[styles.cardFrame, cardMax != null ? { maxHeight: cardMax } : null]}>
                 <Card style={styles.card}>
-                  <Kicker style={{ color: color.sage }}>Secure message</Kicker>
+                  <Kicker style={[styles.kicker, { color: color.sage }]}>Secure message</Kicker>
                   <Title style={styles.cardName}>{patient?.displayName ?? "Patient"}</Title>
                   <Caption style={styles.visitLine}>
                     Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
                   </Caption>
                   <View style={styles.message}>
-                    <TextInput
-                      multiline
-                      scrollEnabled
-                      value={draft}
-                      onChangeText={setDraft}
-                      onBlur={() => void saveEdit()}
-                      style={styles.edit}
-                      textAlignVertical="top"
-                    />
+                    <ScrollView
+                      style={styles.editScroll}
+                      contentContainerStyle={styles.editScrollContent}
+                      keyboardShouldPersistTaps="handled"
+                      nestedScrollEnabled
+                    >
+                      <TextInput
+                        multiline
+                        scrollEnabled={false}
+                        value={draft}
+                        onChangeText={setDraft}
+                        onBlur={() => void saveEdit()}
+                        style={styles.edit}
+                        textAlignVertical="top"
+                      />
+                    </ScrollView>
                     <Caption style={styles.tapEdit}>Tap to edit</Caption>
                   </View>
                 </Card>
@@ -238,18 +245,19 @@ const styles = StyleSheet.create({
   card: { flex: 1, overflow: "hidden" },
   cardName: { marginTop: 10, fontSize: 26, lineHeight: 30, flexShrink: 0 },
   visitLine: { marginTop: 4, flexShrink: 0 },
+  kicker: { flexShrink: 0 },
   message: {
     marginTop: 16,
     backgroundColor: color.paperAlt,
     borderRadius: radius.md,
     padding: 14,
-    flexGrow: 1,
-    flexShrink: 1,
+    flex: 1,
     minHeight: 0,
+    overflow: "hidden",
   },
+  editScroll: { flex: 1, minHeight: 0 },
+  editScrollContent: { flexGrow: 1 },
   edit: {
-    flexGrow: 1,
-    flexShrink: 1,
     minHeight: 144,
     fontSize: 16,
     lineHeight: 24,
