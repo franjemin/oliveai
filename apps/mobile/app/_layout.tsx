@@ -2,6 +2,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
@@ -47,7 +48,7 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: color.paper },
-            animation: "slide_from_right",
+            animation: Platform.OS === "web" ? "none" : "slide_from_right",
           }}
         >
           <Stack.Screen name="(tabs)" />

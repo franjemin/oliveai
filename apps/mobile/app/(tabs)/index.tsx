@@ -34,12 +34,9 @@ export default function TodayScreen() {
   useEffect(() => {
     if (saved !== "draft") return;
     setToast(EDGE.draftSaved);
-    const t = setTimeout(() => {
-      setToast(null);
-      router.setParams({ saved: undefined });
-    }, 2200);
+    const t = setTimeout(() => setToast(null), 2200);
     return () => clearTimeout(t);
-  }, [router, saved]);
+  }, [saved]);
 
   const { next, later } = useMemo(() => {
     const open = olive.day.patients.filter(
@@ -59,15 +56,15 @@ export default function TodayScreen() {
         ? await olive.getVisit(row.visitId)
         : await olive.openVisit(row.patientId);
       if (row.recording === "live") {
-        router.push(`/visit/${visit.id}/live`);
+        router.replace(`/visit/${visit.id}/live`);
         return;
       }
       if (row.visitStatus === "completed" || row.recording === "captured" || row.recording === "declined") {
         const note = await olive.getNote(visit.id).catch(() => null);
-        router.push(note?.status === "signed" ? `/visit/${visit.id}/signed` : `/visit/${visit.id}/note`);
+        router.replace(note?.status === "signed" ? `/visit/${visit.id}/signed` : `/visit/${visit.id}/note`);
         return;
       }
-      router.push(`/visit/${visit.id}/consent`);
+      router.replace(`/visit/${visit.id}/consent`);
     } finally {
       setBusyId(null);
     }
@@ -77,7 +74,7 @@ export default function TodayScreen() {
     const result = await olive.finishDay();
     const first = result.unsignedDrafts?.[0];
     if (first) {
-      router.push({
+      router.replace({
         pathname: "/visit/[id]/note",
         params: { id: first.visitId, from: "day" },
       } as Href);
