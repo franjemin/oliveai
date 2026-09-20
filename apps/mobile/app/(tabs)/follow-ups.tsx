@@ -1,6 +1,6 @@
 import { type Href, useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ApiError } from "@/src/api";
@@ -30,6 +30,7 @@ export default function FollowUpsTab() {
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cardMax, setCardMax] = useState<number | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const load = useCallback(async () => {
     const next = await pending();
@@ -46,6 +47,11 @@ export default function FollowUpsTab() {
 
   const current = queue[0];
   const next = queue[1];
+  const visibleDraft = draft || current?.body || "";
+
+  useEffect(() => {
+    setEditing(false);
+  }, [current?.id]);
   const patient = olive.day.patients.find((p) => p.patientId === current?.patientId);
   const nextPatient = olive.day.patients.find((p) => p.patientId === next?.patientId);
   const index = Math.max(1, total - queue.length + (current ? 1 : 0));
@@ -160,25 +166,30 @@ export default function FollowUpsTab() {
                   <Caption style={styles.visitLine}>
                     Visit today{patient?.reason ? ` · ${patient.reason.split("·")[0].trim()}` : ""}
                   </Caption>
-                  <View style={styles.message}>
-                    <ScrollView
-                      style={styles.editScroll}
-                      contentContainerStyle={styles.editScrollContent}
-                      keyboardShouldPersistTaps="handled"
-                      nestedScrollEnabled
-                    >
+                  <Pressable
+                    style={styles.message}
+                    onPress={() => setEditing(true)}
+                    disabled={editing}
+                  >
+                    {editing ? (
                       <TextInput
+                        autoFocus
                         multiline
-                        scrollEnabled={false}
+                        scrollEnabled
                         value={draft}
                         onChangeText={setDraft}
-                        onBlur={() => void saveEdit()}
+                        onBlur={() => {
+                          setEditing(false);
+                          void saveEdit();
+                        }}
                         style={styles.edit}
                         textAlignVertical="top"
                       />
-                    </ScrollView>
+                    ) : (
+                      <Body style={styles.draftBody}>{visibleDraft}</Body>
+                    )}
                     <Caption style={styles.tapEdit}>Tap to edit</Caption>
-                  </View>
+                  </Pressable>
                 </Card>
               </View>
             </SwipeDeck>
@@ -251,14 +262,18 @@ const styles = StyleSheet.create({
     backgroundColor: color.paperAlt,
     borderRadius: radius.md,
     padding: 14,
-    flex: 1,
-    minHeight: 0,
-    overflow: "hidden",
+    flexGrow: 0,
+    flexShrink: 1,
   },
-  editScroll: { flex: 1, minHeight: 0 },
-  editScrollContent: { flexGrow: 1 },
+  draftBody: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: color.ink,
+  },
   edit: {
-    minHeight: 144,
+    minHeight: 140,
+    maxHeight: 220,
+    flexGrow: 0,
     fontSize: 16,
     lineHeight: 24,
     color: color.ink,
