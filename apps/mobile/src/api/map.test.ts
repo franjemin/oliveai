@@ -8,12 +8,14 @@ import { clinicDayDates, CORE_WALKTHROUGH, ensureSeededVisit } from "./walkthrou
 test("mapDayFeed flattens nested OpenAPI DayPatients", () => {
   const feed = mapDayFeed({
     date: "2026-09-19",
+    followUpRelease: "after_sign",
     patients: [
       {
         visitId: "visit-1",
         visitStatus: "in_progress",
         startedAt: "2026-09-19T13:00:00.000Z",
         endedAt: null,
+        unsignedDraft: true,
         patient: { id: "p-1", displayName: "Alex Rivera", phone: null, source: "local" },
       },
     ],
@@ -24,6 +26,8 @@ test("mapDayFeed flattens nested OpenAPI DayPatients", () => {
   assert.equal(feed.patients[0]?.visitId, "visit-1");
   assert.equal(feed.patients[0]?.visitStatus, "in_progress");
   assert.equal(feed.patients[0]?.source, "local");
+  assert.equal(feed.patients[0]?.unsignedDraft, true);
+  assert.equal(feed.followUpRelease, "after_sign");
   assert.ok(feed.patients[0]?.time);
 });
 

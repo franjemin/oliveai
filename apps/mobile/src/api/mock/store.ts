@@ -123,17 +123,27 @@ export function getVisit(id: string) {
 }
 
 export function dayFeed() {
-  return { date: TODAY, patients: state.day };
+  return {
+    date: TODAY,
+    followUpRelease: "after_sign" as const,
+    patients: state.day.map((row) => ({
+      ...row,
+      unsignedDraft:
+        row.unsignedDraft ??
+        Boolean(row.visitId && state.notes.some((n) => n.visitId === row.visitId && n.status === "draft")),
+    })),
+  };
 }
 
-function syncDayVisit(visit: Visit, recording: DayPatient["recording"]) {
+function syncDayVisit(visit: Visit, recording?: DayPatient["recording"], unsignedDraft?: boolean) {
   state.day = state.day.map((row) =>
     row.patientId === visit.patientId
       ? {
           ...row,
           visitId: visit.id,
           visitStatus: visit.status === "completed" ? "completed" : "in_progress",
-          recording,
+          recording: recording ?? row.recording,
+          unsignedDraft: unsignedDraft ?? row.unsignedDraft,
         }
       : row,
   );
@@ -255,8 +265,8 @@ export function endVisit(visitId: string): Visit {
   state.visits = state.visits.map((v) => (v.id === visitId ? ended : v));
   const audio = latestAudioConsent(visitId);
   const declined = audio?.granted === false;
-  syncDayVisit(ended, declined ? "declined" : "captured");
   ensureNote(ended, Boolean(audio?.granted));
+  syncDayVisit(ended, declined ? "declined" : "captured", true);
   return ended;
 }
 
@@ -367,6 +377,7 @@ export function signNote(visitId: string): Note {
   });
   const visit = getVisit(visitId);
   ensureFollowUp(visit);
+  syncDayVisit(visit, undefined, false);
   return signed;
 }
 
@@ -381,17 +392,47 @@ export function listVisitConsents(visitId: string) {
 }
 
 export function listPendingFollowUps() {
-  return state.followUps.filter((f) => f.status === "draft" || f.status === "queued" || f.status === "failed");
+  return state.followUps.filter((f) => {
+    if (f.status !== "draft" && f.status !== "queued" && f.status !== "failed") return false;
+    const note = f.noteId
+      ? state.notes.find((n) => n.id === f.noteId)
+      : state.notes.find((n) => n.visitId === f.visitId);
+    if (note && note.status !== "signed") return false;
+    return true;
+  });
 }
 
 export function finishDay() {
-  state.followUps = state.followUps.map((f) => (f.status === "draft" ? { ...f, status: "queued" as const } : f));
   state.dayFinished = true;
-  const queued = listPendingFollowUps();
+  const unsignedDrafts = state.notes
+    .filter((n) => n.status === "draft")
+    .map((n) => ({
+      noteId: n.id,
+      visitId: n.visitId,
+      status: "draft" as const,
+      updatedAt: nowIso(),
+    }));
+  const pending = listPendingFollowUps();
+  const snapshot = {
+    date: TODAY,
+    followUpRelease: "after_sign" as const,
+    unsignedDrafts,
+    pendingFollowUps: pending.map((f) => ({
+      id: f.id,
+      visitId: f.visitId,
+      patientId: f.patientId,
+      status: f.status,
+      messageClass: f.messageClass,
+      release: "after_sign" as const,
+    })),
+  };
   return {
     dayClose: { date: TODAY, clinicId: DEMO.clinicId },
-    pendingCount: queued.length,
-    snapshot: { followUpIds: queued.map((f) => f.id) },
+    pendingCount: pending.length,
+    unsignedDraftCount: unsignedDrafts.length,
+    followUpRelease: "after_sign" as const,
+    unsignedDrafts,
+    snapshot,
   };
 }
 

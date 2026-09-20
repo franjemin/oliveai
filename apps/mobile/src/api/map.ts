@@ -27,12 +27,14 @@ export function mapDayPatient(row: DayPatientContract): DayPatient {
     endedAt: row.endedAt ?? null,
     source: row.patient?.source,
     time: formatDayTime(row.startedAt),
+    unsignedDraft: row.unsignedDraft,
   };
 }
 
 export function mapDayFeed(raw: DayPatientsResponse): DayFeed {
   return {
     date: raw.date,
+    followUpRelease: raw.followUpRelease,
     patients: (raw.patients ?? []).map(mapDayPatient).filter((row) => row.patientId),
   };
 }

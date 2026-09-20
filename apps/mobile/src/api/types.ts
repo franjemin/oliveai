@@ -274,6 +274,7 @@ export type DayPatientContract = {
   visitStatus?: string;
   startedAt?: string;
   endedAt?: string | null;
+  unsignedDraft?: boolean;
   patient?: {
     id: string;
     displayName: string;
@@ -285,6 +286,7 @@ export type DayPatientContract = {
 
 export type DayPatientsResponse = {
   date: string;
+  followUpRelease?: "after_sign";
   patients: DayPatientContract[];
 };
 
@@ -305,16 +307,29 @@ export type DayPatient = {
   time?: string;
   reason?: string;
   recording?: DayRecording;
+  unsignedDraft?: boolean;
 };
 
 export type DayFeed = {
   date: string;
+  followUpRelease?: "after_sign";
   patients: DayPatient[];
+};
+
+/** `POST /v1/days/finish` — surfaces unsigned drafts; does not auto-sign or send. */
+export type UnsignedDraft = {
+  noteId: string;
+  visitId: string;
+  status: "draft";
+  updatedAt?: string;
 };
 
 export type FinishDayResult = {
   dayClose?: unknown;
   pendingCount?: number;
+  unsignedDraftCount?: number;
+  followUpRelease?: "after_sign";
+  unsignedDrafts?: UnsignedDraft[];
   snapshot?: unknown;
 };
 

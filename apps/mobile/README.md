@@ -104,7 +104,7 @@ Nothing on the Wed hard-fail list is **missing**.
 
 | Gap | Blocks Live / Sign / Swipe? | FE handling |
 | --- | --- | --- |
-| BE does not auto-create a follow-up on visit end | **No** | Follow-ups are created **on Sign** (day-end or early). FE `POST /v1/visits/:id/follow-ups` if the list is empty. Not on End visit. |
+| BE does not auto-create a follow-up on visit end | **No** | Follow-ups are created **on Sign**. Finish day returns `unsignedDrafts` + `followUpRelease: "after_sign"`. Send 403 `unsigned_note` until signed. Day patients expose `unsignedDraft`. |
 | Day-feed date (`2026-09-19` examples vs seed **today**) | **No** | FE tries today + `2026-09-19` and overlays visit `…0005` |
 | No `GET /v1/follow-ups` | **No** | Compose pending from day visits |
 | Notify SMS vendor / BAA transcription | **No** | Stub on both sides; Send still returns secure + `inboxPath` |

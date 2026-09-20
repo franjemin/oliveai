@@ -74,15 +74,15 @@ export default function TodayScreen() {
   };
 
   const finishDay = async () => {
-    const unsigned = await olive.unsignedNotes();
-    if (unsigned[0]) {
+    const result = await olive.finishDay();
+    const first = result.unsignedDrafts?.[0];
+    if (first) {
       router.push({
         pathname: "/visit/[id]/note",
-        params: { id: unsigned[0].visitId, from: "day" },
+        params: { id: first.visitId, from: "day" },
       } as Href);
       return;
     }
-    await olive.finishDay();
     router.replace("/follow-ups");
   };
 

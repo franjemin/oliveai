@@ -124,14 +124,16 @@ export const httpApi: OliveApi = {
   },
   async listPendingFollowUps() {
     const visitIds = new Set<string>([DEMO.visitAlexId]);
+    const unsignedVisits = new Set<string>();
     for (const date of clinicDayDates()) {
-      const feed = await httpApi.dayPatients(date).catch(() => ({ date, patients: [] }));
+      const feed = await httpApi.dayPatients(date).catch(() => ({ date, patients: [] as { visitId?: string | null; unsignedDraft?: boolean }[] }));
       for (const row of feed.patients) {
         if (row.visitId) visitIds.add(row.visitId);
+        if (row.visitId && row.unsignedDraft) unsignedVisits.add(row.visitId);
       }
     }
     const batches = await Promise.all([...visitIds].map((id) => httpApi.listFollowUps(id).catch(() => [])));
-    return batches.flat().filter(isPendingFollowUp);
+    return batches.flat().filter((fu) => isPendingFollowUp(fu) && !unsignedVisits.has(fu.visitId));
   },
   sendFollowUp: (id) => req(`/v1/follow-ups/${id}/send`, { method: "POST" }),
   skipFollowUp: (id, reason) =>

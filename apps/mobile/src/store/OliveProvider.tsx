@@ -11,6 +11,7 @@ import type {
   FeatureFlags,
   ChatThread,
   ChatThreadView,
+  FinishDayResult,
   FollowUp,
   FollowUpSendResult,
   MagicInbox,
@@ -49,7 +50,7 @@ type OliveContextValue = {
   sendFollowUp: (id: string) => Promise<FollowUpSendResult>;
   skipFollowUp: (id: string) => Promise<FollowUp>;
   saveFollowUpEdit: (id: string, before: string, after: string) => Promise<FollowUp>;
-  finishDay: () => Promise<FollowUp[]>;
+  finishDay: () => Promise<FinishDayResult>;
   unsignedNotes: () => Promise<{ visitId: string; displayName: string; note: Note }[]>;
   getPatient: (id: string) => Promise<Patient>;
   getChat: (patientId: string) => Promise<{ thread: ChatThread | null; messages: ChatThreadView["messages"] }>;
@@ -231,6 +232,7 @@ export function OliveProvider({ children }: { children: ReactNode }) {
             "clinical_transactional",
           );
         }
+        await refreshDay();
         return signed;
       },
       getTranscript: (visitId) => api.getTranscript(visitId),
@@ -249,18 +251,21 @@ export function OliveProvider({ children }: { children: ReactNode }) {
         return updated;
       },
       finishDay: async () => {
-        await api.finishDay(day.date);
-        return api.listPendingFollowUps();
+        const result = await api.finishDay(day.date);
+        await refreshDay();
+        return result;
       },
       unsignedNotes: async () => {
         const rows: { visitId: string; displayName: string; note: Note }[] = [];
         for (const patient of day.patients) {
           if (!patient.visitId) continue;
-          const done =
+          if (patient.unsignedDraft === false) continue;
+          const looksDone =
+            patient.unsignedDraft === true ||
             patient.visitStatus === "completed" ||
             patient.recording === "captured" ||
             patient.recording === "declined";
-          if (!done) continue;
+          if (!looksDone) continue;
           const note = await api.getNote(patient.visitId).catch(() => null);
           if (note?.status === "draft") {
             rows.push({ visitId: patient.visitId, displayName: patient.displayName, note });

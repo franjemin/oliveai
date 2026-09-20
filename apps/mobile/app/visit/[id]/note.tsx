@@ -71,7 +71,6 @@ export default function NoteScreen() {
       });
       return;
     }
-    await olive.finishDay();
     router.replace("/follow-ups");
   };
 

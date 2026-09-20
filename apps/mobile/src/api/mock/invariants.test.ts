@@ -65,6 +65,16 @@ test("end of visit saves a draft note and does not enqueue follow-ups until sign
   const draft = await mockApi.getNote(DEMO.visitAlexId);
   assert.equal(draft.status, "draft");
   assert.equal((await mockApi.listFollowUps(DEMO.visitAlexId)).length, 0);
+  const closed = await mockApi.finishDay(DEMO.date);
+  assert.equal(closed.followUpRelease, "after_sign");
+  assert.ok(closed.unsignedDrafts?.some((d) => d.visitId === DEMO.visitAlexId));
+  assert.equal(closed.unsignedDraftCount, closed.unsignedDrafts?.length);
+  const premature = await mockApi.createFollowUp(DEMO.visitAlexId, "Hi Alex — floss tonight.");
+  await assert.rejects(() => mockApi.sendFollowUp(premature.id), (err: unknown) => {
+    assert.ok(err instanceof ApiError);
+    assert.equal(err.error, "unsigned_note");
+    return true;
+  });
   assert.equal((await mockApi.listPendingFollowUps()).length, 0);
   await mockApi.signNote(DEMO.visitAlexId);
   const pending = await mockApi.listPendingFollowUps();
@@ -194,5 +204,6 @@ test("send publishes channel=secure and a contract inbox payload", async () => {
   assert.equal(inbox.channelOfRecord, "secure");
   assert.equal(inbox.body, sent.body);
   const closed = await mockApi.finishDay(DEMO.date);
+  assert.equal(closed.followUpRelease, "after_sign");
   assert.equal(typeof closed.pendingCount, "number");
 });
