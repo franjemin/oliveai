@@ -4,12 +4,18 @@ Olive v1 workspace.
 
 ## Francesca ASAP — mobile Core on localhost
 
+Install and start **from `apps/mobile`** (npm). Do not install at the repo root — `pnpm-workspace.yaml` has no root `package.json`.
+
+After pull:
+
 ```bash
 cd apps/mobile
 npm install
 cp .env.example .env
-npx expo start --web --port 8081
+npx expo start --web --port 8081 -c
 ```
+
+If `expo-linear-gradient` fails to resolve: `cd apps/mobile && npx expo install expo-linear-gradient` then restart with `-c`.
 
 Open **http://localhost:8081** (mocks; no API process).
 
