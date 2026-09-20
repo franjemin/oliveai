@@ -1,20 +1,29 @@
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 
 import { color, font } from "@/src/theme/tokens";
 
 export function PhoneShell({ children }: { children: ReactNode }) {
+  const [clock, setClock] = useState("");
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const tick = () =>
+      setClock(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: false }));
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   if (Platform.OS !== "web") {
     return <View style={styles.fill}>{children}</View>;
   }
-  const now = new Date();
-  const time = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: false });
   return (
     <View style={styles.stage}>
       <View style={styles.phone}>
         <View style={styles.island} />
         <View style={styles.status} pointerEvents="none">
-          <Text style={styles.statusTime}>{time}</Text>
+          <Text style={styles.statusTime}>{clock}</Text>
           <Text style={styles.statusMeta}>●●● LTE</Text>
         </View>
         <View style={styles.content}>{children}</View>

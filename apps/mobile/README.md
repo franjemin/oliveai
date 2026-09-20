@@ -20,17 +20,31 @@ Tokens: cream `#FFFEFA`/`#F7F5F0`, sage `#7A9E7E`, olive `#6B8F71`, charcoal `#2
 
 ## Francesca ASAP — localhost mocks (no API)
 
-Expo web is the fastest Core loop. Confirmed booting at **http://localhost:8081**.
+**Preferred stable URL:** **http://localhost:8081** via static export (production React; no Performance Tracks).
 
-**Known-good path** — npm inside `apps/mobile` only. Do not run `pnpm` / `npm install` at the repo root.
+React 19.2 DEV `performance.measure` for Components ⚛ structured-clones fiber props into the user-timing buffer. The clone **succeeds**, so try/catch on `DataCloneError` cannot help — Chrome/Safari retain tens of MB and OOM. We strip `detail` (keep timing) before React mounts, and cap the timeline. Production export never emits those measures.
+
+**Preferred — static export (demo-stable):**
 
 ```bash
-cd apps/mobile && rm -rf node_modules && npm ci && npx expo start --web --port 8081 -c
+cd apps/mobile
+rm -rf node_modules && npm ci
+cp .env.example .env   # first run only
+npm run web:static
+npx --yes serve dist -l 8081
 ```
 
-First run: `cp .env.example .env` if `.env` is missing.
+`web:static` is `expo export -p web`. Serve `dist` with `npx serve dist -l 8081`. Mocks still boot (`EXPO_PUBLIC_USE_MOCKS` defaults true) with auto demo login; no API.
 
-Open: **http://localhost:8081**
+**Interim — Metro in production mode:**
+
+```bash
+cd apps/mobile && npx expo start --web --port 8081 --no-dev -c
+```
+
+**Dev (patched, still Metro):** `npx expo start --web --port 8081 -c`
+
+npm inside `apps/mobile` only. Do not run `pnpm` / `npm install` at the repo root.
 
 `.env.example` is `EXPO_PUBLIC_USE_MOCKS=true`. Demo login is automatic (`od@demo.olive.local` / `demo`). Seeded visit `00000000-0000-4000-8000-000000000005` is pinned on Today.
 

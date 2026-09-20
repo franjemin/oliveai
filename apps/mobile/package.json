@@ -1,6 +1,6 @@
 {
   "name": "olive-mobile",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "version": "1.0.0",
   "dependencies": {
     "expo": "~57.0.24",
@@ -32,7 +32,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test:invariants": "npx --yes tsx --test src/api/mock/invariants.test.ts src/api/map.test.ts src/api/learning.test.ts src/copy/soap.test.ts src/copy/design-freeze.test.ts"
+    "web:static": "expo export -p web",
+    "web:serve": "npx --yes serve dist -l 8081",
+    "test:invariants": "npx --yes tsx --test src/api/mock/invariants.test.ts src/api/map.test.ts src/api/learning.test.ts src/copy/soap.test.ts src/copy/design-freeze.test.ts src/web/patchPerformance.test.ts"
   },
   "private": true
 }
