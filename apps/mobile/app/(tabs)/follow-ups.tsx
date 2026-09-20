@@ -140,7 +140,7 @@ export default function FollowUpsTab() {
               setCardMax(Math.max(0, Math.round(slot - 18)));
             }}
           >
-            <SwipeDeck>
+            <SwipeDeck
               disabled={busy}
               onSend={() => void send()}
               onSkip={() => void skip()}
