@@ -44,7 +44,8 @@ export default function NoteScreen() {
           await advanceDayStack(id);
           return;
         }
-        router.replace(`/visit/${id}/signed`);
+        setNote(n);
+        setSoap(parseSoap(n.body));
         return;
       }
       setNote(n);
@@ -164,16 +165,24 @@ export default function NoteScreen() {
           {error ? <Body style={{ color: color.refuse, marginTop: 10 }}>{error}</Body> : null}
         </ScrollView>
         <View style={styles.actions}>
-          <Caption style={{ textAlign: "center", marginBottom: 12 }}>{EDGE.signConfirm.oliveTruth}</Caption>
-          <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
-          <Pressable
-            onPress={() => {
-              void persistIfDirty().then(() => router.replace("/"));
-            }}
-            style={{ paddingVertical: 14 }}
-          >
-            <Caption style={{ textAlign: "center", color: color.inkFaint }}>Save draft</Caption>
-          </Pressable>
+          {signed ? (
+            <Pressable onPress={() => router.replace("/")} style={{ paddingVertical: 14 }}>
+              <Caption style={{ textAlign: "center", color: color.inkFaint }}>Back to Today</Caption>
+            </Pressable>
+          ) : (
+            <>
+              <Caption style={{ textAlign: "center", marginBottom: 12 }}>{EDGE.signConfirm.oliveTruth}</Caption>
+              <Button label="Sign note" disabled={!canSign || busy} onPress={() => setConfirm(true)} />
+              <Pressable
+                onPress={() => {
+                  void persistIfDirty().then(() => router.replace("/"));
+                }}
+                style={{ paddingVertical: 14 }}
+              >
+                <Caption style={{ textAlign: "center", color: color.inkFaint }}>Save draft</Caption>
+              </Pressable>
+            </>
+          )}
         </View>
         <SignConfirmSheet
           visible={confirm}

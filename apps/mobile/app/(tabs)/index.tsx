@@ -60,8 +60,7 @@ export default function TodayScreen() {
         return;
       }
       if (row.visitStatus === "completed" || row.recording === "captured" || row.recording === "declined") {
-        const note = await olive.getNote(visit.id).catch(() => null);
-        router.replace(note?.status === "signed" ? `/visit/${visit.id}/signed` : `/visit/${visit.id}/note`);
+        router.replace(`/visit/${visit.id}/note`);
         return;
       }
       router.replace(`/visit/${visit.id}/consent`);

@@ -1,4 +1,4 @@
-import { type Href, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -23,9 +23,7 @@ export default function ConsentDeniedScreen() {
         </View>
         <Button
           label={EDGE.consentDenied.cta}
-          onPress={() => {
-            if (id) router.replace(`/visit/${id}/note` as Href);
-          }}
+          onPress={() => router.replace({ pathname: "/", params: { saved: "draft" } })}
         />
       </SafeAreaView>
     </Screen>

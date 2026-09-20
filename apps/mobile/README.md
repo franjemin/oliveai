@@ -10,7 +10,7 @@ Copy in this app is **draft pending counsel** — do not treat UX strings as leg
 
 **Design freeze SoT (must-fix, all wired on Expo web):**
 1. Live End = charcoal **Slide to end visit** (not a sage Start twin) + glove-sized **Pause**. Transcript behind **View transcript** sheet only.
-2. **04b** `/visit/:id/signed` — only if they sign **early** (mid-day). End of day: Finish day → notes stack → Follow-ups (no 04b).
+2. **04b** `/visit/:id/signed` — leftover early-sign bridge only. Not the Core loop. EOD: Finish day → notes stack → Follow-ups.
 3. Follow-ups: stamp-on-card Catch Up — swipe right = olive **✓ Send** pill (top-left); left = stone **Skip** (top-right). Tilt + fly-off, next card peeks (not iOS reveal). Outline Skip/Send + “or tap” a11y only.
 4. Consent: no PHIPA/CA·ON chips; **Why we ask** only; **Start recording** + “I confirmed the patient agrees.”
 5. Sign: “You’re signing this as the clinical record.” No “Olive record of truth” / no 24h wipe.
@@ -34,7 +34,7 @@ Open: **http://localhost:8081**
 
 `.env.example` is `EXPO_PUBLIC_USE_MOCKS=true`. Demo login is automatic (`od@demo.olive.local` / `demo`). Seeded visit `00000000-0000-4000-8000-000000000005` is pinned on Today.
 
-**Core loop:** Today **Start** → Consent **Start recording** → Live charcoal **Slide to end visit** → quiet **Draft saved** toast → Today (next patient). Sign is **not** required to leave Live. Optional mid-day review/sign from the Today card (04b only if they sign early). **Finish day** → Notes-to-sign stack → Follow-ups **Send**. Follow-ups are created on **sign**, not on visit end.
+**Core loop:** Today **Start** → Consent **Start recording** → Live charcoal **Slide to end visit** → quiet **Draft saved** toast → Today (next patient). **Finish day** → Notes-to-sign stack → Follow-ups **Send**. Sign is **not** required to leave Live or to leave a declined visit. Mid-day sign is optional/light (Today later row → Note) — not a gate and not the demo spine. Follow-ups are created on **sign**, not on visit end.
 
 **Magic-link inbox is on Backend PR #1** — `GET /v1/inbox/:token` (not missing). Send returns `inboxPath` + `magicLinkToken`; FE route is `/inbox/:token`.
 
@@ -92,7 +92,7 @@ Open **http://localhost:8081**. Boot: `POST /v1/auth/login` with `od@demo.olive.
 
 Edge states (consent denied, bad-audio, empty swipe) are **wired** (supporting, not a numbered hard-fail).
 
-**Wed must-work (#4–#7, all wired):** Consent agree/deny + gate · Live pause/end (draft saved → Today) · Note sign at end of day (optional mid-day + 04b if early) · Swipe send stub/skip/CASL fail-closed.
+**Wed must-work (#4–#7, all wired):** Consent agree/deny + gate · Live pause/end (draft saved → Today) · Note sign at **end of day** via Finish day · Swipe send stub/skip/CASL fail-closed. Mid-day sign is not a gate.
 
 **OK mock/partial for demo week:** SDM / `verbal_attested` depth · MFA · post-sign correction trail · backup purge · admin audit UI · data-map beyond PHIPA fields.
 
@@ -119,19 +119,19 @@ Nothing on the Wed hard-fail list is **missing**.
 - **Demo simplicity cuts** (Core simplicity bar): one hero CTA per screen; cream/sage/charcoal; glass cards; progressive disclosure. No PHIPA chips / no “record of truth” on primary.
 - **Retention:** clinic-controlled on primary surfaces. Do not claim 24h audio deletion.
 - **Messaging (05 / 05b carve-out):** stamp-on-card Catch Up (not iOS background reveal). Swipe right = olive **✓ Send** stamp top-left; left = stone **Skip** top-right. ~35% threshold, stamp opacity scales with drag, tilt + fly-off, next card peeks. Outline Skip/Send + “or tap” a11y only. Chip **Secure message**. Microcopy: “We’ll text them a link to open it securely.” 05b toast on edit-save only.
-- **End-of-day sign:** Live exit saves a draft and returns to Today. Sign is optional mid-day (Today card → Note → 04b). Finish day walks unsigned notes, then Follow-ups. Do not enqueue swipe follow-ups until a note is signed.
+- **End-of-day sign:** Live exit saves a draft and returns to Today (one charcoal slide; no second End modal). **Finish day** walks unsigned notes, then Follow-ups. Mid-day sign is optional/light if they open a note from Today — not a required gate. Do not enqueue swipe follow-ups until a note is signed. Design is re-cutting EOD hi-fi; match functional flow until those assets land.
 - **Voice learning:** on follow-up edit-save **and** note edit/sign, fire `{ source, before, after, resourceId }` to mocks and the HTTP log. Follow-up also `POST /v1/follow-ups/:id/edits` `{ before, after }` (OpenAPI `FollowUpEdit`). Session `style` is a local heuristic (`editCount` / `preferShorter` / `greeting`) — not PHI training and not a batch-apply / queue rewrite.
 
 ## Screens
 
 | Route | Hero CTA | Happy path |
 | --- | --- | --- |
-| Today | **Start** on NEXT UP card | Olive mark + wordmark. LATER rows (tap a completed visit to review/sign). Quiet **Draft saved** toast after Live. **Finish day** when ready. Reset = long-press Today. |
+| Today | **Start** on NEXT UP card | Olive mark + wordmark. LATER rows. Quiet **Draft saved** toast after Live. **Finish day** is how unsigned notes get signed. Reset = long-press Today. |
 | Consent | **Start recording** | Bottom sheet. **Why we ask** + agree line. Refuse = **Not recording this visit**. |
-| Consent denied | **Continue without recording** | Edge only — still lands on Note so they can write; Sign is optional (Save draft → Today). |
-| Live | **Slide to end visit** (charcoal, not a sage Start twin) | Glove-sized **Pause**. **View transcript** pill. End persist draft → **Draft saved** → Today. Sign is not required to leave. |
-| Note | **Sign note** | Optional mid-day from Today. Finish day walks unsigned notes (`?from=day`). Preview on land. **Edit full note**. **Save draft** → Today. Confirm sheet (wipe-scrub: clinic-controlled audio, no 24h). |
-| Post-sign `/visit/:id/signed` | **Review follow-ups** | 04b **only if they sign early**. Day-end sign goes straight to Follow-ups after the last note. |
+| Consent denied | **Continue without recording** | Edge only — back to Today (draft saved). Note stays reachable from Today if they want to write. |
+| Live | **Slide to end visit** (charcoal, not a sage Start twin) | Glove-sized **Pause**. **View transcript** pill. End persist draft → **Draft saved** → Today. One slide only. Sign is not required to leave. |
+| Note | **Sign note** | Primary path is Finish day (`?from=day`, “Notes to sign · i of n”). Opening a note from Today is optional review. **Save draft** → Today. Confirm sheet (wipe-scrub: clinic-controlled audio, no 24h). |
+| Post-sign `/visit/:id/signed` | **Review follow-ups** | Only if they choose to sign early from a note. Day-end last sign goes to Follow-ups. |
 | Follow-ups / Swipe | **Swipe right to Send** (left = Skip) | Gesture-first card stack. Peek of next. Outline Skip/Send are a11y (“or tap”) only. **SECURE MESSAGE** chip. Edit in the card. “We’ll text them a link to open it securely.” 05b toast on edit-save only. |
 | Empty swipe | **Back to Today** | Edge only |
 | Follow-ups | Same queue |
